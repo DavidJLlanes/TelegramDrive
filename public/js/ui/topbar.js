@@ -32,7 +32,7 @@ export function renderTopbar({ onLogout }) {
   ]);
 
   const header = h('header', { class: 'topbar' },
-    h('span', { class: 'brand-mark' }, icon('plane')),
+    h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 40, height: 40 })),
     h('div', { class: 'search' }, icon('search'), searchInput),
     h('div', { class: 'toolbar-spacer' }),
     h('button', { class: 'btn', onclick: createFolder }, icon('folderPlus'), h('span', { class: 'hide-mobile' }, 'Nueva carpeta')),

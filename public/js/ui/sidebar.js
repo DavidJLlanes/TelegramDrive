@@ -74,7 +74,7 @@ export function createSidebar() {
   const tree = h('nav', { class: 'tree', 'aria-label': 'Carpetas y biblioteca' });
   const foot = h('div', { class: 'side-foot' });
   const el = h('aside', { class: 'sidebar' },
-    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('plane')), 'Telegram Drive'), tree, foot);
+    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 38, height: 38 })), 'Telegram Drive'), tree, foot);
 
   const paint = (s) => {
     const current = s.results !== null || s.section !== 'files' ? null : s.path;

@@ -36,7 +36,7 @@ export function renderLogin(root, onSuccess) {
 
   root.replaceChildren(h('div', { class: 'login' },
     h('section', { class: 'login-art' },
-      h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('plane')), 'Telegram Drive'),
+      h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 38, height: 38 })), 'Telegram Drive'),
       h('h2', {}, 'Tu música, vídeos y fotos, en tu Telegram.'),
       collage()),
     h('section', { class: 'login-form-side' }, form)));

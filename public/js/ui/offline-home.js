@@ -8,7 +8,7 @@ import { trackList } from './track-list.js';
 export function renderOfflineHome(root, retry) {
   const tracks = offlineTracks();
   root.replaceChildren(h('div', { class: 'offline-home' },
-    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('plane')), 'Telegram Drive'),
+    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 38, height: 38 })), 'Telegram Drive'),
     h('h1', {}, 'No hay conexión con el servidor'),
     h('p', {}, tracks.length ? 'Puedes escuchar la música que guardaste en este dispositivo.' : 'Cuando vuelva la conexión podrás entrar de nuevo.'),
     h('div', { class: 'offline-actions' },

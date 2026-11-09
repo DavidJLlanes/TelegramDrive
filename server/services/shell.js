@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 
 const INCLUDE = /\.(js|css|woff2|png|svg|webmanifest|html)$/;
 const EXCLUDE = new Set(['sw.js', 'css/share-gate.css', 'og-image.png']);
-const SHELL_ICONS = /^icons\/(favicon-32|apple-touch-icon|icon-192)\.png$/; // el resto de iconos los pide el navegador, no hacen falta sin conexión
+const SHELL_ICONS = /^icons\/(favicon-32|apple-touch-icon|icon-96|icon-192)\.png$/; // el resto de iconos los pide el navegador, no hacen falta sin conexión
 
 function* walk(dir, base = '') {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
