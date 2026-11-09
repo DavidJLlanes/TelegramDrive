@@ -63,3 +63,7 @@
 }
 .check .icon, .sleeve .check .icon { position: static; inset: auto; width: 16px; height: 16px; margin: 0; opacity: 1; color: inherit; }
 .selection-bar .btn { white-space: nowrap; }
+
+/* Guardar como (móvil): acciones en columna y botones anchos para el pulgar */
+.save-actions { flex-wrap: wrap; }
+@media (max-width: 560px) { .save-actions { flex-direction: column-reverse; } .save-actions .btn { width: 100%; justify-content: center; min-height: 46px; } }

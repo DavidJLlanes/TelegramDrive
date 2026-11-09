@@ -2,7 +2,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
 import { formatBytes } from '../core/format.js';
-import { download } from '../ui/download.js';
+import { saveAs } from '../ui/save-as.js';
 
 let box = null;
 const SWIPE = 60;
@@ -57,7 +57,7 @@ export function openLightbox(file, list) {
   box = h('div', { class: 'lightbox', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Visor de imágenes' },
     h('div', { class: 'viewer-bar' },
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar', onclick: close }, icon('close')), title,
-      h('button', { class: 'btn btn-icon', 'aria-label': 'Descargar', onclick: () => download(queue[index]) }, icon('download'))),
+      h('button', { class: 'btn btn-icon', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue[index]) }, icon('download'))),
     stage, foot,
     queue.length > 1 && h('button', { class: 'lb-nav lb-prev', 'aria-label': 'Anterior', onclick: () => step(-1) }, icon('chevronLeft')),
     queue.length > 1 && h('button', { class: 'lb-nav lb-next', 'aria-label': 'Siguiente', onclick: () => step(1) }, icon('chevronRight')));

@@ -7,6 +7,7 @@ import { pickFolder, promptText } from './modal.js';
 import { toast, toastError } from './toast.js';
 import { openFile } from '../players/viewer.js';
 import { download, downloadZip } from './download.js';
+import { saveAs } from './save-as.js';
 import { playFolder } from '../core/playback.js';
 import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
@@ -36,6 +37,7 @@ export function fileMenu(file, siblings) {
     { label: 'Abrir', icon: 'play', run: () => openFile(file, siblings) },
     ...(file.kind === 'audio' ? audioItems(file) : []),
     'sep',
+    { label: 'Guardar como…', icon: 'download', run: () => saveAs(file) },
     { label: 'Descargar', icon: 'download', run: () => download(file) },
     { label: 'Compartir enlace…', icon: 'share', run: () => shareItem({ kind: 'file', target: file.id, label: file.name }) },
     'sep',

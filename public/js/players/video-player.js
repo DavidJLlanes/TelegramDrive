@@ -1,7 +1,7 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
-import { download } from '../ui/download.js';
+import { saveAs } from '../ui/save-as.js';
 
 let modal = null;
 
@@ -39,7 +39,7 @@ export function openVideo(file, list) {
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar', onclick: close }, icon('close')), title, counter,
       h('button', { class: 'btn btn-icon', 'aria-label': 'Anterior (Shift+←)', onclick: () => step(-1) }, icon('prev')),
       h('button', { class: 'btn btn-icon', 'aria-label': 'Siguiente (Shift+→)', onclick: () => step(1) }, icon('next')),
-      h('button', { class: 'btn btn-icon', 'aria-label': 'Descargar', onclick: () => download(queue[index]) }, icon('download'))),
+      h('button', { class: 'btn btn-icon', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue[index]) }, icon('download'))),
     h('div', { class: 'video-stage' }, video));
   video.addEventListener('ended', () => step(1));
   video.addEventListener('error', () => { title.textContent = `${queue[index].name} — formato no compatible con el navegador, descárgalo`; });

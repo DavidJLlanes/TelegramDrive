@@ -1,5 +1,5 @@
 // Service worker: app shell offline. La API y los medios NUNCA se cachean (son datos privados y pesados).
-const VERSION = 'v1.5.2';
+const VERSION = 'v1.6.0';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = [
   './', 'index.html', 'offline.html', 'manifest.webmanifest',
@@ -11,7 +11,7 @@ const SHELL = [
   'js/core/icons.js', 'js/core/router.js', 'js/core/store.js', 'js/core/tags.js', 'js/core/library.js', 'js/core/playback.js',
   'js/ui/actions.js', 'js/ui/app-shell.js', 'js/ui/covers.js', 'js/ui/download.js', 'js/ui/page-header.js', 'js/ui/sidebar.js',
   'js/ui/explorer.js', 'js/ui/login.js', 'js/ui/menu.js', 'js/ui/modal.js', 'js/ui/sorting.js',
-  'js/ui/toast.js', 'js/ui/topbar.js', 'js/ui/uploader.js', 'js/ui/drop-scan.js', 'js/ui/library.js', 'js/ui/library-head.js', 'js/ui/more-button.js', 'js/ui/play-buttons.js',
+  'js/ui/toast.js', 'js/ui/topbar.js', 'js/ui/uploader.js', 'js/ui/drop-scan.js', 'js/ui/save-as.js', 'js/ui/library.js', 'js/ui/library-head.js', 'js/ui/more-button.js', 'js/ui/play-buttons.js',
   'js/players/audio-player.js', 'js/players/audio-queue.js', 'js/players/lightbox.js', 'js/players/video-player.js', 'js/players/viewer.js',
   'js/pwa/register.js',
   'js/core/offline.js', 'js/core/trash.js', 'js/players/resume.js', 'js/players/session.js', 'js/ui/audio-actions.js', 'js/ui/cards.js', 'js/ui/form-dialog.js', 'js/ui/offline-home.js', 'js/ui/playlist-picker.js', 'js/ui/queue-panel.js', 'js/ui/selection.js', 'js/ui/share-dialog.js', 'js/ui/tag-editor.js', 'js/ui/track-list.js', 'js/ui/trash-view.js',

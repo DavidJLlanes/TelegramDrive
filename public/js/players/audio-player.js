@@ -4,7 +4,7 @@ import { contentUrl, thumbUrl } from '../core/api.js';
 import { appState, prefs } from '../core/store.js';
 import { formatTime } from '../core/format.js';
 import { trackTitle, trackSubtitle } from '../core/tags.js';
-import { download } from '../ui/download.js';
+import { saveAs } from '../ui/save-as.js';
 import { tint } from '../core/color.js';
 import { createQueue } from './audio-queue.js';
 import { saveResume, clearResume } from './resume.js';
@@ -63,7 +63,7 @@ function build() {
     h('div', { class: 'audio-seek' }, ui.cur, ui.seek, ui.dur),
     h('div', { class: 'audio-volume' }, ui.mute, ui.vol,
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cola de reproducción', onclick: () => toggleQueuePanel(panelApi) }, icon('queue')),
-      h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Descargar', onclick: () => download(queue.current()) }, icon('download')),
+      h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue.current()) }, icon('download')),
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar reproductor', onclick: stop }, icon('close'))));
   document.body.append(bar);
 
