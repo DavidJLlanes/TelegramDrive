@@ -15,6 +15,7 @@ import { renderShell } from './ui/app-shell.js';
 import { renderOfflineHome } from './ui/offline-home.js';
 import { enableDropZone } from './features/uploads/index.js';
 import { registerServiceWorker } from './pwa/register.js';
+import './pwa/no-zoom.js';
 
 const root = document.getElementById('app');
 let started = false;

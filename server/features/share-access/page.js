@@ -3,7 +3,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 
 export function renderGate({ base, token, label, error = '' }) {
   return `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="robots" content="noindex, nofollow"><title>Enlace protegido</title>
 <link rel="stylesheet" href="${esc(base)}/css/fonts.css"><link rel="stylesheet" href="${esc(base)}/css/tokens.css">
 <link rel="stylesheet" href="${esc(base)}/css/base.css"><link rel="stylesheet" href="${esc(base)}/css/share-gate.css"></head>

@@ -1,5 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
+html, body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; } /* sin pellizco ni doble toque para ampliar */
 body {
   margin: 0;
   font: 15px/1.5 var(--font-ui);

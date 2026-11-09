@@ -7,7 +7,7 @@
   max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; user-select: none; -webkit-user-drag: none;
   cursor: zoom-in; transition: opacity 0.15s;
 }
-.lb-stage.zoomed { place-items: start; }
+.lb-stage.zoomed { place-items: start; touch-action: pan-x pan-y; }
 .lb-stage.zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
 .lb-stage.loading img { opacity: 0.3; }
 .lb-nav {
