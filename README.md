@@ -1,7 +1,9 @@
-# Telegram Drive
+<p align="center"><img src="docs/cover.png" alt="TeleDrive: tu nube personal sobre tu canal privado de Telegram" width="100%"></p>
 
-Tu cuenta de Telegram convertida en una unidad de almacenamiento personal, instalable como **PWA**:
-carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor de fotos con lightbox.
+# TeleDrive (Telegram Drive)
+
+Tu nube personal sobre tu canal privado de Telegram: **privada, sin límites y sin suscripción**. Instalable como **PWA** en iPhone,
+Android y escritorio: carpetas, subida/descarga, música con biblioteca, vídeo, fotos con línea de tiempo y enlaces para compartir.
 
 - **Telegram es la fuente de verdad; SQLite es solo una caché del índice** (`data/index.db`). Cada archivo se guarda como documento
   en tus *Mensajes guardados* con un pie `#tgdrive {"v":2,"t":"file","f":"<idCarpeta>","n":"nombre"}`; cada carpeta es un mensaje
@@ -49,6 +51,8 @@ server/
                  streamer.js (Range) · uploads.js · thumbnails.js · records.js
   telegram/      service.js (único contacto con GramJS) · codec.js (formato del pie de mensaje)
   utils/         paths, crypto (scrypt/HMAC), errores, tipos de medio
+assets/brand/    Imágenes maestras de la marca (icono cuadrado y portada); de ellas salen todos los iconos
+docs/            ARCHITECTURE.md · cover.png (portada del README)
 scripts/         setup.js · login.js · chats.js · migrate-chat.js · backup.js · restore.js · generate-icons.js · check.js
 public/
   index.html · manifest.webmanifest · sw.js · offline.html · icons/
@@ -64,6 +68,14 @@ test/            Integración con un Telegram simulado (npm test) y servidor dem
 ```
 
 Regla de oro: ningún archivo de código supera ~220 líneas (`npm run check` lo verifica).
+
+## Marca e iconos
+
+Las imágenes originales están en `assets/brand/` (`icon-master.png` cuadrada y `cover.png` apaisada). `npm run icons` regenera a partir de ellas:
+iconos PWA de 48 a 512 px, **maskable** de 192/512 (Android adaptable: el motivo queda dentro de la zona segura), `apple-touch-icon`
+(120/152/167/180 para iPhone y iPad), `favicon.ico` + PNG de 16/32/48, icono de mosaico de Windows, `public/og-image.png`
+(1200×630, vista previa al compartir el enlace; el servidor pone la URL absoluta según el dominio) y `docs/cover.png`.
+Para la vista previa del repositorio en GitHub, sube `public/og-image.png` en *Settings → Social preview*.
 
 ## Puesta en marcha
 

@@ -10,7 +10,7 @@ import { trashRoutes } from './routes/trash.js';
 import { playlistRoutes } from './routes/playlists.js';
 import { sharingRoutes } from './routes/sharing.js';
 import { shareRoutes } from './routes/share.js';
-import { serviceWorkerHandler } from './services/shell.js';
+import { serviceWorkerHandler, indexHandler } from './services/shell.js';
 
 export function createApp({ tg, catalog, features = { routers: [], publicRouters: [], api: {} } }) {
   const app = express();
@@ -21,6 +21,7 @@ export function createApp({ tg, catalog, features = { routers: [], publicRouters
   app.use(express.json({ limit: '256kb' }));
 
   app.get('/sw.js', serviceWorkerHandler(config.publicDir));
+  app.get(['/', '/index.html'], indexHandler(config.publicDir, config.basePath));
   app.use(express.static(config.publicDir, {
     index: 'index.html',
     setHeaders(res, file) {
