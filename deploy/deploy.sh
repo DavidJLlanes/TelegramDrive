@@ -31,7 +31,10 @@ fi
 mkdir -p data
 chown -R "$RUN_USER:$RUN_USER" data
 chmod 700 data
-[ -f .env ] && { chown "$RUN_USER:$RUN_USER" .env; chmod 600 .env; }
+# .env propiedad del usuario del servicio: así "setup" puede escribirlo sin tocar los permisos de la carpeta
+[ -f .env ] || cp .env.example .env
+chown "$RUN_USER:$RUN_USER" .env
+chmod 600 .env
 
 if [ ! -f "/etc/systemd/system/$SERVICE.service" ]; then
   echo "==> Instalando servicio systemd"
@@ -40,11 +43,11 @@ if [ ! -f "/etc/systemd/system/$SERVICE.service" ]; then
   systemctl enable "$SERVICE"
 fi
 
-if [ ! -f .env ] || [ ! -f data/telegram.session ]; then
+if ! grep -q '^APP_PASSWORD_HASH=.\+' .env || [ ! -f data/telegram.session ]; then
   echo
   echo "Falta configuración inicial. Ejecuta, en este orden:"
-  echo "  cd $APP_DIR && sudo -u $RUN_USER npm run setup"
-  echo "  cd $APP_DIR && sudo -u $RUN_USER npm run login"
+  echo "  cd $APP_DIR && sudo -u $RUN_USER node scripts/setup.js"
+  echo "  cd $APP_DIR && sudo -u $RUN_USER node scripts/login.js"
   echo "  systemctl restart $SERVICE"
   exit 0
 fi
