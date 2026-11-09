@@ -1,6 +1,7 @@
 // Corrección de etiquetas de música desde la app. Se guarda en Telegram (pie del mensaje); el archivo no se modifica.
 import { api } from '../core/api.js';
 import { reload, watchSync } from '../core/drive.js';
+import { navigateLib } from '../core/router.js';
 import { formDialog } from './form-dialog.js';
 import { toast, toastError } from './toast.js';
 
@@ -23,12 +24,12 @@ export async function editTrackTags(file) {
   try { await api.setTags(file.id, patch); toast('Etiquetas actualizadas', { type: 'ok' }); reload(); } catch (err) { toastError(err); }
 }
 
-async function runRetag(filter, set) {
+async function runRetag(filter, set, after) {
   if (!Object.keys(set).length) return;
   try {
     await api.retag(filter, set);
     toast('Actualizando etiquetas… puedes seguir usando la aplicación.');
-    watchSync();
+    watchSync().then(after);
   } catch (err) { toastError(err.status === 409 ? new Error('Ya hay un cambio de etiquetas en curso') : err); }
 }
 
@@ -46,7 +47,9 @@ export async function editAlbumTags({ artist, album, tracks }) {
   });
   if (!values) return;
   const set = changed(values, { album, band: artist, genre: first.genre, year: first.year });
-  await runRetag({ artist, album }, set);
+  // al renombrar el álbum o el artista, la vista actual dejaría de existir: se abre la nueva cuando termina el cambio
+  const moved = set.album !== undefined || set.band !== undefined;
+  await runRetag({ artist, album }, set, moved ? () => navigateLib('album', set.band || artist, set.album ?? album) : undefined);
 }
 
 /** Renombra un artista en todas sus canciones. Si el nombre ya existe, ambos se fusionan. */
@@ -56,5 +59,5 @@ export async function editArtistName(name) {
     fields: [{ name: 'band', label: 'Nombre del artista', value: name, placeholder: 'Si ya existe, se fusionan' }],
     confirmLabel: 'Aplicar',
   });
-  if (values?.band && values.band !== name) await runRetag({ artist: name }, { band: values.band });
+  if (values?.band && values.band !== name) await runRetag({ artist: name }, { band: values.band }, () => navigateLib('artist', values.band));
 }

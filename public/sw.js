@@ -1,5 +1,5 @@
 // Service worker: app shell offline. La API y los medios NUNCA se cachean (son datos privados y pesados).
-const VERSION = 'v1.4.1';
+const VERSION = 'v1.4.2';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = [
   './', 'index.html', 'offline.html', 'manifest.webmanifest',

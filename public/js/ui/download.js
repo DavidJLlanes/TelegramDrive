@@ -13,4 +13,5 @@ function click(href, name) {
 export const download = (file) => click(contentUrl(file.id, { download: true }), file.name);
 
 /** ZIP de una carpeta (`{ path }`) o de una selección de archivos (`{ ids }`), en streaming. */
-export const downloadZip = (target) => click(zipUrl(target));
+// `download` evita que el navegador abandone la aplicación si el servidor responde con un error (carpeta vacía, sesión caducada).
+export const downloadZip = (target) => click(zipUrl(target), '');
