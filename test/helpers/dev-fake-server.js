@@ -23,10 +23,21 @@ const tg = new FakeTelegram();
 const catalog = new Catalog(tg, openDatabase(config.dbFile));
 await catalog.startSync();
 const seed = Number(process.env.FAKE_SEED || 0);
-if (seed) { // carpeta de demostración con muchos archivos (FAKE_SEED=650 npm run dev:fake)
+if (seed) { // datos de demostración (FAKE_SEED=650 npm run dev:fake)
+  for (const name of ['Música', 'Fotos', 'Vídeos', 'Documentos']) await catalog.folderOps.create('/', name);
+  for (const name of ['Rock clásico', 'Jazz de noche', 'Electrónica']) await catalog.folderOps.create('/Música', name);
+  const at = (p) => catalog.tree.resolve(p);
+  const titles = ['Intro', 'Autopista', 'Cielo abierto', 'Luces de ciudad', 'Último tren', 'Marea', 'Cartas', 'Despedida'];
+  titles.forEach((t, i) => tg.addFile({ folder: at('/Música/Rock clásico'), name: `${String(i + 1).padStart(2, '0')} - ${t}.mp3`, size: 4096 }));
+  titles.slice(0, 5).forEach((t, i) => tg.addFile({ folder: at('/Música/Jazz de noche'), name: `${i + 1}. ${t}.flac`, size: 8192 }));
+  tg.addFile({ folder: at('/Vídeos'), name: 'concierto 2025.mp4', size: 2_400_000 });
+  tg.addFile({ folder: at('/Vídeos'), name: 'viaje a Lisboa.mov', size: 9_800_000 });
+  tg.addFile({ folder: at('/Documentos'), name: 'factura-octubre.pdf', size: 88_000 });
+  tg.addFile({ folder: at('/Documentos'), name: 'contrato.docx', size: 41_000 });
+  tg.addFile({ folder: at('/Fotos'), name: 'amanecer.png', size: 3_100_000 });
   await catalog.folderOps.create('/', 'Discos');
-  const folder = catalog.tree.resolve('/Discos');
-  for (let n = 1; n <= seed; n += 1) tg.addFile({ folder, name: `Pista ${String(n)}.mp3`, size: 4096 });
+  const big = at('/Discos');
+  for (let n = 1; n <= seed; n += 1) tg.addFile({ folder: big, name: `Pista ${n}.mp3`, size: 4096 });
   await catalog.startSync({ full: true });
 }
 const port = Number(process.env.FAKE_PORT || 3199);

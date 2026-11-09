@@ -1,39 +1,53 @@
 :root {
-  color-scheme: dark light;
-  --bg: #0e1621;
-  --surface: #17212b;
-  --surface-2: #1f2c3a;
-  --surface-3: #283849;
-  --border: #2a3a4b;
-  --text: #e9eef3;
-  --muted: #8b9cad;
-  --accent: #2aabee;
-  --accent-strong: #1b8fcb;
-  --accent-contrast: #04141f;
-  --danger: #f06262;
-  --ok: #4fcf8a;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 8px 28px rgb(0 0 0 / 0.38);
-  --topbar-h: 56px;
+  color-scheme: light dark;
+  --font-ui: "Figtree Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", var(--font-ui);
+
+  /* Claro: papel azulado y tinta */
+  --bg: #eef2f7;
+  --surface: #ffffff;
+  --raised: #f5f8fc;
+  --sunken: #e4eaf2;
+  --line: #d5deea;
+  --ink: #0d1a2c;
+  --muted: #566780;
+  --accent: #1479c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9ebfa;
+  --danger: #c4323a;
+  --ok: #1a8456;
+  /* Portadas: el tono (--h) lo fija cada elemento; luminosidad y croma, el tema */
+  --cover-l: 0.87;
+  --cover-c: 0.075;
+  --cover-ink: rgb(13 26 44 / 0.78);
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --rail: 272px;
   --player-h: 0px;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow: 0 1px 2px rgb(13 26 44 / 0.06), 0 12px 32px rgb(13 26 44 / 0.12);
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #eef2f6;
-    --surface: #ffffff;
-    --surface-2: #f2f5f8;
-    --surface-3: #e5ebf1;
-    --border: #d8e0e8;
-    --text: #17212b;
-    --muted: #64768a;
-    --accent: #1b8fcb;
-    --accent-strong: #136fa0;
-    --accent-contrast: #ffffff;
-    --shadow: 0 8px 28px rgb(23 33 43 / 0.16);
+    --bg: #09111e;
+    --surface: #101b2c;
+    --raised: #16243a;
+    --sunken: #0c1626;
+    --line: #1f3049;
+    --ink: #e9eff8;
+    --muted: #8da0b8;
+    --accent: #46b4f7;
+    --accent-ink: #04121f;
+    --accent-soft: #12304c;
+    --danger: #ff7a80;
+    --ok: #4fd69a;
+    --cover-l: 0.42;
+    --cover-c: 0.09;
+    --cover-ink: rgb(255 255 255 / 0.86);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.5);
   }
 }

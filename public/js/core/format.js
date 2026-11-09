@@ -3,7 +3,8 @@ export function formatBytes(bytes) {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let i = 0; let n = bytes;
   while (n >= 1024 && i < units.length - 1) { n /= 1024; i += 1; }
-  return `${n.toFixed(n >= 100 || i === 0 ? 0 : 1)} ${units[i]}`;
+  const digits = n >= 100 || i === 0 ? 0 : 1;
+  return `${n.toLocaleString('es-ES', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${units[i]}`;
 }
 
 export const formatDate = (ms) =>

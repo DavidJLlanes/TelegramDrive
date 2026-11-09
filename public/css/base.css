@@ -2,24 +2,27 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  font: 15px/1.45 var(--font);
-  color: var(--text);
+  font: 15px/1.5 var(--font-ui);
+  color: var(--ink);
   background: var(--bg);
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-body.has-player { --player-h: 76px; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); letter-spacing: -0.02em; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: var(--accent); }
 img, video { max-width: 100%; }
 [hidden] { display: none !important; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.sr-only {
-  position: absolute; width: 1px; height: 1px; overflow: hidden;
-  clip: rect(0 0 0 0); white-space: nowrap;
-}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Color de portada derivado del contenido: <el style="--h: 210"> */
+.hued { background: oklch(var(--cover-l) var(--cover-c) var(--h, 230)); color: var(--cover-ink); }
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+#app { min-height: 100vh; }

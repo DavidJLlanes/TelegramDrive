@@ -11,7 +11,7 @@ export function openVideo(file, list) {
   const previous = document.activeElement;
   const video = h('video', { controls: true, autoplay: true, playsinline: true, preload: 'metadata' });
   const title = h('div', { class: 'title' });
-  const counter = h('span', { class: 'hide-mobile' });
+  const counter = h('span', { class: 'count hide-mobile' });
 
   const load = (i) => {
     index = i;

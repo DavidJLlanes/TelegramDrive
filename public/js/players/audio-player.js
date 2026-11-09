@@ -4,6 +4,7 @@ import { contentUrl } from '../core/api.js';
 import { appState, prefs } from '../core/store.js';
 import { formatTime, stripExtension } from '../core/format.js';
 import { download } from '../ui/download.js';
+import { tint } from '../core/color.js';
 
 let bar = null;
 let audio = null;
@@ -19,17 +20,20 @@ function build() {
   ui.title = h('div', { class: 'audio-title' });
   ui.sub = h('div', { class: 'audio-sub' });
   ui.play = h('button', { class: 'btn btn-icon play', 'aria-label': 'Reproducir/Pausar', onclick: toggle }, icon('play'));
-  ui.seek = h('input', { type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
+  ui.seek = h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
   ui.cur = h('span', {}, '0:00');
   ui.dur = h('span', {}, '0:00');
-  ui.vol = h('input', { type: 'range', min: 0, max: 1, step: 0.02, value: prefs.volume, 'aria-label': 'Volumen' });
+  ui.vol = h('input', { class: 'range', type: 'range', min: 0, max: 1, step: 0.02, value: prefs.volume, 'aria-label': 'Volumen' });
+  ui.art = h('div', { class: 'audio-art' }, icon('music'));
   ui.mute = h('button', { class: 'btn btn-icon', 'aria-label': 'Silenciar', onclick: () => { audio.muted = !audio.muted; syncVolume(); } }, icon('volume'));
 
-  ui.seek.addEventListener('input', () => { if (audio.duration) audio.currentTime = (ui.seek.value / 1000) * audio.duration; });
-  ui.vol.addEventListener('input', () => { audio.volume = Number(ui.vol.value); audio.muted = false; prefs.save('volume', ui.vol.value); syncVolume(); });
+  const fill = (input, fraction) => input.style.setProperty('--p', `${(fraction * 100).toFixed(1)}%`);
+  ui.seek.addEventListener('input', () => { fill(ui.seek, ui.seek.value / 1000); if (audio.duration) audio.currentTime = (ui.seek.value / 1000) * audio.duration; });
+  ui.vol.addEventListener('input', () => { fill(ui.vol, Number(ui.vol.value)); audio.volume = Number(ui.vol.value); audio.muted = false; prefs.save('volume', ui.vol.value); syncVolume(); });
+  fill(ui.vol, prefs.volume);
 
   bar = h('section', { class: 'audio-bar', 'aria-label': 'Reproductor de música' },
-    h('div', { class: 'audio-info' }, h('div', { class: 'audio-art' }, icon('music')), h('div', { class: 'audio-text' }, ui.title, ui.sub)),
+    h('div', { class: 'audio-info' }, ui.art, h('div', { class: 'audio-text' }, ui.title, ui.sub)),
     h('div', { class: 'audio-controls' },
       h('button', { class: 'btn btn-icon', 'aria-label': 'Anterior', onclick: () => step(-1) }, icon('prev')), ui.play,
       h('button', { class: 'btn btn-icon', 'aria-label': 'Siguiente', onclick: () => step(1) }, icon('next'))),
@@ -45,7 +49,10 @@ function build() {
   audio.addEventListener('loadedmetadata', () => { ui.dur.textContent = formatTime(audio.duration); });
   audio.addEventListener('timeupdate', () => {
     ui.cur.textContent = formatTime(audio.currentTime);
-    if (audio.duration) ui.seek.value = Math.round((audio.currentTime / audio.duration) * 1000);
+    if (audio.duration) {
+      ui.seek.value = Math.round((audio.currentTime / audio.duration) * 1000);
+      ui.seek.style.setProperty('--p', `${(audio.currentTime / audio.duration) * 100}%`);
+    }
   });
   audio.addEventListener('error', () => { ui.sub.textContent = 'No se pudo reproducir este archivo'; });
   setupMediaSession();
@@ -64,7 +71,8 @@ function load(i) {
   audio.src = contentUrl(file.id);
   ui.title.textContent = stripExtension(file.name);
   ui.sub.textContent = `${index + 1} de ${queue.length}`;
-  ui.seek.value = 0; ui.cur.textContent = '0:00'; ui.dur.textContent = '0:00';
+  ui.seek.value = 0; ui.seek.style.setProperty('--p', '0%'); ui.cur.textContent = '0:00'; ui.dur.textContent = '0:00';
+  tint(ui.art, file.parent);
   appState.set({ playingId: file.id });
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: stripExtension(file.name), artist: 'Telegram Drive' });

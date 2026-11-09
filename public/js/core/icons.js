@@ -28,6 +28,7 @@ const PATHS = {
   chevronLeft: '<path d="m15 5-7 7 7 7"/>',
   chevronRight: '<path d="m9 5 7 7-7 7"/>',
   home: '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
+  sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>',
   plane: '<path d="M21 4 3 11l6 2.5L11.5 20l3-4.5L19 18z"/><path d="m9 13.5 12-9.5"/>',
 };
 

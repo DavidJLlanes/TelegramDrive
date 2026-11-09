@@ -1,8 +1,8 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
-import { appState, prefs } from '../core/store.js';
-import { reload, search, watchSync } from '../core/drive.js';
+import { appState } from '../core/store.js';
+import { search, watchSync } from '../core/drive.js';
 import { onInstallAvailable, promptInstall, isStandalone } from '../pwa/register.js';
 import { createFolder } from './actions.js';
 import { pickFiles } from './uploader.js';
@@ -11,43 +11,31 @@ import { toast, toastError } from './toast.js';
 
 export function renderTopbar({ onLogout }) {
   const searchInput = h('input', {
-    class: 'input', type: 'search', placeholder: 'Buscar en todo el almacenamiento…', 'aria-label': 'Buscar',
+    class: 'input', type: 'search', placeholder: 'Buscar por nombre…', 'aria-label': 'Buscar en todo el almacenamiento',
     oninput: (e) => search(e.target.value),
   });
-  const viewBtn = h('button', { class: 'btn btn-icon', 'aria-label': 'Cambiar vista', onclick: () => {
-    const view = appState.get().view === 'grid' ? 'list' : 'grid';
-    prefs.save('view', view); appState.set({ view });
-  } });
-  const syncView = () => viewBtn.replaceChildren(icon(appState.get().view === 'grid' ? 'list' : 'grid'));
-  syncView();
-  appState.subscribe(syncView);
+  let canInstall = false;
+  onInstallAvailable((available) => { canInstall = available && !isStandalone(); });
 
-  const installBtn = h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Instalar aplicación', onclick: promptInstall }, icon('install'));
-  installBtn.hidden = true;
-  onInstallAvailable((available) => { installBtn.hidden = !available || isStandalone(); });
-
-  const sortBtn = h('button', { class: 'btn', 'aria-haspopup': 'menu', onclick: (e) => {
-    const make = (label, sort) => ({ label: `${appState.get().sort === sort ? '✓ ' : ''}${label}`, icon: 'list', run: () => { prefs.save('sort', sort); appState.set({ sort }); if (appState.get().results === null) reload(); } });
-    openMenu(e.currentTarget, [make('Nombre', 'name'), make('Fecha', 'date'), make('Tamaño', 'size')]);
-  } }, 'Ordenar');
-
-  const uploadBtn = h('button', { class: 'btn btn-primary', 'aria-haspopup': 'menu', onclick: (e) => openMenu(e.currentTarget, [
-    { label: 'Subir archivos', icon: 'upload', run: () => pickFiles() },
-    { label: 'Subir carpeta', icon: 'folderPlus', run: () => pickFiles({ directory: true }) },
-  ]) }, icon('upload'), h('span', { class: 'hide-mobile' }, 'Subir'));
-
-  const refreshBtn = h('button', { class: 'btn btn-icon', 'aria-label': 'Sincronizar con Telegram', onclick: async () => {
+  const sync = async () => {
     try { await api.refresh(); toast('Sincronizando con Telegram…'); watchSync(); } catch (e) { toastError(e); }
-  } }, icon('refresh'));
+  };
+  const overflow = (e) => openMenu(e.currentTarget, [
+    { label: 'Sincronizar con Telegram', icon: 'refresh', run: sync },
+    ...(canInstall ? [{ label: 'Instalar aplicación', icon: 'install', run: promptInstall }] : []),
+    'sep',
+    { label: 'Cerrar sesión', icon: 'logout', run: onLogout },
+  ]);
 
-  const header = h('header', { class: 'topbar' },
-    h('div', { class: 'brand' }, icon('plane'), h('span', {}, 'Telegram Drive')),
+  appState.subscribe((s) => { if (s.query === '' && searchInput.value) searchInput.value = ''; });
+  return h('header', { class: 'topbar' },
+    h('span', { class: 'brand-mark' }, icon('plane')),
     h('div', { class: 'search' }, icon('search'), searchInput),
     h('div', { class: 'toolbar-spacer' }),
-    uploadBtn,
-    h('button', { class: 'btn btn-icon', 'aria-label': 'Nueva carpeta', onclick: createFolder }, icon('folderPlus')),
-    sortBtn, viewBtn, refreshBtn, installBtn,
-    h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar sesión', onclick: onLogout }, icon('logout')));
-  appState.subscribe((s) => { if (s.query === '' && searchInput.value) searchInput.value = ''; });
-  return header;
+    h('button', { class: 'btn', onclick: createFolder }, icon('folderPlus'), h('span', { class: 'hide-mobile' }, 'Nueva carpeta')),
+    h('button', { class: 'btn btn-primary', 'aria-haspopup': 'menu', onclick: (e) => openMenu(e.currentTarget, [
+      { label: 'Subir archivos', icon: 'upload', run: () => pickFiles() },
+      { label: 'Subir carpeta', icon: 'folderPlus', run: () => pickFiles({ directory: true }) },
+    ]) }, icon('upload'), 'Subir'),
+    h('button', { class: 'btn btn-icon btn-ghost', 'aria-label': 'Más opciones', 'aria-haspopup': 'menu', onclick: overflow }, icon('more')));
 }

@@ -14,6 +14,7 @@ export async function loadPath(path = appState.get().path) {
     const data = await api.list(path, { sort: appState.get().sort, limit: PAGE });
     if (mine !== token) return;
     appState.set({ path: data.path, folders: data.folders, files: data.files, total: data.total, loading: false });
+    api.folders().then(({ folders }) => appState.set({ folderPaths: folders })).catch(() => {});
   } catch (err) {
     if (mine !== token) return;
     appState.set({ loading: false, folders: [], files: [], total: 0 });
