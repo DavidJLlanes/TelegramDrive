@@ -16,7 +16,8 @@ const MESSAGE_TTL = 10 * 60 * 1000;
 export class TelegramService {
   constructor() {
     this.client = null;
-    this.chat = config.telegram.chat;
+    const chat = String(config.telegram.chat).trim();
+    this.chat = /^-?\d+$/.test(chat) ? Number(chat) : chat; // ID numérico de un grupo o canal, "me" o @usuario
     this.messageCache = new Map();
   }
 
@@ -37,6 +38,13 @@ export class TelegramService {
     await this.client.connect();
     if (!(await this.client.checkAuthorization())) {
       throw new Error('La sesión de Telegram ya no es válida. Ejecuta "npm run login".');
+    }
+    // GramJS solo reconoce un grupo por su ID si ya conoce el chat: se cargan los diálogos una vez.
+    if (typeof this.chat === 'number') {
+      await this.client.getDialogs({ limit: 500 });
+      await this.client.getInputEntity(this.chat).catch(() => {
+        throw new Error(`TG_CHAT=${this.chat}: no encuentro ese grupo en tu cuenta. Revisa el ID con "npm run chats".`);
+      });
     }
   }
 
