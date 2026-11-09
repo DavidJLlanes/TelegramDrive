@@ -73,7 +73,8 @@ export const http = {
   get: (path, query) => request(path, { query }),
   post: (path, body) => request(path, { method: 'POST', body }),
   put: (path, body) => request(path, { method: 'PUT', body }),
-  delete: (path) => request(path, { method: 'DELETE' }),
+  patch: (path, body) => request(path, { method: 'PATCH', body }),
+  delete: (path, body) => request(path, { method: 'DELETE', body }),
 };
 
 export const contentUrl = (id, { download = false } = {}) =>

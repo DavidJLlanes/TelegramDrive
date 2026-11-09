@@ -1,5 +1,6 @@
 // Service worker: app shell offline. La API y los medios NUNCA se cachean (son datos privados y pesados).
 // El servidor rellena la versión y la lista de archivos al servirlo (server/services/shell.js): no se edita nada a mano.
+importScripts('sw-share-target.js'); // compartir hacia la aplicación (Android)
 const VERSION = '__BUILD__';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = ['__SHELL__'];

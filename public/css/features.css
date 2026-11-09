@@ -124,3 +124,32 @@
   .fl-extra { width: 100%; }
   .fl-extra .fl-select { flex: 1; min-width: 0; }
 }
+
+/* Fotos y álbumes (features/photos) */
+.ph-month { margin: 0 0 28px; }
+.ph-month h2 { margin: 0 0 12px; font: 700 1.1rem var(--font-display); }
+.ph-month h2::first-letter { text-transform: uppercase; }
+.ph-month h2 span { color: var(--muted); font-weight: 500; }
+.ph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.ph-cell { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: var(--r-sm); cursor: pointer; background: var(--sunken); }
+.ph-cell .cover { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+.ph-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-cell:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ph-pin { position: absolute; right: 6px; bottom: 6px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: rgb(13 26 44 / 0.55); backdrop-filter: blur(6px); }
+.ph-pin:hover { background: var(--accent); }
+.ph-pin .icon { width: 16px; height: 16px; }
+.ph-more { display: block; margin: 8px auto 0; }
+.ph-back { margin: 0 0 14px; }
+.ph-albums { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px 14px; }
+.ph-album { display: grid; gap: 2px; cursor: pointer; }
+.ph-album strong { margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ph-album span { color: var(--muted); font-size: 0.88rem; }
+.ph-album-cover { aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border-radius: var(--r-md, 16px); background: var(--sunken); color: var(--muted); }
+.ph-album-cover img { width: 100%; height: 100%; object-fit: cover; }
+.ph-album:focus-visible .ph-album-cover, .ph-album:hover .ph-album-cover { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { .ph-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; } }
+
+/* Uso de espacio (features/usage) */
+.pg-row.us-row { grid-template-columns: minmax(0, 1fr) 230px; }
+.us-row .pg-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+@media (max-width: 560px) { .pg-row.us-row { grid-template-columns: minmax(0, 1fr); } .us-row .pg-side { justify-content: space-between; } }

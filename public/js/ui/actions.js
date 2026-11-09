@@ -12,6 +12,7 @@ import { playFolder } from '../core/playback.js';
 import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
+import { extraFileMenu } from '../core/explorer-ext.js';
 
 async function guarded(fn, okMessage) {
   try {
@@ -49,6 +50,7 @@ export function fileMenu(file, siblings) {
       const target = await pickFolder({ title: `Mover "${file.name}"` });
       if (target !== null && target !== file.parent) guarded(() => api.moveFile(file.id, target), 'Movido');
     } },
+    ...extraFileMenu(file),
     'sep',
     { label: 'Enviar a la papelera', icon: 'trash', danger: true, run: () => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; }) },
   ];

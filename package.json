@@ -23,7 +23,7 @@
     "icons": "node scripts/generate-icons.js",
     "totp": "node scripts/totp.js",
     "check": "node scripts/check.js",
-    "test": "node --test test/api.test.js test/sync.test.js test/library.test.js test/queue.test.js test/features.test.js test/totp-login.test.js test/audit.test.js test/migrations.test.js test/access-log.test.js test/share-access.test.js test/backup.test.js test/tools.test.js test/duplicates.test.js test/client-uploads.test.js test/client-filters.test.js test/client-keymap.test.js test/lyrics.test.js test/client-audiofx.test.js test/library-audit.test.js",
+    "test": "node --test test/api.test.js test/sync.test.js test/library.test.js test/queue.test.js test/features.test.js test/totp-login.test.js test/audit.test.js test/migrations.test.js test/access-log.test.js test/share-access.test.js test/backup.test.js test/tools.test.js test/duplicates.test.js test/client-uploads.test.js test/client-filters.test.js test/client-keymap.test.js test/lyrics.test.js test/client-audiofx.test.js test/library-audit.test.js test/client-videoresume.test.js test/photos.test.js test/photo-albums.test.js test/usage.test.js test/client-photos.test.js test/client-sharetarget.test.js",
     "dev:fake": "node test/helpers/dev-fake-server.js"
   },
   "dependencies": {

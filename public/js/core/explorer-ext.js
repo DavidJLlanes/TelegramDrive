@@ -3,6 +3,7 @@
 const filters = [];
 const bars = [];
 const enhancers = [];
+const fileMenus = [];
 
 /** `fn(files, state) → files`: reduce la lista visible. */
 export const addFileFilter = (fn) => { filters.push(fn); };
@@ -10,6 +11,10 @@ export const addFileFilter = (fn) => { filters.push(fn); };
 export const addExplorerBar = (fn) => { bars.push(fn); };
 /** `fn(el, item, kind)`: se llama con cada tarjeta recién creada; kind = 'file' | 'folder'. */
 export const addCardEnhancer = (fn) => { enhancers.push(fn); };
+
+/** `fn(file) → items[]`: entradas extra del menú de un archivo (formato de ui/menu.js). */
+export const addFileMenuItems = (fn) => { fileMenus.push(fn); };
+export const extraFileMenu = (file) => fileMenus.flatMap((fn) => fn(file));
 
 export const applyFileFilters = (files, state) => filters.reduce((list, fn) => fn(list, state), files);
 export const explorerBars = (state) => bars.map((fn) => fn(state)).filter(Boolean);

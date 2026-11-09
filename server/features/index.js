@@ -12,6 +12,9 @@ import backup from './backup/index.js';
 import duplicates from './duplicates/index.js';
 import lyrics from './lyrics/index.js';
 import libraryAudit from './library-audit/index.js';
+import photos from './photos/index.js';
+import photoAlbums from './photo-albums/index.js';
+import usage from './usage/index.js';
 
 const FEATURES = [
   accessLog,
@@ -20,6 +23,9 @@ const FEATURES = [
   duplicates,
   lyrics,
   libraryAudit,
+  photos,
+  photoAlbums,
+  usage,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {

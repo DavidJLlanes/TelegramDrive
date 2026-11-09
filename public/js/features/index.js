@@ -8,3 +8,7 @@ import './shortcuts/index.js';
 import './lyrics/index.js';
 import './audio-fx/index.js';
 import './library-audit/index.js';
+import './video-resume/index.js';
+import './photos/index.js';
+import './usage/index.js';
+import './share-target/index.js';

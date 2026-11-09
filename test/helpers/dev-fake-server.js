@@ -58,6 +58,10 @@ if (seed) { // datos de demostración (FAKE_SEED=650 npm run dev:fake)
   tg.addFile({ folder: at('/Documentos'), name: 'factura-octubre.pdf', size: 88_000 });
   tg.addFile({ folder: at('/Documentos'), name: 'contrato.docx', size: 41_000 });
   tg.addFile({ folder: at('/Fotos'), name: 'amanecer.png', size: 3_100_000 });
+  const { jpegWithExif } = await import('./jpeg-exif.js');
+  tg.addFile({ folder: at('/Fotos'), name: 'Barcelona.jpg', bytes: jpegWithExif({ taken: '2024:07:15 18:30:05', lat: 41.3874, lon: 2.1686 }) });
+  tg.addFile({ folder: at('/Fotos'), name: 'Madrid.jpg', bytes: jpegWithExif({ taken: '2023:12:24 21:00:00', lat: 40.4168, lon: -3.7038 }) });
+  tg.addFile({ folder: at('/Fotos'), name: 'Sin-gps.jpg', bytes: jpegWithExif({ taken: '2024:07:02 09:00:00' }) });
   await catalog.folderOps.create('/', 'Discos');
   const big = at('/Discos');
   for (let n = 1; n <= seed; n += 1) tg.addFile({ folder: big, name: `Pista ${n}.mp3`, size: 4096 });

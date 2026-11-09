@@ -25,9 +25,18 @@ const queue = new UploadQueue({
   },
 });
 
+/** Sube `entries` ({ file, rel }) a la carpeta `base` (el destino se elige antes, p. ej. al compartir desde otra aplicación). */
+export async function uploadTo(entries, base) {
+  await enqueue(entries, base);
+}
+
 async function enqueueEntries(entries) {
   const { path: base, section } = appState.get();
   if (section !== 'files') { toast('Abre una carpeta para subir archivos'); return; }
+  await enqueue(entries, base);
+}
+
+async function enqueue(entries, base) {
   const items = entries.filter((e) => e.file.size > 0);
   if (entries.length > items.length) toast(`${entries.length - items.length} archivo(s) vacío(s) omitido(s): Telegram no admite archivos de 0 bytes`);
   if (!items.length) return;

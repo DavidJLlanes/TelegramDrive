@@ -2,6 +2,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
 import { saveAs } from '../ui/save-as.js';
+import { emitVideoLoad } from './video-hooks.js';
 
 let modal = null;
 
@@ -16,6 +17,7 @@ export function openVideo(file, list) {
   const load = (i) => {
     index = i;
     video.src = contentUrl(queue[index].id);
+    emitVideoLoad(video, queue[index]);
     title.textContent = queue[index].name;
     counter.textContent = queue.length > 1 ? `${index + 1}/${queue.length}` : '';
     video.play().catch(() => {});
