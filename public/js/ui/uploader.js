@@ -90,7 +90,9 @@ async function drain() {
 export function enqueueUploads(files) {
   const { path: base, section } = appState.get();
   if (section !== 'files') { toast('Abre una carpeta para subir archivos'); return; }
-  const items = [...files].filter((f) => f.size > 0 || f.name);
+  const all = [...files];
+  const items = all.filter((f) => f.size > 0);
+  if (all.length > items.length) toast(`${all.length - items.length} archivo(s) vacío(s) omitido(s): Telegram no admite archivos de 0 bytes`);
   if (!items.length) return;
   ensurePanel();
   items.forEach((file) => { const job = { file, base }; makeRow(job); queue.push(job); });
