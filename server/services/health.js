@@ -36,7 +36,7 @@ export class Health {
 
   #notify(text) {
     if (!this.webhook) return;
-    fetch(this.webhook, { method: 'POST', headers: { 'Content-Type': 'text/plain; charset=utf-8', Title: 'Telegram Drive' }, body: text })
+    fetch(this.webhook, { method: 'POST', headers: { 'Content-Type': 'text/plain; charset=utf-8', Title: 'Telegram Drive' }, body: text, signal: AbortSignal.timeout(10_000) })
       .catch((err) => console.warn('[salud] el webhook falló:', err.message));
   }
 }

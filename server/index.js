@@ -4,6 +4,7 @@ import { TelegramService } from './telegram/service.js';
 import { Catalog } from './services/catalog.js';
 import { createApp } from './app.js';
 
+process.on('unhandledRejection', (err) => console.error('[error] promesa sin capturar:', err));
 assertRuntimeConfig();
 ensureDirs();
 

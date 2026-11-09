@@ -2,7 +2,7 @@ import { h } from '../core/dom.js';
 import { appState } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
 import { renderTopbar } from './topbar.js';
-import { createSidebar } from './sidebar.js';
+import { createSidebar, createMobileNav } from './sidebar.js';
 import { createPageHeader } from './page-header.js';
 import { renderExplorer } from './explorer.js';
 import { renderLibrary } from './library.js';
@@ -14,7 +14,7 @@ export function renderShell(root, { onLogout }) {
   const explorer = h('div');
   const foot = h('div', { class: 'foot-stats' });
   const banner = h('p', { class: 'sync-note warn', role: 'status', hidden: true });
-  const main = h('main', { class: 'main' }, banner, syncNote, createPageHeader(), explorer, foot);
+  const main = h('main', { class: 'main' }, createMobileNav(), banner, syncNote, createPageHeader(), explorer, foot);
   root.replaceChildren(h('div', { class: 'shell' }, createSidebar(), h('div', { class: 'column' }, renderTopbar({ onLogout }), main), createSelectionBar()));
 
   const paint = (s) => {

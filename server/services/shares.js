@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { badRequest, notFound } from '../utils/errors.js';
+import { normalizePath } from '../utils/paths.js';
 
 const HOUR = 3_600_000;
 export const DURATIONS = { '1h': HOUR, '1d': 24 * HOUR, '7d': 7 * 24 * HOUR, '30d': 30 * 24 * HOUR };
@@ -17,8 +18,9 @@ export class Shares {
       if (!row || row.hidden) throw notFound('Archivo no encontrado');
       label = row.name;
     } else if (kind === 'folder') {
-      const id = this.tree.resolve(String(target));
+      const id = this.tree.resolve(normalizePath(target));
       if (id === null) throw notFound('La carpeta no existe');
+      target = id;  // se guarda el id: renombrar o mover la carpeta no rompe el enlace
       label = `${this.tree.pathOf(id).split('/').pop() || 'Inicio'} (ZIP)`;
     } else throw badRequest('Tipo no válido');
     const token = randomBytes(24).toString('base64url');

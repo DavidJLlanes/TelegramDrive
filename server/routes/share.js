@@ -17,7 +17,9 @@ export function shareRoutes({ catalog, tg }) {
       const entry = catalog.getFile(share.target);
       await streamEntry({ req, res, tg, entry, download: req.query.download === '1' });
     } else {
-      catalog.archive.stream(res, catalog.archive.forFolder(share.target));
+      const id = String(share.target).startsWith('/') ? catalog.tree.resolve(share.target) : share.target; // enlaces antiguos guardaban la ruta
+      if (id === null || !catalog.tree.exists(id)) throw notFound('La carpeta ya no existe');
+      catalog.archive.stream(res, catalog.archive.forFolder(catalog.tree.pathOf(id)));
     }
   }));
   return router;

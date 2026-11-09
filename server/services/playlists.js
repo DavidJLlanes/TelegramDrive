@@ -14,6 +14,7 @@ export class Playlists {
 
   /** Solo canciones que existen y no están en la papelera, sin repetir ids. */
   #audioIds(ids) {
+    if (!Array.isArray(ids)) throw badRequest('Se esperaba una lista de canciones');
     const unique = [...new Set(ids.map(Number).filter(Number.isInteger))];
     const found = new Set(this.files.byIds(unique).filter((r) => r.kind === 'audio').map((r) => r.id));
     return unique.filter((id) => found.has(id));
@@ -54,7 +55,7 @@ export class Playlists {
       const list = this.#need(id);
       const nextName = name === undefined ? list.name : validateName(name);
       let nextIds = ids === undefined ? list.ids : this.#audioIds(ids);
-      if (add) nextIds = this.#audioIds([...nextIds, ...add.map(Number)]);
+      if (add !== undefined) nextIds = this.#audioIds([...nextIds, ...(Array.isArray(add) ? add.map(Number) : [])]);
       if (nextIds.length > MAX_PLAYLIST) throw badRequest(`Una lista admite hasta ${MAX_PLAYLIST} canciones`);
       await this.tg.editText(list.msgId, encodePlaylist({ id, name: nextName, ids: nextIds }));
       this.repo.upsert({ id, msgId: list.msgId, name: nextName, ids: nextIds });

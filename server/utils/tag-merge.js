@@ -9,7 +9,7 @@ export function cleanOverrides(input = {}) {
   const out = {};
   for (const key of TAG_KEYS) {
     const value = input[key];
-    if (value === undefined || value === null || value === '') continue;
+    if (value === undefined || value === null || value === '' || !['string', 'number'].includes(typeof value)) continue;
     if (NUMERIC.has(key)) { const n = Math.trunc(Number(value)); if (Number.isInteger(n) && n > 0 && n < 100000) out[key] = n; } else out[key] = String(value).trim().slice(0, 80);
   }
   return out;

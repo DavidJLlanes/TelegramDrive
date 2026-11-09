@@ -49,6 +49,22 @@ function libraryItem(entry, s) {
     icon(entry.icon), h('span', {}, entry.label));
 }
 
+/** Navegación en móvil (donde la barra lateral está oculta): biblioteca, carpetas y papelera en una fila deslizable. */
+export function createMobileNav() {
+  const el = h('nav', { class: 'mobile-nav', 'aria-label': 'Secciones' });
+  const chip = (label, iconName, active, go) => h('button', { class: 'chip', 'aria-current': active ? 'page' : null, onclick: go }, icon(iconName), label);
+  const paint = (s) => {
+    const lib = s.section === 'library' && s.results === null;
+    el.replaceChildren(
+      chip('Archivos', 'folder', s.section === 'files' || s.results !== null, () => navigate('/')),
+      ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
+      chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
+  };
+  appState.subscribe(paint);
+  paint(appState.get());
+  return el;
+}
+
 export function createSidebar() {
   const tree = h('nav', { class: 'tree', 'aria-label': 'Carpetas y biblioteca' });
   const foot = h('div', { class: 'side-foot' });

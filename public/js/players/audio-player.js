@@ -17,10 +17,13 @@ const ui = {};
 let lastSave = 0;
 
 /** Guarda la cola y la posición (solo ids) para retomar al volver a abrir la aplicación. */
+const MAX_SAVED = 5000;
 function persist() {
   lastSave = Date.now();
   if (!queue.length) return;
-  saveResume({ ids: queue.ordered.map((f) => f.id), pos: queue.index, time: audio?.currentTime ?? 0, shuffle: queue.shuffle, repeat: queue.repeat });
+  // colas enormes: se guarda una ventana alrededor de la pista actual (el servidor limita la consulta al restaurar)
+  const start = queue.length > MAX_SAVED ? Math.max(0, queue.index - 100) : 0;
+  saveResume({ ids: queue.ordered.slice(start, start + MAX_SAVED).map((f) => f.id), pos: queue.index - start, time: audio?.currentTime ?? 0, shuffle: queue.shuffle, repeat: queue.repeat });
 }
 
 const REPEAT_ICON = { off: 'repeat', all: 'repeat', one: 'repeatOne' };

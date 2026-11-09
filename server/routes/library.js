@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { wrap } from '../utils/async-handler.js';
 import { cleanOverrides } from '../utils/tag-merge.js';
+import { badRequest } from '../utils/errors.js';
 
 const text = (v) => (typeof v === 'string' ? v : undefined);
 
@@ -27,11 +28,12 @@ export function libraryRoutes({ catalog }) {
     res.json(catalog.toDto(row));
   }));
   router.post('/library/retag', (req, res) => {
-    const { filter = {}, set = {} } = req.body ?? {};
-    const started = catalog.retag.start(
-      { artist: text(filter.artist), album: text(filter.album), genre: text(filter.genre) },
-      cleanOverrides(set),
-    );
+    const { filter, set } = req.body ?? {};
+    const where = { artist: text(filter?.artist), album: text(filter?.album), genre: text(filter?.genre) };
+    const changes = cleanOverrides(set ?? {});
+    if (!Object.values(where).some(Boolean)) throw badRequest('Indica artista, álbum o género a modificar');
+    if (!Object.keys(changes).length) throw badRequest('No hay ningún cambio válido que aplicar');
+    const started = catalog.retag.start(where, changes);
     res.status(started ? 202 : 409).json(catalog.retag.state());
   });
   return router;

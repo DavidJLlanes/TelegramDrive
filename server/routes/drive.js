@@ -24,7 +24,7 @@ export function driveRoutes({ catalog, tg }) {
     res.status(202).json(catalog.stats());
   });
 
-  router.post('/files/lookup', (req, res) => res.json({ files: catalog.lookup(Array.isArray(req.body?.ids) ? req.body.ids : []) }));
+  router.post('/files/lookup', (req, res) => res.json({ files: catalog.lookup(Array.isArray(req.body?.ids) ? req.body.ids.slice(0, 5000) : []) }));
 
   // --- acciones múltiples y descargas en ZIP ---
   router.post('/bulk', wrap(async (req, res) => {
