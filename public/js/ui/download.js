@@ -1,11 +1,16 @@
-import { contentUrl } from '../core/api.js';
+import { contentUrl, zipUrl } from '../core/api.js';
 
-/** Descarga nativa del navegador (con Content-Disposition: attachment desde el servidor). */
-export function download(file) {
+function click(href, name) {
   const a = document.createElement('a');
-  a.href = contentUrl(file.id, { download: true });
-  a.download = file.name;
+  a.href = href;
+  if (name) a.download = name;
   document.body.append(a);
   a.click();
   a.remove();
 }
+
+/** Descarga nativa del navegador (con Content-Disposition: attachment desde el servidor). */
+export const download = (file) => click(contentUrl(file.id, { download: true }), file.name);
+
+/** ZIP de una carpeta (`{ path }`) o de una selección de archivos (`{ ids }`), en streaming. */
+export const downloadZip = (target) => click(zipUrl(target));

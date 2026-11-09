@@ -25,3 +25,6 @@ export function append(el, children) {
 
 export const clear = (el) => { el.replaceChildren(); return el; };
 export const $ = (selector, root = document) => root.querySelector(selector);
+
+/** Como replaceChildren, pero ignora null/false y acepta listas anidadas (evita que aparezca el texto «null»). */
+export const fill = (el, ...children) => { el.replaceChildren(); return append(el, children); };

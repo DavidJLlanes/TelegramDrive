@@ -2,7 +2,8 @@ import { h } from '../core/dom.js';
 import { api } from '../core/api.js';
 import { icon } from '../core/icons.js';
 
-function dialog({ title, content, confirmLabel = 'Aceptar', danger = false, hideCancel = false, onConfirm }) {
+/** Diálogo modal genérico: devuelve una promesa con el valor confirmado o null si se cancela. */
+export function dialog({ title, content, confirmLabel = 'Aceptar', danger = false, hideCancel = false, onConfirm }) {
   return new Promise((resolve) => {
     const previous = document.activeElement;
     const close = (value) => { overlay.remove(); previous?.focus?.(); resolve(value); };

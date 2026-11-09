@@ -70,11 +70,24 @@ test('sync completa poda lo borrado fuera de la app, pero nunca vacía el índic
   saved.forEach((m, id) => h.tg.messages.set(id, m));
 });
 
-test('borrar una carpeta con 650 archivos usa borrado por lotes y limpia el índice', async () => {
-  const before = h.tg.removeCalls;
-  const del = await call('DELETE', '/api/folders?path=/Archivo');
-  assert.ok(del.json.deleted >= 650);
-  assert.equal(h.tg.removeCalls - before, 1);
+test('a la papelera con 650 archivos = UNA edición; restaurar los devuelve; borrar definitivamente va por lotes', async () => {
+  const edits = h.tg.edits;
+  await call('DELETE', '/api/folders?path=/Archivo');
+  assert.equal(h.tg.edits - edits, 1);
   assert.equal((await call('GET', '/api/stats')).json.files, 0);
   assert.equal((await call('GET', '/api/search?q=track')).json.files.length, 0);
+  const trash = (await call('GET', '/api/trash')).json;
+  assert.equal(trash.folders.length, 1);
+  assert.equal(trash.folders[0].files, 650);
+
+  await call('POST', '/api/trash/restore', { folders: [trash.folders[0].id] });
+  assert.equal((await call('GET', '/api/stats')).json.files, 650);
+  assert.equal((await call('GET', '/api/list?path=/Archivo/Mi%20m%C3%BAsica&limit=1')).json.total, 650);
+
+  await call('DELETE', '/api/folders?path=/Archivo');
+  const before = h.tg.removeCalls;
+  const del = await call('POST', '/api/trash/empty');
+  assert.ok(del.json.deleted >= 650);
+  assert.equal(h.tg.removeCalls - before, 1);
+  assert.equal((await call('GET', '/api/trash')).json.folders.length, 0);
 });

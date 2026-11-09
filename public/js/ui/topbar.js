@@ -8,6 +8,7 @@ import { createFolder } from './actions.js';
 import { pickFiles } from './uploader.js';
 import { openMenu } from './menu.js';
 import { toast, toastError } from './toast.js';
+import { manageShares } from './share-dialog.js';
 
 export function renderTopbar({ onLogout }) {
   const searchInput = h('input', {
@@ -22,6 +23,7 @@ export function renderTopbar({ onLogout }) {
   };
   const overflow = (e) => openMenu(e.currentTarget, [
     { label: 'Sincronizar con Telegram', icon: 'refresh', run: sync },
+    { label: 'Enlaces compartidos', icon: 'link', run: manageShares },
     ...(canInstall ? [{ label: 'Instalar aplicación', icon: 'install', run: promptInstall }] : []),
     'sep',
     { label: 'Cerrar sesión', icon: 'logout', run: onLogout },

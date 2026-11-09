@@ -40,6 +40,12 @@ export class TelegramService {
     }
   }
 
+  /** Comprobación ligera de conexión y sesión (para el control de salud). */
+  async ping() {
+    if (!this.client?.connected) await this.client?.connect();
+    await this.client.getMe();
+  }
+
   get connected() {
     return Boolean(this.client?.connected);
   }

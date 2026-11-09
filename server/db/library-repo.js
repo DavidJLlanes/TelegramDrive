@@ -1,6 +1,7 @@
 import { compareNames } from '../utils/text.js';
+import { COLS } from './files-repo.js';
 
-const BASE = "kind = 'audio' AND tagged = 1";
+const BASE = "kind = 'audio' AND tagged = 1 AND hidden = 0";
 const byName = (key) => (a, b) => compareNames(a[key], b[key]);
 
 /** Consultas agrupadas por etiquetas (artista, álbum, género). */
@@ -32,7 +33,6 @@ export class LibraryRepo {
     if (band !== undefined) { where.push('band = ?'); args.push(band); }
     if (album !== undefined) { where.push('album = ?'); args.push(album); }
     if (genre) { where.push('genre = ?'); args.push(genre); }
-    return this.db.stmt(`SELECT msg_id AS id, folder, name, size, mime, kind, date, thumb, tagged, title, artist, album, band, genre, track, disc, year
-      FROM files WHERE ${where.join(' AND ')} LIMIT 10000`).all(...args);
+    return this.db.stmt(`SELECT ${COLS} FROM files WHERE ${where.join(' AND ')} LIMIT 10000`).all(...args);
   }
 }

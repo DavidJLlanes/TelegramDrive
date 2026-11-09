@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { wrap } from '../utils/async-handler.js';
+import { cleanOverrides } from '../utils/tag-merge.js';
 
 const text = (v) => (typeof v === 'string' ? v : undefined);
 
@@ -17,6 +19,20 @@ export function libraryRoutes({ catalog }) {
   });
   router.get('/library/tracks', (req, res) => {
     res.json({ files: library.tracks({ band: text(req.query.artist), album: text(req.query.album), genre: text(req.query.genre) }) });
+  });
+
+  // Corrección de etiquetas (se guarda en Telegram, en el pie del mensaje; el archivo no se modifica).
+  router.patch('/files/:id/tags', wrap(async (req, res) => {
+    const row = await catalog.retag.track(req.params.id, req.body ?? {});
+    res.json(catalog.toDto(row));
+  }));
+  router.post('/library/retag', (req, res) => {
+    const { filter = {}, set = {} } = req.body ?? {};
+    const started = catalog.retag.start(
+      { artist: text(filter.artist), album: text(filter.album), genre: text(filter.genre) },
+      cleanOverrides(set),
+    );
+    res.status(started ? 202 : 409).json(catalog.retag.state());
   });
   return router;
 }

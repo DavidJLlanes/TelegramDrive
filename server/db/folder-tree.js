@@ -10,17 +10,28 @@ export class FolderTree {
     this.reload();
   }
 
+  /** `byId` contiene todas las carpetas (también las de la papelera); `kids` y las búsquedas solo las visibles. */
   reload() {
-    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name FROM folders').all();
+    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name, trashed FROM folders').all();
     this.byId = new Map(rows.map((r) => [r.id, r]));
+    const all = new Map();
+    for (const f of this.byId.values()) {
+      if (!all.has(f.parent)) all.set(f.parent, []);
+      all.get(f.parent).push(f);
+    }
+    this.allKids = all;
+    this.hiddenIds = new Set();
+    const hide = (f) => { this.hiddenIds.add(f.id); (all.get(f.id) ?? []).forEach(hide); };
+    rows.filter((f) => f.trashed).forEach((f) => !this.hiddenIds.has(f.id) && hide(f));
     this.kids = new Map();
     for (const f of this.byId.values()) {
+      if (this.hiddenIds.has(f.id)) continue;
       if (!this.kids.has(f.parent)) this.kids.set(f.parent, new Map());
       this.kids.get(f.parent).set(f.name.toLowerCase(), f);
     }
   }
 
-  exists = (id) => id === ROOT || this.byId.has(id);
+  exists = (id) => id === ROOT || (this.byId.has(id) && !this.hiddenIds.has(id));
   child = (parent, name) => this.kids.get(parent)?.get(name.toLowerCase()) ?? null;
   get(id) { return this.byId.get(id) ?? null; }
 
@@ -48,7 +59,19 @@ export class FolderTree {
   }
 
   allPaths() {
-    return [...this.byId.keys()].map((id) => this.pathOf(id)).sort(compareNames);
+    return [...this.byId.keys()].filter((id) => !this.hiddenIds.has(id)).map((id) => this.pathOf(id)).sort(compareNames);
+  }
+
+  /** Carpeta y todo lo que cuelga de ella, incluidas las subcarpetas en la papelera. */
+  subtree(id) {
+    const out = [id];
+    for (let i = 0; i < out.length; i += 1) (this.allKids.get(out[i]) ?? []).forEach((c) => out.push(c.id));
+    return out;
+  }
+
+  /** Carpetas enviadas a la papelera directamente (no las que solo cuelgan de otra eliminada). */
+  trashedRoots() {
+    return [...this.byId.values()].filter((f) => f.trashed && !this.hiddenIds.has(f.parent));
   }
 
   descendants(id) {
@@ -70,8 +93,8 @@ export class FolderTree {
     this.reload();
   }
 
-  update(id, { parent, name }) {
-    this.db.stmt('UPDATE folders SET parent = ?, name = ? WHERE id = ?').run(parent, name, id);
+  update(id, { parent, name, trashed = 0 }) {
+    this.db.stmt('UPDATE folders SET parent = ?, name = ?, trashed = ? WHERE id = ?').run(parent, name, trashed, id);
     this.reload();
   }
 
@@ -81,14 +104,14 @@ export class FolderTree {
   }
 
   /** Alta desde la sincronización: tolera duplicados de nombre sufijando con el id del mensaje. */
-  upsertFromSync({ id, msgId, parent, name }) {
-    const sql = `INSERT INTO folders (id, msg_id, parent, name) VALUES (?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name`;
+  upsertFromSync({ id, msgId, parent, name, trashed = 0 }) {
+    const sql = `INSERT INTO folders (id, msg_id, parent, name, trashed) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name, trashed = excluded.trashed`;
     try {
-      this.db.stmt(sql).run(id, msgId, parent, name);
+      this.db.stmt(sql).run(id, msgId, parent, name, trashed);
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
-      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`);
+      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`, trashed);
     }
   }
 

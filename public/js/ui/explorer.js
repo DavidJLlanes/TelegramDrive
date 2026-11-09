@@ -8,18 +8,29 @@ import { loadMore } from '../core/drive.js';
 import { openMenu } from './menu.js';
 import { moreButton } from './more-button.js';
 import { playFolder } from '../core/playback.js';
+import { fileKey, folderKey, isSelected, toggleSelected } from './selection.js';
 import { fileMenu, folderMenu } from './actions.js';
 import { sortFiles } from './sorting.js';
 import { fileCover } from './covers.js';
 import { openFile } from '../players/viewer.js';
 
+const checkbox = (key) => h('button', {
+  class: 'check', type: 'button', role: 'checkbox', 'aria-checked': String(isSelected(key)), 'aria-label': 'Seleccionar',
+  onclick: (e) => { e.stopPropagation(); toggleSelected(key); },
+}, icon('check'));
+
+/** Con elementos seleccionados, pulsar uno lo marca/desmarca en vez de abrirlo. */
+const clickOr = (key, open) => () => (appState.get().selected.length ? toggleSelected(key) : open());
+
 function sleeve(folder) {
-  const open = () => navigate(folder.path);
+  const key = folderKey(folder);
+  const open = clickOr(key, () => navigate(folder.path));
   return tint(h('div', {
-    class: 'sleeve', tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
+    class: `sleeve${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
   }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'),
+    checkbox(key),
     h('button', {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
       onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
@@ -28,15 +39,16 @@ function sleeve(folder) {
 }
 
 function tile(file, siblings, playingId) {
-  const open = () => openFile(file, siblings);
+  const key = fileKey(file);
+  const open = clickOr(key, () => openFile(file, siblings));
   return h('div', {
-    class: `tile kind-${file.kind}${file.id === playingId ? ' playing' : ''}`, tabindex: 0, role: 'button', 'aria-label': file.name,
+    class: `tile kind-${file.kind}${file.id === playingId ? ' playing' : ''}${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'button', 'aria-label': file.name,
     dataset: { id: file.id }, onclick: open, onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, fileMenu(file, siblings)); },
   },
-  fileCover(file),
+  fileCover(file), checkbox(key),
   h('div', { class: 'tile-body' }, h('div', { class: 'tile-name', title: file.name }, file.name),
-    h('div', { class: 'tile-meta' }, h('span', {}, formatBytes(file.size)), h('span', {}, formatDate(file.date)))),
+    h('div', { class: 'tile-meta' }, h('span', {}, file.tags?.artist || formatBytes(file.size)), h('span', {}, formatDate(file.date)))),
   moreButton(() => fileMenu(file, siblings)));
 }
 
@@ -50,6 +62,7 @@ function emptyState(s, searching) {
 export function renderExplorer(container) {
   const s = appState.get();
   clear(container);
+  container.classList.toggle('selecting', s.selected.length > 0);
   if (s.loading) {
     container.append(h('div', { class: `tiles view-${s.view}` }, Array.from({ length: 10 }, () => h('div', { class: 'skeleton' }))));
     return;

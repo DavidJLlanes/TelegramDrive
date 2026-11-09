@@ -51,3 +51,40 @@ test('activar el aleatorio a mitad no cambia la pista actual', () => {
   assert.equal(q.current().id, 4);
   assert.equal(q.next().id, 5);
 });
+
+test('quitar pistas: antes, la actual y la última', () => {
+  const q = createQueue();
+  q.set(files(5), 3);                                   // 1 2 [3] 4 5
+  assert.equal(q.removeAt(0), false);                   // quitar la 1: la actual sigue siendo la 3
+  assert.equal(q.current().id, 3);
+  assert.equal(q.removeAt(q.index), true);              // quitar la actual: pasa a la 4
+  assert.equal(q.current().id, 4);
+  assert.deepEqual(q.ordered.map((f) => f.id), [2, 4, 5]);
+  q.next(); assert.equal(q.current().id, 5);
+  assert.equal(q.removeAt(q.index), true);              // era la última: queda la anterior
+  assert.equal(q.current().id, 4);
+  assert.equal(q.length, 2);
+});
+
+test('reordenar y encolar: "a continuación" y "al final"', () => {
+  const q = createQueue();
+  q.set(files(4), 1);                                   // [1] 2 3 4
+  q.move(3, 1);                                         // 1 4 2 3
+  assert.deepEqual(q.ordered.map((f) => f.id), [1, 4, 2, 3]);
+  assert.equal(q.current().id, 1);
+  q.enqueue({ id: 9 });                                 // justo después de la actual
+  q.enqueue({ id: 10 }, { last: true });
+  assert.deepEqual(q.ordered.map((f) => f.id), [1, 9, 4, 2, 3, 10]);
+  q.move(0, 2);                                         // la actual cambia de sitio y sigue siendo la actual
+  assert.equal(q.current().id, 1);
+  assert.equal(q.index, 2);
+});
+
+test('restaurar una cola guardada conserva posición, aleatorio y repetición', () => {
+  const q = createQueue();
+  q.restore(files(6), 4, { shuffle: true, repeat: 'all' });
+  assert.equal(q.current().id, 5);
+  assert.equal(q.shuffle, true);
+  assert.equal(q.repeat, 'all');
+  assert.equal(q.next().id, 6);
+});

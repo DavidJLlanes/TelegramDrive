@@ -1,10 +1,10 @@
 // Service worker: app shell offline. La API y los medios NUNCA se cachean (son datos privados y pesados).
-const VERSION = 'v1.3.0';
+const VERSION = 'v1.4.0';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = [
   './', 'index.html', 'offline.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/components.css', 'css/layout.css',
-  'css/explorer.css', 'css/players.css', 'css/lightbox.css', 'css/library.css',
+  'css/explorer.css', 'css/players.css', 'css/lightbox.css', 'css/library.css', 'css/features.css',
   'fonts/figtree-latin-wght-normal.woff2', 'fonts/bricolage-grotesque-latin-wght-normal.woff2',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'js/main.js', 'js/core/api.js', 'js/core/color.js', 'js/core/text.js', 'js/core/dom.js', 'js/core/drive.js', 'js/core/format.js',
@@ -14,6 +14,7 @@ const SHELL = [
   'js/ui/toast.js', 'js/ui/topbar.js', 'js/ui/uploader.js', 'js/ui/library.js', 'js/ui/library-head.js', 'js/ui/more-button.js', 'js/ui/play-buttons.js',
   'js/players/audio-player.js', 'js/players/audio-queue.js', 'js/players/lightbox.js', 'js/players/video-player.js', 'js/players/viewer.js',
   'js/pwa/register.js',
+  'js/core/offline.js', 'js/core/trash.js', 'js/players/resume.js', 'js/players/session.js', 'js/ui/audio-actions.js', 'js/ui/cards.js', 'js/ui/form-dialog.js', 'js/ui/offline-home.js', 'js/ui/playlist-picker.js', 'js/ui/queue-panel.js', 'js/ui/selection.js', 'js/ui/share-dialog.js', 'js/ui/tag-editor.js', 'js/ui/track-list.js', 'js/ui/trash-view.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,6 +29,24 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+const AUDIO_CACHE = 'tgdrive-audio-v1';
+
+/** Sirve el audio guardado (con soporte de Range para poder avanzar); si no está guardado, va a la red. */
+async function offlineAudio(request) {
+  const cached = await (await caches.open(AUDIO_CACHE)).match(request.url);
+  if (!cached) return fetch(request);
+  const blob = await cached.blob();
+  const type = cached.headers.get('Content-Type') || 'audio/mpeg';
+  const m = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('Range') || '');
+  if (!m) return new Response(blob, { status: 200, headers: { 'Content-Type': type, 'Content-Length': blob.size, 'Accept-Ranges': 'bytes' } });
+  const start = m[1] === '' ? Math.max(blob.size - Number(m[2]), 0) : Number(m[1]);
+  const end = m[1] !== '' && m[2] !== '' ? Math.min(Number(m[2]), blob.size - 1) : blob.size - 1;
+  if (start > end || start >= blob.size) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${blob.size}` } });
+  return new Response(blob.slice(start, end + 1), {
+    status: 206, headers: { 'Content-Type': type, 'Content-Length': end - start + 1, 'Content-Range': `bytes ${start}-${end}/${blob.size}`, 'Accept-Ranges': 'bytes' },
+  });
+}
+
 self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') self.skipWaiting();
 });
@@ -36,6 +55,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  // Única excepción en /api: audio guardado para escuchar sin conexión (el resto va siempre a la red).
+  if (/\/api\/files\/\d+\/content$/.test(url.pathname) && !url.search) { event.respondWith(offlineAudio(request)); return; }
   if (url.pathname.includes('/api/') || url.pathname.endsWith('/healthz')) return; // red directa
 
   if (request.mode === 'navigate') {

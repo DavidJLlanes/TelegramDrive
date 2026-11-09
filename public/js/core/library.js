@@ -2,6 +2,7 @@
 import { api } from './api.js';
 import { appState } from './store.js';
 import { nextToken, isCurrent } from './drive.js';
+import { offlineTracks } from './offline.js';
 import { toastError } from '../ui/toast.js';
 
 async function fetchView({ view, a, b }) {
@@ -10,6 +11,9 @@ async function fetchView({ view, a, b }) {
     case 'genres': return { items: (await api.genres()).genres };
     case 'artist': return { items: (await api.albums({ artist: a })).albums };
     case 'genre': return { items: (await api.albums({ genre: a })).albums };
+    case 'playlists': return { items: (await api.playlists()).playlists };
+    case 'playlist': { const p = await api.playlist(a); return { tracks: p.files, name: p.name }; }
+    case 'offline': return { tracks: offlineTracks() };
     case 'album': return { tracks: (await api.tracks({ artist: a, album: b })).files };
     default: return { items: (await api.albums()).albums };
   }
@@ -18,7 +22,7 @@ async function fetchView({ view, a, b }) {
 export async function loadLibrary(route) {
   const mine = nextToken();
   const { view = 'albums', a, b } = route;
-  appState.set({ section: 'library', query: '', results: null, lib: { view, a, b, loading: true, items: [], tracks: [] } });
+  appState.set({ section: 'library', selected: [], query: '', results: null, lib: { view, a, b, loading: true, items: [], tracks: [] } });
   try {
     const data = await fetchView({ view, a, b });
     if (!isCurrent(mine)) return;

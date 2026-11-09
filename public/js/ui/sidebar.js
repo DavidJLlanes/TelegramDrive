@@ -2,7 +2,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
-import { navigate, navigateLib } from '../core/router.js';
+import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
 
 const parentOf = (p) => p.slice(0, p.lastIndexOf('/')) || '/';
@@ -39,6 +39,8 @@ const LIBRARY = [
   { view: 'albums', label: 'Álbumes', icon: 'disc', also: ['album'] },
   { view: 'artists', label: 'Artistas', icon: 'user', also: ['artist'] },
   { view: 'genres', label: 'Géneros', icon: 'tag', also: ['genre'] },
+  { view: 'playlists', label: 'Listas', icon: 'playlist', also: ['playlist'] },
+  { view: 'offline', label: 'Sin conexión', icon: 'cloud', also: [] },
 ];
 
 function libraryItem(entry, s) {
@@ -54,12 +56,14 @@ export function createSidebar() {
     h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('plane')), 'Telegram Drive'), tree, foot);
 
   const paint = (s) => {
-    const current = s.results !== null || s.section === 'library' ? null : s.path;
+    const current = s.results !== null || s.section !== 'files' ? null : s.path;
     tree.replaceChildren(
       h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)),
       h('div', { class: 'tree-heading' }, 'Carpetas'),
       item('/', 'Inicio', 'home', 0, current),
-      ...visibleTree(s.folderPaths, s.path).map((n) => item(n.path, n.path.split('/').pop(), 'folder', n.depth, current)));
+      ...visibleTree(s.folderPaths, s.path).map((n) => item(n.path, n.path.split('/').pop(), 'folder', n.depth, current)),
+      h('div', { class: 'tree-heading' }, 'Más'),
+      h('button', { class: 'tree-item', 'aria-current': s.section === 'trash' ? 'page' : null, onclick: navigateTrash }, icon('trash'), h('span', {}, 'Papelera')));
     const sync = s.stats?.sync;
     foot.replaceChildren(
       h('strong', {}, s.stats ? formatBytes(s.stats.bytes) : '—'),

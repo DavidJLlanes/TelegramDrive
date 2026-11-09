@@ -1,13 +1,15 @@
-// Acciones sobre archivos y carpetas (renombrar, mover, borrar, descargar).
+// Acciones sobre archivos y carpetas (renombrar, mover, papelera, descargar, compartir).
 import { api } from '../core/api.js';
 import { reload, refreshStats } from '../core/drive.js';
 import { appState } from '../core/store.js';
 import { navigate } from '../core/router.js';
-import { confirmDialog, pickFolder, promptText } from './modal.js';
+import { pickFolder, promptText } from './modal.js';
 import { toast, toastError } from './toast.js';
 import { openFile } from '../players/viewer.js';
-import { download } from './download.js';
+import { download, downloadZip } from './download.js';
 import { playFolder } from '../core/playback.js';
+import { audioItems } from './audio-actions.js';
+import { shareItem } from './share-dialog.js';
 
 async function guarded(fn, okMessage) {
   try {
@@ -18,10 +20,23 @@ async function guarded(fn, okMessage) {
   } catch (err) { toastError(err); }
 }
 
+/** Envía a la papelera con la opción de deshacer al momento. */
+async function trash(label, remove) {
+  try {
+    const restoreBody = await remove();
+    toast(`«${label}» enviado a la papelera`, { action: { label: 'Deshacer', run: () => guarded(() => api.restore(restoreBody)) } });
+    await reload();
+    refreshStats();
+  } catch (err) { toastError(err); }
+}
+
 export function fileMenu(file, siblings) {
   return [
     { label: 'Abrir', icon: 'play', run: () => openFile(file, siblings) },
+    ...(file.kind === 'audio' ? audioItems(file) : []),
+    'sep',
     { label: 'Descargar', icon: 'download', run: () => download(file) },
+    { label: 'Compartir enlace…', icon: 'share', run: () => shareItem({ kind: 'file', target: file.id, label: file.name }) },
     'sep',
     { label: 'Renombrar', icon: 'edit', run: async () => {
       const name = await promptText({ title: 'Renombrar archivo', label: 'Nombre', value: file.name });
@@ -32,10 +47,7 @@ export function fileMenu(file, siblings) {
       if (target !== null && target !== file.parent) guarded(() => api.moveFile(file.id, target), 'Movido');
     } },
     'sep',
-    { label: 'Eliminar', icon: 'trash', danger: true, run: async () => {
-      const ok = await confirmDialog({ title: 'Eliminar archivo', message: `"${file.name}" se borrará también de Telegram.` });
-      if (ok) guarded(() => api.deleteFile(file.id), 'Archivo eliminado');
-    } },
+    { label: 'Enviar a la papelera', icon: 'trash', danger: true, run: () => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; }) },
   ];
 }
 
@@ -44,6 +56,9 @@ export function folderMenu(folder) {
     { label: 'Abrir', icon: 'folder', run: () => navigate(folder.path) },
     { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
     { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
+    'sep',
+    { label: 'Descargar como ZIP', icon: 'archive', run: () => downloadZip({ path: folder.path }) },
+    { label: 'Compartir como ZIP…', icon: 'share', run: () => shareItem({ kind: 'folder', target: folder.path, label: folder.name }) },
     'sep',
     { label: 'Renombrar', icon: 'edit', run: async () => {
       const name = await promptText({ title: 'Renombrar carpeta', label: 'Nombre', value: folder.name });
@@ -54,10 +69,7 @@ export function folderMenu(folder) {
       if (target !== null) guarded(() => api.moveFolder(folder.path, target), 'Movida');
     } },
     'sep',
-    { label: 'Eliminar', icon: 'trash', danger: true, run: async () => {
-      const ok = await confirmDialog({ title: 'Eliminar carpeta', message: `Se borrará "${folder.name}" con todo su contenido, también en Telegram.` });
-      if (ok) guarded(() => api.deleteFolder(folder.path), 'Carpeta eliminada');
-    } },
+    { label: 'Enviar a la papelera', icon: 'trash', danger: true, run: () => trash(folder.name, async () => ({ folders: [(await api.deleteFolder(folder.path)).id] })) },
   ];
 }
 

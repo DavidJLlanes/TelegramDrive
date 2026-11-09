@@ -14,12 +14,16 @@ export function renderLogin(root, onSuccess) {
   const input = h('input', {
     class: 'input', type: 'password', autocomplete: 'current-password', 'aria-label': 'Contraseña', placeholder: 'Contraseña', required: true,
   });
+  const code = h('input', {
+    class: 'input', type: 'text', inputmode: 'numeric', pattern: '[0-9]{6}', maxlength: 6, autocomplete: 'one-time-code', 'aria-label': 'Código de verificación', placeholder: 'Código de 6 dígitos', hidden: true,
+  });
+  api.status().then((st) => { if (st.totp) { code.hidden = false; code.required = true; } }).catch(() => {});
   const button = h('button', { class: 'btn btn-primary', type: 'submit' }, 'Entrar');
   const form = h('form', { class: 'login-card', onsubmit: async (e) => {
     e.preventDefault();
     button.disabled = true; error.textContent = '';
     try {
-      await api.login(input.value);
+      await api.login(input.value, code.hidden ? undefined : code.value.trim());
       onSuccess();
     } catch (err) {
       error.textContent = err.message;
@@ -28,7 +32,7 @@ export function renderLogin(root, onSuccess) {
   } },
   h('h1', {}, 'Entrar'),
   h('p', {}, 'Escribe la contraseña de tu unidad.'),
-  input, error, button);
+  input, code, error, button);
 
   root.replaceChildren(h('div', { class: 'login' },
     h('section', { class: 'login-art' },

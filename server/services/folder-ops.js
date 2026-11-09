@@ -59,10 +59,13 @@ export class FolderOps {
     });
   }
 
-  delete(path) {
+  /** Borrado definitivo de una carpeta con todo su contenido. Lo normal es enviarla a la papelera. */
+  delete(path) { return this.destroy(this.#needSub(path)); }
+
+  destroy(id) {
     return this.lock.run(async () => {
-      const id = this.#needSub(path);
-      const folderIds = this.tree.descendants(id);
+      if (!this.tree.byId.has(id)) return { deleted: 0 };
+      const folderIds = this.tree.subtree(id);
       const fileIds = this.files.idsInFolders(folderIds);
       const folderMsgIds = folderIds.map((f) => this.tree.get(f).msgId);
       await this.tg.remove([...fileIds, ...folderMsgIds]);

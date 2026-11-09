@@ -68,12 +68,12 @@ test('subida, listado, streaming con Range, descarga, renombrar, mover y borrar'
   dup.append('file', new Blob([payload]), 'nuevo.mp3');
   assert.equal((await call('POST', '/api/files', dup)).json.name, 'nuevo (1).mp3');
 
-  assert.equal((await call('DELETE', `/api/files/${id}`)).res.status, 204);
+  assert.equal((await call('DELETE', `/api/files/${id}?permanent=1`)).res.status, 204);
   assert.equal((await call('GET', `/api/files/${id}/content`)).res.status, 404);
 });
 
 test('borrar carpeta elimina su contenido y la PWA se sirve con cabeceras seguras', async () => {
-  const del = await call('DELETE', '/api/folders?path=/Rock%20cl%C3%A1sico');
+  const del = await call('DELETE', '/api/folders?path=/Rock%20cl%C3%A1sico&permanent=1');
   assert.ok(del.json.deleted >= 1);
   assert.equal((await call('GET', '/api/list?path=/Rock%20cl%C3%A1sico')).res.status, 404);
   const index = await call('GET', '/');

@@ -31,7 +31,7 @@ after(() => h.close());
 test('las etiquetas se leen en segundo plano y salen en el DTO', async () => {
   const { json } = await call('GET', '/api/list?path=/Música/Rock&kind=audio');
   const primera = json.files.find((f) => f.name === 'a.mp3');
-  assert.deepEqual(primera.tags, { title: 'Primera', artist: 'Los Fugitivos', album: 'Disco Uno', band: 'Los Fugitivos', genre: 'Rock', track: 1, disc: 0, year: 1999 });
+  assert.deepEqual(primera.tags, { title: 'Primera', artist: 'Los Fugitivos', album: 'Disco Uno', band: 'Los Fugitivos', genre: 'Rock', track: 1, disc: 0, year: 1999, duration: 0 });
   const stats = (await call('GET', '/api/stats')).json;
   assert.equal(stats.tagging.pending, 0);
 });

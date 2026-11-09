@@ -3,7 +3,7 @@ import { parseBuffer } from 'music-metadata';
 
 const HEAD = 64 * 1024;            // primera lectura
 const MAX_TAG = 6 * 1024 * 1024;   // tope para cabeceras ID3v2 grandes (portadas incrustadas)
-const MAX_COVER = 2 * 1024 * 1024;
+const MAX_COVER = 8 * 1024 * 1024;
 
 const clean = (value, max = 200) => String(value ?? '').replace(/\0/g, '').trim().slice(0, max);
 const int = (value) => (Number.isInteger(value) && value > 0 && value < 100000 ? value : 0);
@@ -40,19 +40,28 @@ function normalize(common) {
 
 const hasAny = (t) => Boolean(t.title || t.artist || t.album);
 
-/** Devuelve { tags, cover } o { tags: null } si el archivo no tiene etiquetas legibles. */
+/** Duración en segundos. Con MP3 de tasa constante se calcula con el tamaño total (solo hemos leído el principio). */
+function durationOf(format, size, tagBytes) {
+  if (format.container === 'MPEG' && format.codecProfile === 'CBR' && format.bitrate) return Math.max(0, ((size - tagBytes) * 8) / format.bitrate);
+  if (['MPEG', 'FLAC', 'M4A', 'mp4'].some((c) => String(format.container).includes(c)) && format.duration) return format.duration;
+  return 0;
+}
+
+/** Devuelve { tags, cover, duration }; `tags` es null si el archivo no tiene etiquetas legibles. */
 export async function readTags(tg, message, name) {
   const size = Number(message.media.document.size);
-  if (size === 0) return { tags: null };
+  if (size === 0) return { tags: null, duration: 0 };
   let head = await bytes(tg, message, 0, Math.min(size, HEAD) - 1);
   const wanted = id3v2Size(head);
   if (wanted > head.length) head = await bytes(tg, message, 0, Math.min(size, wanted, MAX_TAG) - 1);
 
   let tags = null;
   let cover = null;
+  let duration = 0;
   try {
-    const { common } = await parseBuffer(head, { path: name, size }, { duration: false, skipPostHeaders: true });
+    const { common, format } = await parseBuffer(head, { path: name, size }, { duration: true, skipPostHeaders: true });
     tags = normalize(common);
+    duration = durationOf(format, size, wanted);
     const picture = common.picture?.[0];
     if (picture && picture.data.length <= MAX_COVER && /^image\/(jpe?g|png)$/i.test(picture.format)) cover = Buffer.from(picture.data);
   } catch { /* formato sin cabecera al inicio o truncado */ }
@@ -61,5 +70,5 @@ export async function readTags(tg, message, name) {
     const v1 = parseId3v1(await bytes(tg, message, size - 128, size - 1));
     if (v1) tags = { ...tags, ...v1, band: v1.artist, disc: 0, genre: tags?.genre ?? '' };
   }
-  return tags && hasAny(tags) ? { tags, cover } : { tags: null };
+  return tags && hasAny(tags) ? { tags, cover, duration } : { tags: null, duration };
 }

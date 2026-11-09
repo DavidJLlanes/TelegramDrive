@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { appState } from './store.js';
 import { toastError } from '../ui/toast.js';
 import { loadLibrary } from './library.js';
+import { loadTrash } from './trash.js';
 
 let token = 0;
 /** Invalida las cargas en curso (la última navegación gana, sea carpeta o biblioteca). */
@@ -13,7 +14,7 @@ const PAGE = 300;
 
 export async function loadPath(path = appState.get().path) {
   const mine = nextToken();
-  appState.set({ section: 'files', path, loading: true, loadingMore: false, query: '', results: null });
+  appState.set({ section: 'files', selected: [], path, loading: true, loadingMore: false, query: '', results: null });
   try {
     const data = await api.list(path, { sort: appState.get().sort, limit: PAGE });
     if (mine !== token) return;
@@ -43,7 +44,11 @@ export async function loadMore() {
 }
 
 
-export const reload = () => (appState.get().section === 'library' ? loadLibrary(appState.get().lib) : loadPath());
+export function reload() {
+  const { section, lib } = appState.get();
+  if (section === 'trash') return loadTrash();
+  return section === 'library' ? loadLibrary(lib) : loadPath();
+}
 
 let searchTimer;
 export function search(query) {
@@ -73,7 +78,7 @@ export async function watchSync() {
     for (;;) {
       const stats = await api.stats();
       appState.set({ stats });
-      const running = Boolean(stats.sync?.running || stats.tagging?.running);
+      const running = Boolean(stats.sync?.running || stats.tagging?.running || stats.retag?.running);
       if (was && !running) await reload();
       was = running;
       if (!running) break;

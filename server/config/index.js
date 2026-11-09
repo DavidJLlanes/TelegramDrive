@@ -33,8 +33,10 @@ export const config = Object.freeze({
     passwordHash: env.APP_PASSWORD_HASH || '',
     secret: env.SESSION_SECRET || '',
     ttlDays: Number(env.SESSION_DAYS || 30),
+    totpSecret: (env.APP_TOTP_SECRET || '').replace(/\s/g, ''),
     cookieName: 'tgd_session',
   },
+  health: { webhook: env.HEALTH_WEBHOOK_URL || '' },
   upload: {
     maxBytes: Number(env.MAX_UPLOAD_MB || 2000) * 1024 * 1024,
   },

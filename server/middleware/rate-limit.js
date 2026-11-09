@@ -1,9 +1,9 @@
 import { HttpError } from '../utils/errors.js';
 
-/** Limitador mínimo en memoria por IP (suficiente para un login personal). */
+/** Limitador mínimo en memoria por IP (suficiente para un login personal). `limiter.reset(ip)` borra el contador. */
 export function rateLimit({ windowMs, max }) {
   const hits = new Map();
-  return (req, _res, next) => {
+  const limiter = (req, _res, next) => {
     const now = Date.now();
     const rec = hits.get(req.ip);
     if (!rec || rec.reset < now) {
@@ -13,4 +13,6 @@ export function rateLimit({ windowMs, max }) {
     rec.count += 1;
     return next(rec.count > max ? new HttpError(429, 'Demasiados intentos. Espera unos minutos.') : undefined);
   };
+  limiter.reset = (ip) => hits.delete(ip);
+  return limiter;
 }

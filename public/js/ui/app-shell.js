@@ -6,13 +6,16 @@ import { createSidebar } from './sidebar.js';
 import { createPageHeader } from './page-header.js';
 import { renderExplorer } from './explorer.js';
 import { renderLibrary } from './library.js';
+import { renderTrash } from './trash-view.js';
+import { createSelectionBar } from './selection.js';
 
 export function renderShell(root, { onLogout }) {
   const syncNote = h('p', { class: 'sync-note', role: 'status' });
   const explorer = h('div');
   const foot = h('div', { class: 'foot-stats' });
-  const main = h('main', { class: 'main' }, syncNote, createPageHeader(), explorer, foot);
-  root.replaceChildren(h('div', { class: 'shell' }, createSidebar(), h('div', { class: 'column' }, renderTopbar({ onLogout }), main)));
+  const banner = h('p', { class: 'sync-note warn', role: 'status', hidden: true });
+  const main = h('main', { class: 'main' }, banner, syncNote, createPageHeader(), explorer, foot);
+  root.replaceChildren(h('div', { class: 'shell' }, createSidebar(), h('div', { class: 'column' }, renderTopbar({ onLogout }), main), createSelectionBar()));
 
   const paint = (s) => {
     const sync = s.stats?.sync;
@@ -23,7 +26,16 @@ export function renderShell(root, { onLogout }) {
       syncNote.hidden = false;
       syncNote.textContent = `Leyendo las etiquetas de tu música… quedan ${s.stats.tagging.pending}. La biblioteca se completa sola.`;
     }
-    (s.section === 'library' && s.results === null ? renderLibrary : renderExplorer)(explorer);
+    const offline = s.offline || s.stats?.health?.ok === false;
+    banner.hidden = !offline;
+    banner.textContent = s.offline ? 'Sin conexión: puedes escuchar la música guardada en este dispositivo.'
+      : 'Telegram no responde ahora mismo. Se reintenta solo; mientras tanto no se podrán abrir archivos nuevos.';
+    if (!sync?.running && !sync?.error && s.stats?.retag?.running) {
+      syncNote.hidden = false;
+      syncNote.textContent = `Actualizando etiquetas… quedan ${s.stats.retag.pending ?? 0}.`;
+    }
+    const render = s.results !== null ? renderExplorer : s.section === 'library' ? renderLibrary : s.section === 'trash' ? renderTrash : renderExplorer;
+    render(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };
   appState.subscribe(paint);

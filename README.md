@@ -15,6 +15,11 @@ carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor
   música, subcarpetas incluidas. Además, el servidor lee en segundo plano las etiquetas (ID3v2/ID3v1, Vorbis, MP4) descargando solo
   el principio de cada archivo y las guarda en el índice: la sección **Biblioteca** agrupa por **álbumes, artistas y géneros**, ordena
   por disco y nº de pista y usa la portada incrustada. El reproductor tiene aleatorio y repetir (todo / una).
+- **Cola, listas y sin conexión**: cola editable (reordenar, quitar, guardar como lista), reanuda la canción y la posición al volver,
+  listas de reproducción (se guardan en Telegram, así que sobreviven a reconstruir la caché), búsqueda por etiquetas, duración de
+  pistas, edición de etiquetas y fusión de artistas, y música guardada en el dispositivo para escuchar sin red.
+- **Gestión**: selección múltiple (mover, ZIP, papelera, añadir a lista), descarga de carpetas en ZIP en streaming, **papelera de 30 días**
+  (eliminar ya no borra al instante), enlaces temporales para compartir un archivo o una carpeta y aviso si Telegram deja de responder.
 - **Streaming con `Range`**: audio y vídeo se pueden buscar (seek) sin descargar el archivo entero.
 - **Frontend sin build**: HTML + CSS + módulos ES nativos. Cero dependencias en el navegador.
 
@@ -59,7 +64,8 @@ Desarrollo de la interfaz sin Telegram: `npm run dev:fake` → <http://127.0.0.1
 
 ## Seguridad
 
-- La web se protege con contraseña (scrypt) y cookie `HttpOnly`/`SameSite=Lax` firmada con HMAC. Limitador de intentos de login.
+- La web se protege con contraseña (scrypt) y cookie `HttpOnly`/`SameSite=Lax` firmada con HMAC. Limitador de intentos de login (los accesos correctos no cuentan). Segundo factor TOTP opcional: `npm run totp` y `APP_TOTP_SECRET`.
+  Para una capa extra delante, ver `deploy/nginx-telegram.conf` (ejemplo con `allow`/`auth_basic` comentado).
 - `data/telegram.session` equivale a tu cuenta de Telegram: permisos `600`, fuera de git y fuera del alcance web. **Sirve la app solo por HTTPS.**
 - CSP estricta (`script-src 'self'`), sin HTML inyectado desde nombres de archivo, y `nosniff` en descargas.
 - La API y los medios nunca se guardan en la caché del service worker.

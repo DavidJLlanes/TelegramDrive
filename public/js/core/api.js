@@ -30,7 +30,7 @@ async function request(path, { method = 'GET', body, query } = {}) {
 
 export const api = {
   status: () => request('auth/status'),
-  login: (password) => request('auth/login', { method: 'POST', body: { password } }),
+  login: (password, code) => request('auth/login', { method: 'POST', body: { password, code } }),
   logout: () => request('auth/logout', { method: 'POST' }),
   list: (path, opts = {}) => request('list', { query: { path, ...opts } }),
   search: (q) => request('search', { query: { q } }),
@@ -49,11 +49,30 @@ export const api = {
   renameFile: (id, name) => request(`files/${id}`, { method: 'PATCH', body: { name } }),
   moveFile: (id, parent) => request(`files/${id}`, { method: 'PATCH', body: { parent } }),
   deleteFile: (id) => request(`files/${id}`, { method: 'DELETE' }),
+  lookup: (ids) => request('files/lookup', { method: 'POST', body: { ids } }),
+  bulk: (body) => request('bulk', { method: 'POST', body }),
+  trash: () => request('trash'),
+  restore: (body) => request('trash/restore', { method: 'POST', body }),
+  destroy: (body) => request('trash/delete', { method: 'POST', body }),
+  emptyTrash: () => request('trash/empty', { method: 'POST' }),
+  playlists: () => request('playlists'),
+  playlist: (id) => request(`playlists/${id}`),
+  createPlaylist: (name, ids = []) => request('playlists', { method: 'POST', body: { name, ids } }),
+  updatePlaylist: (id, body) => request(`playlists/${id}`, { method: 'PATCH', body }),
+  deletePlaylist: (id) => request(`playlists/${id}`, { method: 'DELETE' }),
+  shares: () => request('shares'),
+  createShare: (body) => request('shares', { method: 'POST', body }),
+  revokeShare: (token) => request(`shares/${token}`, { method: 'DELETE' }),
+  setTags: (id, patch) => request(`files/${id}/tags`, { method: 'PATCH', body: patch }),
+  retag: (filter, set) => request('library/retag', { method: 'POST', body: { filter, set } }),
 };
 
 export const contentUrl = (id, { download = false } = {}) =>
   url(`files/${id}/content`, download ? { download: 1 } : undefined).href;
 export const thumbUrl = (id) => url(`files/${id}/thumb`).href;
+/** ZIP de una carpeta (`path`) o de una selección (`ids`). Se descarga navegando a la URL (la cookie de sesión va sola). */
+export const zipUrl = ({ path, ids }) => url('zip', ids ? { ids: ids.join(',') } : { path }).href;
+export const shareUrl = (token) => new URL(`share/${token}`, document.baseURI).href;
 
 /** Subida con progreso (XHR, porque fetch no expone progreso de subida). */
 export function uploadFile(file, parent, onProgress) {

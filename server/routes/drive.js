@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { wrap } from '../utils/async-handler.js';
 import { receiveUpload } from '../services/uploads.js';
 import { streamEntry } from '../services/streamer.js';
-import { getThumbnail, dropThumbnail } from '../services/thumbnails.js';
+import { getThumbnail } from '../services/thumbnails.js';
 import { badRequest, notFound } from '../utils/errors.js';
 
 export function driveRoutes({ catalog, tg }) {
@@ -24,6 +24,21 @@ export function driveRoutes({ catalog, tg }) {
     res.status(202).json(catalog.stats());
   });
 
+  router.post('/files/lookup', (req, res) => res.json({ files: catalog.lookup(Array.isArray(req.body?.ids) ? req.body.ids : []) }));
+
+  // --- acciones múltiples y descargas en ZIP ---
+  router.post('/bulk', wrap(async (req, res) => {
+    const { action, files, folders, parent } = req.body ?? {};
+    if (!['trash', 'move'].includes(action)) throw badRequest('Acción no válida');
+    res.json(await catalog.bulk.run({ action, files: Array.isArray(files) ? files : [], folders: Array.isArray(folders) ? folders : [], parent }));
+  }));
+  router.get('/zip', wrap(async (req, res) => {
+    const source = req.query.ids
+      ? catalog.archive.forIds(String(req.query.ids).split(','))
+      : catalog.archive.forFolder(req.query.path ?? '/');
+    catalog.archive.stream(res, source);
+  }));
+
   // --- carpetas (se direccionan por ruta; internamente por id) ---
   router.post('/folders', wrap(async (req, res) => {
     res.status(201).json(await folderOps.create(req.body?.parent ?? '/', req.body?.name));
@@ -34,7 +49,10 @@ export function driveRoutes({ catalog, tg }) {
     if (parent !== undefined) return res.json(await folderOps.move(path, parent));
     throw badRequest('Indica "name" o "parent"');
   }));
-  router.delete('/folders', wrap(async (req, res) => res.json(await folderOps.delete(req.query.path))));
+  router.delete('/folders', wrap(async (req, res) => {
+    if (req.query.permanent === '1') return res.json(await folderOps.delete(req.query.path));
+    return res.json({ trashed: true, id: await catalog.trash.trashFolder(req.query.path) });
+  }));
 
   // --- archivos ---
   router.post('/files', wrap(async (req, res) => {
@@ -56,8 +74,7 @@ export function driveRoutes({ catalog, tg }) {
   }));
   router.delete('/files/:id', wrap(async (req, res) => {
     const id = Number(req.params.id);
-    await fileOps.delete(id);
-    await dropThumbnail(id);
+    if (req.query.permanent === '1') await fileOps.destroy([id]); else await catalog.trash.trashFile(id);
     res.status(204).end();
   }));
   router.get('/files/:id/content', wrap(async (req, res) => {

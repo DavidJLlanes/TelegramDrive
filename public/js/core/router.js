@@ -1,6 +1,7 @@
 // Router por hash. Carpetas: #/Carpeta/Sub. Biblioteca de música: #!/musica/album/<artista>/<álbum>.
 // Independiente del prefijo de despliegue.
 const LIB_PREFIX = '#!/musica';
+const TRASH_HASH = '#!/papelera';
 const decode = (v) => { try { return decodeURIComponent(v); } catch { return v; } };
 
 export const pathFromHash = () => {
@@ -8,8 +9,9 @@ export const pathFromHash = () => {
   return `/${raw.split('/').filter(Boolean).map(decode).join('/')}`;
 };
 
-/** { kind: 'folder', path } | { kind: 'lib', view, a, b } */
+/** { kind: 'folder', path } | { kind: 'lib', view, a, b } | { kind: 'trash' } */
 export function currentRoute() {
+  if (location.hash.startsWith(TRASH_HASH)) return { kind: 'trash' };
   if (location.hash.startsWith(LIB_PREFIX)) {
     const [view, a, b] = location.hash.slice(LIB_PREFIX.length).split('/').slice(1).map(decode);
     return { kind: 'lib', view: view || 'albums', a, b };
@@ -23,6 +25,7 @@ export const hashFor = (path) =>
 export const libHash = (view, a, b) =>
   `${LIB_PREFIX}/${[view, a, b].filter((v) => v !== undefined).map(encodeURIComponent).join('/')}`;
 
+export const navigateTrash = () => { location.hash = TRASH_HASH; };
 export const navigate = (path) => { location.hash = hashFor(path); };
 export const navigateLib = (view, a, b) => { location.hash = libHash(view, a, b); };
 export const onRoute = (fn) => window.addEventListener('hashchange', () => fn(currentRoute()));

@@ -38,7 +38,8 @@ export async function makeHarness() {
   };
 
   return {
-    tg, db, catalog, call, dataDir, Catalog,
+    tg, db, catalog, call, dataDir, Catalog, base,
+    raw: (url) => fetch(`${base}${url}`, { headers: { cookie } }), // respuesta sin leer (binarios)
     setCookie: (value) => { cookie = value; },
     async login() {
       const r = await call('POST', '/api/auth/login', { password: 'contraseña-de-prueba' });

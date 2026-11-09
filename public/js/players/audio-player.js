@@ -7,11 +7,21 @@ import { trackTitle, trackSubtitle } from '../core/tags.js';
 import { download } from '../ui/download.js';
 import { tint } from '../core/color.js';
 import { createQueue } from './audio-queue.js';
+import { saveResume, clearResume } from './resume.js';
+import { toggleQueuePanel, refreshQueuePanel } from '../ui/queue-panel.js';
 
 const queue = createQueue();
 let bar = null;
 let audio = null;
 const ui = {};
+let lastSave = 0;
+
+/** Guarda la cola y la posición (solo ids) para retomar al volver a abrir la aplicación. */
+function persist() {
+  lastSave = Date.now();
+  if (!queue.length) return;
+  saveResume({ ids: queue.ordered.map((f) => f.id), pos: queue.index, time: audio?.currentTime ?? 0, shuffle: queue.shuffle, repeat: queue.repeat });
+}
 
 const REPEAT_ICON = { off: 'repeat', all: 'repeat', one: 'repeatOne' };
 const REPEAT_LABEL = { off: 'Repetir: desactivado', all: 'Repetir toda la lista', one: 'Repetir esta canción' };
@@ -32,9 +42,9 @@ function build() {
   ui.seek = h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
   ui.cur = h('span', {}, '0:00');
   ui.dur = h('span', {}, '0:00');
-  ui.vol = h('input', { class: 'range', type: 'range', min: 0, max: 1, step: 0.02, value: prefs.volume, 'aria-label': 'Volumen' });
+  ui.vol = h('input', { class: 'range hide-mobile', type: 'range', min: 0, max: 1, step: 0.02, value: prefs.volume, 'aria-label': 'Volumen' });
   ui.art = h('div', { class: 'audio-art' }, icon('music'));
-  ui.mute = h('button', { class: 'btn btn-icon', 'aria-label': 'Silenciar', onclick: () => { audio.muted = !audio.muted; syncVolume(); } }, icon('volume'));
+  ui.mute = h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Silenciar', onclick: () => { audio.muted = !audio.muted; syncVolume(); } }, icon('volume'));
   ui.shuffle = toggleButton('Orden aleatorio', 'shuffle', () => { queue.toggleShuffle(); syncModes(); });
   ui.repeat = toggleButton(REPEAT_LABEL.off, 'repeat', () => { queue.cycleRepeat(); syncModes(); });
 
@@ -49,7 +59,8 @@ function build() {
       h('button', { class: 'btn btn-icon', 'aria-label': 'Siguiente', onclick: () => go(queue.next()) }, icon('next')), ui.repeat),
     h('div', { class: 'audio-seek' }, ui.cur, ui.seek, ui.dur),
     h('div', { class: 'audio-volume' }, ui.mute, ui.vol,
-      h('button', { class: 'btn btn-icon', 'aria-label': 'Descargar', onclick: () => download(queue.current()) }, icon('download')),
+      h('button', { class: 'btn btn-icon', 'aria-label': 'Cola de reproducción', onclick: () => toggleQueuePanel(panelApi) }, icon('queue')),
+      h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Descargar', onclick: () => download(queue.current()) }, icon('download')),
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar reproductor', onclick: stop }, icon('close'))));
   document.body.append(bar);
 
@@ -60,6 +71,7 @@ function build() {
   audio.addEventListener('timeupdate', () => {
     ui.cur.textContent = formatTime(audio.currentTime);
     if (audio.duration) { ui.seek.value = Math.round((audio.currentTime / audio.duration) * 1000); fill(ui.seek, audio.currentTime / audio.duration); }
+    if (Date.now() - lastSave > 5000) persist();
   });
   audio.addEventListener('error', () => { ui.sub.textContent = 'No se pudo reproducir este archivo'; });
   setupMediaSession();
@@ -89,7 +101,7 @@ function paintArt(file) {
   ui.art.append(img);
 }
 
-function go(file) {
+function go(file, { autoplay = true } = {}) {
   if (!file) return;
   audio.src = contentUrl(file.id);
   ui.title.textContent = trackTitle(file);
@@ -97,13 +109,15 @@ function go(file) {
   ui.seek.value = 0; fill(ui.seek, 0); ui.cur.textContent = '0:00'; ui.dur.textContent = '0:00';
   paintArt(file);
   appState.set({ playingId: file.id });
+  persist();
+  refreshQueuePanel();
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: trackTitle(file), artist: file.tags?.artist || 'Telegram Drive', album: file.tags?.album || '',
       artwork: file.thumb ? [{ src: thumbUrl(file.id), sizes: '512x512' }] : [],
     });
   }
-  audio.play().catch(() => {});
+  if (autoplay) audio.play().catch(() => {});
 }
 
 function setupMediaSession() {
@@ -114,10 +128,20 @@ function setupMediaSession() {
   set('seekto', (d) => { audio.currentTime = d.seekTime; });
 }
 
+/** Operaciones que usa el panel de la cola. */
+const panelApi = {
+  queue,
+  jump: (position) => go(queue.jump(position)),
+  remove: (position) => { if (queue.removeAt(position)) { if (queue.current()) go(queue.current()); else stop(); } else { persist(); refreshQueuePanel(); } },
+  move: (from, to) => { queue.move(from, to); persist(); refreshQueuePanel(); },
+};
+
 function stop() {
   audio.pause(); audio.removeAttribute('src'); audio.load();
   bar.hidden = true;
   document.body.classList.remove('has-player');
+  clearResume();
+  refreshQueuePanel(true);
   appState.set({ playingId: null });
 }
 
@@ -129,14 +153,39 @@ export function extendQueue(list) {
 /** Reproduce `files` empezando por `startId` (o la primera); `shuffle` fuerza el modo aleatorio. */
 export function playList(files, { startId, shuffle } = {}) {
   if (!files.length) return;
-  if (!bar) build();
-  bar.hidden = false;
-  document.body.classList.add('has-player');
+  ensureBar();
   const start = startId ?? (shuffle ? files[Math.floor(Math.random() * files.length)].id : files[0].id);
   queue.set(files, start, shuffle === undefined ? {} : { shuffle });
   syncModes();
-  syncVolume();
   go(queue.current());
 }
 
+function ensureBar() {
+  if (!bar) build();
+  bar.hidden = false;
+  document.body.classList.add('has-player');
+  syncVolume();
+}
+
+/** Añade una canción justo después de la actual (o al final). Si no suena nada, empieza a reproducirla. */
+export function enqueueTrack(file, { last = false } = {}) {
+  if (!bar || !queue.length) { playList([file]); return false; }
+  queue.enqueue(file, { last });
+  persist();
+  refreshQueuePanel();
+  return true;
+}
+
+/** Deja preparada (en pausa) una cola guardada: el navegador no permite reproducir sin que el usuario pulse. */
+export function restoreQueue(files, position, { time = 0, shuffle, repeat } = {}) {
+  if (bar && !audio.paused) return;
+  ensureBar();
+  queue.restore(files, position, { shuffle, repeat });
+  syncModes();
+  const file = queue.current();
+  go(file, { autoplay: false });
+  audio.addEventListener('loadedmetadata', () => { if (time > 0 && time < audio.duration) audio.currentTime = time; }, { once: true });
+}
+
+export const queueTracks = () => queue.ordered;
 export const playAudio = (file, list) => playList(list.length ? list : [file], { startId: file.id });

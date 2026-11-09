@@ -7,6 +7,7 @@ import { playFolder } from '../core/playback.js';
 import { openMenu } from './menu.js';
 import { playButtons } from './play-buttons.js';
 import { libraryHead } from './library-head.js';
+import { emptyTrash } from './trash-view.js';
 
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
@@ -57,10 +58,22 @@ function folderHead(s) {
   };
 }
 
+function trashHead(s) {
+  const n = s.trash.files.length + s.trash.folders.length;
+  return {
+    crumbs: null, title: 'Papelera', sub: s.trash.loading ? '' : `Se borra definitivamente a los ${s.trash.days} días · ${plural(n, 'elemento', 'elementos')}`,
+    tools: n ? [h('button', { class: 'btn btn-danger', type: 'button', onclick: emptyTrash }, icon('trash'), 'Vaciar papelera')] : null,
+  };
+}
+
 export function createPageHeader() {
   const el = h('header', { class: 'page-head' });
   const paint = (s) => {
-    const head = s.section === 'library' && s.results === null ? libraryHead(s.lib) : folderHead(s);
+    let head;
+    if (s.results !== null) head = folderHead(s);
+    else if (s.section === 'library') head = libraryHead(s.lib);
+    else if (s.section === 'trash') head = trashHead(s);
+    else head = folderHead(s);
     const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
     el.replaceChildren(...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
   };

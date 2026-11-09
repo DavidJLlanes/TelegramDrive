@@ -48,5 +48,6 @@ export class FakeTelegram {
   async getMessage(id) { return this.messages.get(id); }
   async *readRange(message, start, end) { yield message.media.document.bytes.subarray(start, end + 1); }
   async downloadThumb() { return null; }
+  async ping() { if (this.down) throw new Error('sin conexión'); }
   async disconnect() {}
 }

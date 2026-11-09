@@ -10,8 +10,8 @@ const BATCH = 500;
  *  - completa: relee todo y poda lo que ya no existe (botón "Sincronizar").
  */
 export class Syncer {
-  constructor({ tg, db, tree, files }) {
-    Object.assign(this, { tg, db, tree, files });
+  constructor({ tg, db, tree, files, playlists }) {
+    Object.assign(this, { tg, db, tree, files, playlists });
     this.state = { running: false, scanned: 0, full: false, error: null };
     this.promise = null;
   }
@@ -37,6 +37,7 @@ export class Syncer {
       batch = [];
       this.db.tx(() => records.forEach((r) => this.#apply(r)));
       this.tree.reload();
+      this.files.refreshHidden(this.tree.hiddenIds);
     };
 
     for await (const message of this.tg.iterTagged({ minId: full ? 0 : last })) {
@@ -57,6 +58,7 @@ export class Syncer {
 
   #apply(r) {
     if (r.type === 'folder') { this.tree.upsertFromSync(r); return; }
+    if (r.type === 'playlist') { this.playlists.upsert(r); return; }
     try {
       this.files.upsert(r);
     } catch (err) {
@@ -67,18 +69,21 @@ export class Syncer {
 
   /** Borra del índice lo que ya no está en Telegram. Solo ids <= maxId: no toca subidas hechas durante el escaneo. */
   #prune(seen, maxId) {
-    const known = this.files.allIds().length + this.tree.byId.size;
+    const known = this.files.allIds().length + this.tree.byId.size + this.playlists.allMsgIds().length;
     if (!seen.size && known) {
       console.warn('[sync] Telegram no devolvió ningún elemento; se conserva el índice por seguridad');
       return;
     }
     const staleFiles = this.files.allIds().filter((id) => id <= maxId && !seen.has(id));
     const staleFolders = this.tree.allMsgIds().filter((f) => f.id <= maxId && !seen.has(f.id)).map((f) => f.folderId);
+    const stalePlaylists = this.playlists.allMsgIds().filter((p) => p.msgId <= maxId && !seen.has(p.msgId));
     this.db.tx(() => {
+      stalePlaylists.forEach((p) => this.playlists.remove(p.id));
       this.files.remove(staleFiles);
       inChunks(staleFolders, (c) => c.forEach((id) => this.db.stmt('DELETE FROM folders WHERE id = ?').run(id)));
     });
     this.tree.reload();
+    this.files.refreshHidden(this.tree.hiddenIds);
     if (staleFiles.length || staleFolders.length) {
       console.log(`[sync] podados ${staleFiles.length} archivos y ${staleFolders.length} carpetas`);
     }

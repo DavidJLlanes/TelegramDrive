@@ -13,7 +13,11 @@ const tg = new TelegramService();
 const catalog = new Catalog(tg, db);
 await tg.connect();
 console.log('[telegram] conectado');
+catalog.health.start();
 catalog.startSync(); // incremental si ya hay índice; completa la primera vez
+const purge = () => catalog.trash.purge().then((r) => r.deleted && console.log(`[papelera] ${r.deleted} elementos eliminados definitivamente`)).catch((e) => console.warn('[papelera]', e.message));
+setTimeout(purge, 60_000).unref();
+setInterval(purge, 6 * 3600_000).unref();
 
 const server = createApp({ tg, catalog }).listen(config.port, config.host, () => {
   console.log(`[http] http://${config.host}:${config.port}  (base ${config.basePath})`);

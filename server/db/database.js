@@ -1,9 +1,9 @@
 // SQLite como caché del índice. Telegram sigue siendo la fuente de verdad: si se pierde, se reconstruye.
 // Usa el SQLite integrado de Node (>= 22.5); si no existe, cae a better-sqlite3 (dependencia opcional).
 import { createRequire } from 'node:module';
+import { SCHEMA_VERSION, migrate } from './schema.js';
 
 const require = createRequire(import.meta.url);
-const SCHEMA_VERSION = 3;
 
 function driver() {
   if (process.env.SQLITE_DRIVER !== 'better-sqlite3') {
@@ -18,57 +18,6 @@ function driver() {
   } catch {
     throw new Error('Se necesita Node >= 22.5 (SQLite integrado) o "npm install better-sqlite3".');
   }
-}
-
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS folders (
-  id     TEXT PRIMARY KEY,
-  msg_id INTEGER NOT NULL UNIQUE,
-  parent TEXT NOT NULL,
-  name   TEXT NOT NULL COLLATE NOCASE,
-  UNIQUE (parent, name)
-);
-CREATE TABLE IF NOT EXISTS files (
-  msg_id INTEGER PRIMARY KEY,
-  folder TEXT NOT NULL,
-  name   TEXT NOT NULL COLLATE NOCASE,
-  key    TEXT NOT NULL,
-  size   INTEGER NOT NULL,
-  mime   TEXT NOT NULL,
-  kind   TEXT NOT NULL,
-  date   INTEGER NOT NULL,
-  thumb  INTEGER NOT NULL DEFAULT 0,
-  UNIQUE (folder, name)
-);
-CREATE INDEX IF NOT EXISTS files_folder_kind ON files (folder, kind);
-CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
-`;
-
-// v3: etiquetas de audio (ID3/Vorbis/MP4). tagged: 0 pendiente, 1 leídas, 2 sin etiquetas legibles.
-const TAG_COLUMNS = {
-  tagged: 'INTEGER NOT NULL DEFAULT 0',
-  title: "TEXT NOT NULL DEFAULT ''",
-  artist: "TEXT NOT NULL DEFAULT '' COLLATE NOCASE",
-  album: "TEXT NOT NULL DEFAULT '' COLLATE NOCASE",
-  band: "TEXT NOT NULL DEFAULT '' COLLATE NOCASE",
-  genre: "TEXT NOT NULL DEFAULT '' COLLATE NOCASE",
-  track: 'INTEGER NOT NULL DEFAULT 0',
-  disc: 'INTEGER NOT NULL DEFAULT 0',
-  year: 'INTEGER NOT NULL DEFAULT 0',
-};
-const TAG_INDEXES = `
-CREATE INDEX IF NOT EXISTS files_pending ON files (kind, tagged);
-CREATE INDEX IF NOT EXISTS files_band ON files (band, album);
-CREATE INDEX IF NOT EXISTS files_genre ON files (genre);
-`;
-
-function migrate(db) {
-  db.exec(SCHEMA);
-  const have = new Set(db.prepare('PRAGMA table_info(files)').all().map((c) => c.name));
-  for (const [name, type] of Object.entries(TAG_COLUMNS)) {
-    if (!have.has(name)) db.exec(`ALTER TABLE files ADD COLUMN ${name} ${type}`);
-  }
-  db.exec(TAG_INDEXES);
 }
 
 export function openDatabase(file) {
