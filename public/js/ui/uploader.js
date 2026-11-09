@@ -5,6 +5,7 @@ import { appState } from '../core/store.js';
 import { reload, refreshStats } from '../core/drive.js';
 import { formatBytes } from '../core/format.js';
 import { toast } from './toast.js';
+import { scanDrop } from './drop-scan.js';
 
 const queue = [];
 let running = false;
@@ -49,7 +50,7 @@ async function ensureFolders(base, relative) {
 async function runJob(job) {
   job.state.textContent = 'Subiendo…';
   try {
-    const rel = job.file.webkitRelativePath;
+    const rel = job.rel;
     const target = rel ? await ensureFolders(job.base, rel) : job.base;
     const send = () => uploadFile(job.file, target, (p) => {
       job.bar.style.width = `${Math.round(p * 100)}%`;
@@ -69,7 +70,7 @@ async function runJob(job) {
     job.row.classList.add('error');
     job.state.textContent = err.message;
     job.state.title = err.message;
-    console.warn('[upload]', job.file.webkitRelativePath || job.file.name, err);
+    console.warn('[upload]', job.rel || job.file.name, err);
   }
 }
 
@@ -88,14 +89,18 @@ async function drain() {
 }
 
 export function enqueueUploads(files) {
+  enqueueEntries([...files].map((file) => ({ file, rel: file.webkitRelativePath || '' })));
+}
+
+function enqueueEntries(entries) {
   const { path: base, section } = appState.get();
   if (section !== 'files') { toast('Abre una carpeta para subir archivos'); return; }
-  const all = [...files];
-  const items = all.filter((f) => f.size > 0);
+  const all = entries;
+  const items = all.filter((e) => e.file.size > 0);
   if (all.length > items.length) toast(`${all.length - items.length} archivo(s) vacío(s) omitido(s): Telegram no admite archivos de 0 bytes`);
   if (!items.length) return;
   ensurePanel();
-  items.forEach((file) => { const job = { file, base }; makeRow(job); queue.push(job); });
+  items.forEach(({ file, rel }) => { const job = { file, rel, base }; makeRow(job); queue.push(job); });
   if (!running) drain();
 }
 
@@ -120,5 +125,8 @@ export function enableDropZone() {
   });
   window.addEventListener('dragleave', () => { depth -= 1; if (depth <= 0) hide(); });
   window.addEventListener('dragover', (e) => e.preventDefault());
-  window.addEventListener('drop', (e) => { e.preventDefault(); hide(); enqueueUploads(e.dataTransfer.files); });
+  window.addEventListener('drop', (e) => {
+    e.preventDefault(); hide();
+    scanDrop(e.dataTransfer).then(enqueueEntries).catch(() => toast('No se pudo leer lo que soltaste', { type: 'error' }));
+  });
 }
