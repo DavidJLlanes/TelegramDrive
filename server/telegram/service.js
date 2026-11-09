@@ -1,0 +1,123 @@
+import fs from 'node:fs';
+import bigInt from 'big-integer';
+import telegram from 'telegram';
+import sessions from 'telegram/sessions/index.js';
+import { CustomFile } from 'telegram/client/uploads.js';
+import { TAG } from './codec.js';
+import { config } from '../config/index.js';
+import { HttpError } from '../utils/errors.js';
+
+const { TelegramClient, Api } = telegram;
+const { StringSession } = sessions;
+const CHUNK = 512 * 1024;
+const MESSAGE_TTL = 10 * 60 * 1000;
+
+/** Envoltorio fino sobre GramJS: todo el contacto con MTProto vive aquí. */
+export class TelegramService {
+  constructor() {
+    this.client = null;
+    this.chat = config.telegram.chat;
+    this.messageCache = new Map();
+  }
+
+  static readSession() {
+    return fs.existsSync(config.sessionFile) ? fs.readFileSync(config.sessionFile, 'utf8').trim() : '';
+  }
+
+  async connect() {
+    const session = TelegramService.readSession();
+    if (!session) throw new Error('No hay sesión de Telegram. Ejecuta "npm run login".');
+    this.client = new TelegramClient(
+      new StringSession(session),
+      config.telegram.apiId,
+      config.telegram.apiHash,
+      { connectionRetries: 10, requestRetries: 5, autoReconnect: true },
+    );
+    this.client.setLogLevel('error');
+    await this.client.connect();
+    if (!(await this.client.checkAuthorization())) {
+      throw new Error('La sesión de Telegram ya no es válida. Ejecuta "npm run login".');
+    }
+  }
+
+  get connected() {
+    return Boolean(this.client?.connected);
+  }
+
+  async *iterTagged() {
+    for await (const message of this.client.iterMessages(this.chat, { search: TAG })) yield message;
+  }
+
+  sendText(text) {
+    return this.client.sendMessage(this.chat, { message: text });
+  }
+
+  async sendFile({ path, name, size, caption, onProgress }) {
+    return this.client.sendFile(this.chat, {
+      file: new CustomFile(name, size, path),
+      caption,
+      forceDocument: true,
+      workers: 4,
+      progressCallback: onProgress ? (p) => onProgress(Number(p)) : undefined,
+    });
+  }
+
+  async editText(id, text) {
+    await this.client.editMessage(this.chat, { message: id, text });
+    this.messageCache.delete(id);
+  }
+
+  async remove(ids) {
+    for (let i = 0; i < ids.length; i += 100) {
+      await this.client.deleteMessages(this.chat, ids.slice(i, i + 100), { revoke: true });
+    }
+    ids.forEach((id) => this.messageCache.delete(id));
+  }
+
+  async getMessage(id) {
+    const hit = this.messageCache.get(id);
+    if (hit && Date.now() - hit.at < MESSAGE_TTL) return hit.message;
+    const [message] = await this.client.getMessages(this.chat, { ids: [id] });
+    if (!message?.media) throw new HttpError(404, 'El archivo ya no existe en Telegram');
+    this.messageCache.set(id, { message, at: Date.now() });
+    return message;
+  }
+
+  /** Itera bytes [start, end] del documento, alineando las peticiones a 512 KB. */
+  async *readRange(message, start, end) {
+    const size = Number(message.media.document.size);
+    const aligned = start - (start % CHUNK);
+    const iterator = this.client.iterDownload({
+      file: message.media,
+      offset: bigInt(aligned),
+      requestSize: CHUNK,
+      fileSize: bigInt(size),
+      limit: Math.ceil((end + 1 - aligned) / CHUNK),
+    });
+    let position = aligned;
+    try {
+      for await (const chunk of iterator) {
+        const from = Math.max(start - position, 0);
+        const to = Math.min(end + 1 - position, chunk.length);
+        if (to > from) yield chunk.subarray(from, to);
+        position += chunk.length;
+        if (position > end) break;
+      }
+    } finally {
+      await iterator.return?.();
+    }
+  }
+
+  async downloadThumb(message) {
+    const thumbs = message.media?.document?.thumbs;
+    if (!thumbs?.length) return null;
+    const sized = thumbs.filter((t) => t instanceof Api.PhotoSize);
+    const thumb = sized.length ? sized[sized.length - 1] : thumbs[thumbs.length - 1];
+    const data = await this.client.downloadMedia(message, { thumb });
+    return Buffer.isBuffer(data) ? data : null;
+  }
+
+  async disconnect() {
+    await this.client?.disconnect();
+  }
+}

@@ -1,0 +1,56 @@
+.items { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.item {
+  position: relative; display: flex; flex-direction: column; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border); overflow: hidden; cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.item:hover { border-color: var(--accent); }
+.item:active { transform: scale(0.99); }
+.item-thumb {
+  aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); overflow: hidden;
+}
+.item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-thumb .icon { width: 44px; height: 44px; stroke-width: 1.4; }
+.item.is-folder .item-thumb { color: var(--accent); }
+.item.kind-audio .item-thumb { color: #b78cf0; }
+.item.kind-video .item-thumb { color: #f0a35e; }
+.item-meta { display: grid; gap: 1px; padding: 9px 40px 10px 11px; min-width: 0; }
+.item-name { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-sub { color: var(--muted); font-size: 12.5px; }
+.item-more {
+  position: absolute; right: 4px; bottom: 6px; width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: transparent; display: grid; place-items: center; color: var(--muted);
+}
+.item-more:hover { background: var(--surface-3); color: var(--text); }
+.item.playing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+
+/* vista lista */
+.items.view-list { grid-template-columns: 1fr; gap: 4px; }
+.view-list .item { flex-direction: row; align-items: center; border-radius: var(--radius-sm); }
+.view-list .item-thumb { width: 52px; aspect-ratio: 1; flex: none; }
+.view-list .item-thumb .icon { width: 26px; height: 26px; }
+.view-list .item-meta { flex: 1; padding: 6px 10px; }
+.view-list .item-more { position: static; margin-right: 6px; flex: none; }
+
+.empty { display: grid; justify-items: center; gap: 8px; padding: 70px 10px; color: var(--muted); text-align: center; }
+.empty .icon { width: 56px; height: 56px; stroke-width: 1.2; }
+.skeleton { height: 160px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface)); background-size: 200% 100%; animation: shimmer 1.3s infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.drop-hint {
+  position: fixed; inset: 10px; z-index: 40; display: grid; place-items: center; pointer-events: none;
+  border: 2px dashed var(--accent); border-radius: 18px; background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 18px; font-weight: 600;
+}
+
+.upload-panel {
+  position: fixed; z-index: 45; right: 14px; bottom: calc(14px + var(--player-h) + var(--safe-b));
+  width: min(340px, calc(100% - 28px)); max-height: 40vh; overflow: auto; padding: 10px;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+.upload-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
+.upload-row { display: grid; gap: 4px; padding: 6px 2px; }
+.upload-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.upload-row .state { color: var(--muted); font-size: 12px; }
+.upload-row.error .state { color: var(--danger); }
+.upload-row.done .state { color: var(--ok); }

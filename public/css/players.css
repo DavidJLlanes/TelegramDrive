@@ -1,0 +1,36 @@
+.audio-bar {
+  position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: calc(var(--player-h) + var(--safe-b));
+  padding: 8px 14px var(--safe-b); display: grid; grid-template-columns: minmax(0, 1.1fr) auto minmax(0, 1.4fr) auto;
+  align-items: center; gap: 14px; background: var(--surface); border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 24px rgb(0 0 0 / 0.25);
+}
+.audio-info { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.audio-art { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-3); color: #b78cf0; flex: none; }
+.audio-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audio-sub { color: var(--muted); font-size: 12.5px; }
+.audio-controls { display: flex; align-items: center; gap: 4px; }
+.audio-controls .play { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: var(--accent-contrast); }
+.audio-seek { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.audio-seek input[type="range"] { flex: 1; min-width: 0; }
+.audio-volume { display: flex; align-items: center; gap: 6px; }
+.audio-volume input { width: 90px; }
+input[type="range"] { accent-color: var(--accent); }
+.audio-bar .btn-icon:not(.play) { background: transparent; }
+@media (max-width: 720px) {
+  .audio-bar { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "info controls" "seek seek"; height: auto; padding-top: 8px; row-gap: 2px; }
+  body.has-player { --player-h: 108px; }
+  .audio-info { grid-area: info; } .audio-controls { grid-area: controls; } .audio-seek { grid-area: seek; }
+  .audio-volume { display: none; }
+}
+
+.video-modal {
+  position: fixed; inset: 0; z-index: 70; display: grid; grid-template-rows: auto 1fr; background: #000;
+  padding-top: var(--safe-t);
+}
+.viewer-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; color: #fff; background: linear-gradient(#000c, #0000); }
+.viewer-bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.viewer-bar .btn { background: #ffffff1a; color: #fff; }
+.viewer-bar .btn:hover { background: #ffffff33; }
+.video-stage { display: grid; place-items: center; min-height: 0; }
+.video-stage video { width: 100%; height: 100%; max-height: calc(100vh - 60px); background: #000; }
+.audio-text { min-width: 0; }
