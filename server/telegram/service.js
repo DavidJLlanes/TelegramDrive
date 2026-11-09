@@ -16,9 +16,14 @@ const MESSAGE_TTL = 10 * 60 * 1000;
 export class TelegramService {
   constructor() {
     this.client = null;
-    const chat = String(config.telegram.chat).trim();
-    this.chat = /^-?\d+$/.test(chat) ? Number(chat) : chat; // ID numérico de un grupo o canal, "me" o @usuario
+    this.chat = TelegramService.parseChat(config.telegram.chat);
     this.messageCache = new Map();
+  }
+
+  /** "me", "@usuario" o el ID numérico de un grupo o canal (-100…). */
+  static parseChat(value) {
+    const chat = String(value).trim();
+    return /^-?\d+$/.test(chat) ? Number(chat) : chat;
   }
 
   static readSession() {
@@ -39,13 +44,36 @@ export class TelegramService {
     if (!(await this.client.checkAuthorization())) {
       throw new Error('La sesión de Telegram ya no es válida. Ejecuta "npm run login".');
     }
-    // GramJS solo reconoce un grupo por su ID si ya conoce el chat: se cargan los diálogos una vez.
-    if (typeof this.chat === 'number') {
-      await this.client.getDialogs({ limit: 500 });
-      await this.client.getInputEntity(this.chat).catch(() => {
-        throw new Error(`TG_CHAT=${this.chat}: no encuentro ese grupo en tu cuenta. Revisa el ID con "npm run chats".`);
-      });
+    await this.#prepare(this.chat, 'TG_CHAT');
+  }
+
+  /** GramJS solo reconoce un grupo por su ID si ya conoce el chat: se cargan los diálogos una vez. */
+  async #prepare(chat, label) {
+    if (typeof chat !== 'number') return;
+    await this.client.getDialogs({ limit: 500 });
+    await this.client.getInputEntity(chat).catch(() => {
+      throw new Error(`${label}=${chat}: no encuentro ese grupo en tu cuenta. Revisa el ID con "npm run chats".`);
+    });
+  }
+
+  /** Vista del mismo cliente sobre otro chat (copias de seguridad, migración): mismos métodos, otro destino. */
+  async forChat(chat, label = 'chat') {
+    const target = TelegramService.parseChat(chat);
+    await this.#prepare(target, label);
+    const view = Object.create(this);
+    view.chat = target;
+    view.messageCache = new Map();
+    return view;
+  }
+
+  /** Copia mensajes (con su archivo y pie) a la vista `target`, sin marca de reenviado. Devuelve los nuevos, en el mismo orden. */
+  async forwardTo(target, ids) {
+    const out = [];
+    for (let i = 0; i < ids.length; i += 100) {
+      const sent = await this.client.forwardMessages(target.chat, { messages: ids.slice(i, i + 100), fromPeer: this.chat, dropAuthor: true });
+      out.push(...[sent].flat());
     }
+    return out;
   }
 
   /** Comprobación ligera de conexión y sesión (para el control de salud). */
@@ -59,8 +87,8 @@ export class TelegramService {
   }
 
   /** Mensajes etiquetados, del más nuevo al más antiguo. `minId` > 0 limita a los posteriores (sync incremental). */
-  async *iterTagged({ minId = 0 } = {}) {
-    for await (const message of this.client.iterMessages(this.chat, { search: TAG, minId })) yield message;
+  async *iterTagged({ minId = 0, tag = TAG } = {}) {
+    for await (const message of this.client.iterMessages(this.chat, { search: tag, minId })) yield message;
   }
 
   sendText(text) {

@@ -9,7 +9,7 @@ export function renderPage(container) {
   container.replaceChildren();
   if (!view) { container.append(h('p', { class: 'empty' }, 'Esta sección no existe.')); return; }
   if (page.error) { container.append(h('p', { class: 'empty' }, page.error)); return; }
-  if (page.loading) { container.append(h('div', { class: 'skeleton page-skeleton' })); return; }
+  if (page.loading) { container.append(h('div', { class: 'skeleton pg-skeleton' })); return; }
   view.render(container, page);
 }
 

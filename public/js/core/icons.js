@@ -50,6 +50,9 @@ const PATHS = {
   plane: '<path d="M21 4 3 11l6 2.5L11.5 20l3-4.5L19 18z"/><path d="m9 13.5 12-9.5"/>',
 };
 
+/** Las funciones (features/*) añaden aquí sus iconos propios. */
+export const registerIcons = (map) => Object.assign(PATHS, map);
+
 export function icon(name, extraClass = '') {
   const span = document.createElement('span');
   span.innerHTML = `<svg class="icon ${extraClass}" viewBox="0 0 24 24" aria-hidden="true">${PATHS[name] ?? PATHS.file}</svg>`;

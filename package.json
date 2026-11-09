@@ -17,10 +17,13 @@
     "login": "node scripts/login.js",
     "login:qr": "node scripts/login-qr.js",
     "chats": "node scripts/chats.js",
+    "migrate": "node scripts/migrate-chat.js",
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js",
     "icons": "node scripts/generate-icons.js",
     "totp": "node scripts/totp.js",
     "check": "node scripts/check.js",
-    "test": "node --test test/api.test.js test/sync.test.js test/library.test.js test/queue.test.js test/features.test.js test/totp-login.test.js test/audit.test.js test/migrations.test.js test/access-log.test.js test/share-access.test.js",
+    "test": "node --test test/api.test.js test/sync.test.js test/library.test.js test/queue.test.js test/features.test.js test/totp-login.test.js test/audit.test.js test/migrations.test.js test/access-log.test.js test/share-access.test.js test/backup.test.js test/tools.test.js",
     "dev:fake": "node test/helpers/dev-fake-server.js"
   },
   "dependencies": {

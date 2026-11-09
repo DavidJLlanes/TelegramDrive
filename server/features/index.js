@@ -8,10 +8,12 @@ import { events } from '../core/events.js';
 
 import accessLog from './access-log/index.js';
 import shareAccess from './share-access/index.js';
+import backup from './backup/index.js';
 
 const FEATURES = [
   accessLog,
   shareAccess,
+  backup,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {

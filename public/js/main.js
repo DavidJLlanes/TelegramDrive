@@ -4,6 +4,7 @@ import { loadPath, watchSync } from './core/drive.js';
 import { loadLibrary } from './core/library.js';
 import { loadTrash } from './core/trash.js';
 import { loadPage } from './core/page.js';
+import { runAppStart } from './core/hooks.js';
 import './features/index.js';
 import { resumeSession } from './players/session.js';
 import { onRoute, currentRoute } from './core/router.js';
@@ -49,6 +50,7 @@ function start() {
   openRoute(currentRoute());
   watchSync();
   resumeSession();
+  runAppStart();
 }
 
 async function boot() {

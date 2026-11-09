@@ -3,20 +3,39 @@ import fs from 'node:fs';
 import { TAG, encodeFile } from '../../server/telegram/codec.js';
 
 export class FakeTelegram {
-  constructor() {
-    this.messages = new Map();
-    this.nextId = 1;
+  /** `chats`: almacén compartido por chat (cada chat tiene sus mensajes e ids, como en Telegram). */
+  constructor(chats = new Map(), chat = 'me') {
+    this.chats = chats;
+    this.chat = chat;
     this.connected = true;
-    this.chat = 'me';
-    this.homeChat = 'me'; // los mensajes del simulador viven en este chat; otro chat se ve vacío
     this.edits = 0;
     this.removeCalls = 0;
   }
 
+  get #box() {
+    const key = String(this.chat);
+    if (!this.chats.has(key)) this.chats.set(key, { messages: new Map(), nextId: 1 });
+    return this.chats.get(key);
+  }
+
+  get messages() { return this.#box.messages; }
+
   #store(message) {
-    const m = { id: this.nextId++, date: Math.floor(Date.now() / 1000), ...message };
-    this.messages.set(m.id, m);
+    const box = this.#box;
+    const m = { id: box.nextId++, date: Math.floor(Date.now() / 1000), ...message };
+    box.messages.set(m.id, m);
     return m;
+  }
+
+  /** Vista sobre otro chat (mismo almacén). */
+  async forChat(chat) { return Object.assign(new FakeTelegram(this.chats, String(chat)), { down: this.down }); }
+
+  /** Copia mensajes a `target` (como el reenvío sin autor); devuelve los nuevos en el mismo orden. */
+  async forwardTo(target, ids) {
+    return ids.map((id) => {
+      const { id: _id, ...rest } = this.messages.get(id);
+      return target.#store(rest);
+    });
   }
 
   static media(name, size, bytes) {
@@ -33,8 +52,8 @@ export class FakeTelegram {
     return this.#store({ message: encodeFile({ folder, name }), media: FakeTelegram.media(name, bytes.length, bytes) });
   }
 
-  async *iterTagged({ minId = 0 } = {}) {
-    const list = this.chat !== this.homeChat ? [] : [...this.messages.values()].filter((m) => m.id > minId && m.message.startsWith(TAG));
+  async *iterTagged({ minId = 0, tag = TAG } = {}) {
+    const list = [...this.messages.values()].filter((m) => m.id > minId && m.message.startsWith(tag));
     for (const m of list.sort((a, b) => b.id - a.id)) yield m;
   }
 

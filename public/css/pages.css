@@ -1,22 +1,28 @@
-/* Estilos compartidos por las vistas registradas (js/features/*): listas, tarjetas de datos y barras. */
-.page-skeleton { height: 240px; border-radius: var(--r-md); }
-.panel { display: grid; gap: 14px; padding: 18px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 8%, transparent); }
-.panel + .panel { margin-top: 16px; }
-.panel h2 { margin: 0; font: 650 1.1rem var(--font-display); letter-spacing: -0.01em; }
-.panel p.hint { margin: 0; color: var(--muted); font-size: 13.5px; }
-.rows { display: grid; gap: 2px; }
-.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 4px; border-radius: 8px; }
-.row + .row { box-shadow: 0 -1px 0 color-mix(in oklab, var(--ink) 7%, transparent); }
-.row .main { min-width: 0; display: grid; gap: 2px; }
-.row .main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.row .main span { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .side { color: var(--muted); font-size: 13px; white-space: nowrap; }
-button.row { width: 100%; text-align: left; background: transparent; border: 0; cursor: pointer; color: inherit; }
-button.row:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
-.badge { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; background: var(--sunken); color: var(--muted); }
-.badge.warn { background: color-mix(in oklab, #d97706 18%, transparent); color: #b45309; }
-.badge.ok { background: color-mix(in oklab, #16a34a 16%, transparent); color: #15803d; }
-.bar { height: 8px; border-radius: 8px; background: var(--sunken); overflow: hidden; }
-.bar > i { display: block; height: 100%; background: var(--accent); }
-.form-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.form-row .input { flex: 1 1 200px; min-width: 0; }
+/* Prefijo pg-: evita choques con clases del núcleo (p. ej. .main, .row). Móvil: las filas se apilan.
+   Estilos compartidos por las vistas registradas (js/features/*): listas, tarjetas de datos y barras. */
+.pg-skeleton { height: 240px; border-radius: var(--r-md); }
+.pg-panel { display: grid; gap: 14px; padding: 18px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 8%, transparent); }
+.pg-panel + .pg-panel { margin-top: 16px; }
+.pg-panel h2 { margin: 0; font: 650 1.1rem var(--font-display); letter-spacing: -0.01em; }
+.pg-panel p.pg-hint { margin: 0; color: var(--muted); font-size: 13.5px; }
+.pg-rows { display: grid; gap: 2px; }
+.pg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 4px; border-radius: 8px; }
+.pg-row + .pg-row { box-shadow: 0 -1px 0 color-mix(in oklab, var(--ink) 7%, transparent); }
+.pg-row .pg-main { min-width: 0; display: grid; gap: 2px; }
+.pg-row .pg-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pg-row .pg-main span { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.pg-row .pg-side { color: var(--muted); font-size: 13px; white-space: nowrap; }
+button.pg-row { width: 100%; text-align: left; background: transparent; border: 0; cursor: pointer; color: inherit; }
+button.pg-row:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+.pg-badge { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; background: var(--sunken); color: var(--muted); }
+.pg-badge.warn { background: color-mix(in oklab, #d97706 18%, transparent); color: #b45309; }
+.pg-badge.ok { background: color-mix(in oklab, #16a34a 16%, transparent); color: #15803d; }
+.pg-bar { height: 8px; border-radius: 8px; background: var(--sunken); overflow: hidden; }
+.pg-bar > i { display: block; height: 100%; background: var(--accent); }
+.pg-form-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pg-form-row .input { flex: 1 1 200px; min-width: 0; }
+
+@media (max-width: 560px) {
+  .pg-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pg-row .pg-main strong, .pg-row .pg-main span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
