@@ -93,6 +93,16 @@ function stop() {
   appState.set({ playingId: null });
 }
 
+/** Sustituye la cola por la lista completa de la carpeta, conservando la pista actual. */
+export function extendQueue(list) {
+  const current = queue[index];
+  const i = current ? list.findIndex((f) => f.id === current.id) : -1;
+  if (i < 0) return;
+  queue = list;
+  index = i;
+  ui.sub.textContent = `${index + 1} de ${queue.length}`;
+}
+
 export function playAudio(file, list) {
   if (!bar) build();
   bar.hidden = false;

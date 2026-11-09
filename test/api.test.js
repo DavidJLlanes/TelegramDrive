@@ -1,41 +1,10 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import { makeHarness } from './helpers/harness.js';
 
-const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tgd-test-'));
-process.env.DATA_DIR = dataDir;
-process.env.BASE_PATH = '/telegram';
-process.env.TG_API_ID = '1';
-process.env.TG_API_HASH = 'x';
-process.env.SESSION_SECRET = 'a'.repeat(64);
-
-const { hashPassword } = await import('../server/utils/crypto.js');
-process.env.APP_PASSWORD_HASH = hashPassword('contraseña-de-prueba');
-const { ensureDirs } = await import('../server/config/index.js');
-const { createApp } = await import('../server/app.js');
-const { Catalog } = await import('../server/services/catalog.js');
-const { FakeTelegram } = await import('./helpers/fake-telegram.js');
-
-let server; let base; let cookie = '';
-const call = async (method, url, body, headers = {}) => {
-  const res = await fetch(`${base}${url}`, {
-    method, headers: { cookie, ...(body && !(body instanceof FormData) ? { 'content-type': 'application/json' } : {}), ...headers },
-    body: body instanceof FormData ? body : body && JSON.stringify(body),
-  });
-  const text = await res.text();
-  let json = null; try { json = JSON.parse(text); } catch { /* binario */ }
-  return { res, json, text };
-};
-
-before(async () => {
-  ensureDirs();
-  const tg = new FakeTelegram();
-  server = createApp({ tg, catalog: new Catalog(tg) }).listen(0);
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-after(() => { server.close(); fs.rmSync(dataDir, { recursive: true, force: true }); });
+let h; let call;
+before(async () => { h = await makeHarness(); call = h.call; });
+after(() => h.close());
 
 test('la API exige sesión y el login rechaza contraseñas erróneas', async () => {
   assert.equal((await call('GET', '/api/list?path=/')).res.status, 401);
@@ -45,7 +14,7 @@ test('la API exige sesión y el login rechaza contraseñas erróneas', async () 
   const setCookie = ok.res.headers.get('set-cookie');
   assert.match(setCookie, /HttpOnly/);
   assert.match(setCookie, /Path=\/telegram/);
-  cookie = setCookie.split(';')[0];
+  h.setCookie(setCookie.split(';')[0]);
   assert.equal((await call('GET', '/api/auth/status')).json.authenticated, true);
 });
 

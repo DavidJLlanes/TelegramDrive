@@ -6,7 +6,8 @@ import { navigate } from '../core/router.js';
 import { appState } from '../core/store.js';
 import { openMenu } from './menu.js';
 import { fileMenu, folderMenu } from './actions.js';
-import { sortFiles, sortFolders } from './sorting.js';
+import { sortFiles } from './sorting.js';
+import { loadMore } from '../core/drive.js';
 import { openFile } from '../players/viewer.js';
 
 const MAX_FULL_FALLBACK = 6 * 1024 * 1024;
@@ -67,8 +68,8 @@ export function renderExplorer(container) {
     return;
   }
   const searching = s.results !== null;
-  const files = sortFiles(searching ? s.results : s.files, s.sort);
-  const folders = searching ? [] : sortFolders(s.folders);
+  const files = searching ? sortFiles(s.results, s.sort) : s.files; // en carpetas, el servidor ya ordena
+  const folders = searching ? [] : s.folders;
   if (!files.length && !folders.length) {
     container.append(h('div', { class: 'empty' }, icon(searching ? 'search' : 'folder'),
       h('strong', {}, searching ? 'Sin resultados' : 'Carpeta vacía'),
@@ -77,4 +78,14 @@ export function renderExplorer(container) {
   }
   container.append(h('div', { class: `items view-${s.view}`, role: 'list' },
     folders.map(folderCard), files.map((f) => fileCard(f, files, s.playingId))));
+  if (!searching && files.length < s.total) container.append(sentinel(s));
+}
+
+let observer = null;
+function sentinel(s) {
+  const el = h('div', { class: 'load-more' }, s.loadingMore ? 'Cargando…' : `${s.files.length} de ${s.total}`);
+  observer?.disconnect();
+  observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && loadMore(), { rootMargin: '600px' });
+  observer.observe(el);
+  return el;
 }

@@ -16,7 +16,10 @@ export function renderShell(root, { onLogout }) {
       ? h('strong', {}, `Resultados para "${s.query.trim()}"`)
       : renderBreadcrumbs(s.path));
     renderExplorer(explorer);
-    stats.textContent = s.stats ? `${s.stats.files} archivos · ${s.stats.folders} carpetas · ${formatBytes(s.stats.bytes)} en Telegram` : '';
+    const sync = s.stats?.sync;
+    if (sync?.running) stats.textContent = `Sincronizando con Telegram… ${sync.scanned} mensajes revisados`;
+    else if (sync?.error) stats.textContent = `Error de sincronización: ${sync.error}`;
+    else stats.textContent = s.stats ? `${s.stats.files} archivos · ${s.stats.folders} carpetas · ${formatBytes(s.stats.bytes)} en Telegram` : '';
   };
   appState.subscribe(paint);
   paint(appState.get());

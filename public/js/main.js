@@ -1,6 +1,6 @@
 import { api, onUnauthorized } from './core/api.js';
 import { appState } from './core/store.js';
-import { loadPath, refreshStats } from './core/drive.js';
+import { loadPath, watchSync } from './core/drive.js';
 import { onRoute, pathFromHash } from './core/router.js';
 import { renderLogin } from './ui/login.js';
 import { renderShell } from './ui/app-shell.js';
@@ -28,7 +28,7 @@ function start() {
     onRoute((path) => loadPath(path));
   }
   loadPath(pathFromHash());
-  refreshStats();
+  watchSync();
 }
 
 async function boot() {

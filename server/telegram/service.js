@@ -44,8 +44,9 @@ export class TelegramService {
     return Boolean(this.client?.connected);
   }
 
-  async *iterTagged() {
-    for await (const message of this.client.iterMessages(this.chat, { search: TAG })) yield message;
+  /** Mensajes etiquetados, del más nuevo al más antiguo. `minId` > 0 limita a los posteriores (sync incremental). */
+  async *iterTagged({ minId = 0 } = {}) {
+    for await (const message of this.client.iterMessages(this.chat, { search: TAG, minId })) yield message;
   }
 
   sendText(text) {

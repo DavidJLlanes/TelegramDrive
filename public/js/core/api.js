@@ -32,7 +32,7 @@ export const api = {
   status: () => request('auth/status'),
   login: (password) => request('auth/login', { method: 'POST', body: { password } }),
   logout: () => request('auth/logout', { method: 'POST' }),
-  list: (path) => request('list', { query: { path } }),
+  list: (path, opts = {}) => request('list', { query: { path, ...opts } }),
   search: (q) => request('search', { query: { q } }),
   folders: () => request('folders'),
   stats: () => request('stats'),

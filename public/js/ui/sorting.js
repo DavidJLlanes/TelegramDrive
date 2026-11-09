@@ -6,4 +6,3 @@ export function sortFiles(files, sort) {
   if (sort === 'size') return list.sort((a, b) => b.size - a.size);
   return list.sort((a, b) => collator.compare(a.name, b.name));
 }
-export const sortFolders = (folders) => [...folders].sort((a, b) => collator.compare(a.name, b.name));

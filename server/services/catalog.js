@@ -1,219 +1,74 @@
-import { decode, encodeFile, encodeFolder } from '../telegram/codec.js';
-import { kindOf } from '../utils/media-kind.js';
-import { conflict, notFound, badRequest } from '../utils/errors.js';
-import {
-  ancestorsOf, baseName, isWithin, joinPath, normalizePath, parentOf,
-  replacePrefix, uniqueName, validateName,
-} from '../utils/paths.js';
+import { FolderTree } from '../db/folder-tree.js';
+import { FilesRepo } from '../db/files-repo.js';
+import { Syncer } from './sync.js';
+import { FolderOps } from './folder-ops.js';
+import { FileOps } from './file-ops.js';
+import { Mutex } from '../utils/mutex.js';
+import { compareNames } from '../utils/text.js';
+import { badRequest, notFound } from '../utils/errors.js';
+import { normalizePath } from '../utils/paths.js';
 
-const filenameOf = (doc) =>
-  doc.attributes?.find((a) => a.className === 'DocumentAttributeFilename')?.fileName || 'archivo';
+const SORTERS = {
+  name: (a, b) => compareNames(a.name, b.name),
+  date: (a, b) => b.date - a.date || compareNames(a.name, b.name),
+  size: (a, b) => b.size - a.size || compareNames(a.name, b.name),
+};
+const MAX_LIMIT = 5000;
 
-function toEntry(message) {
-  const meta = decode(message.message);
-  if (!meta) return null;
-  const base = { id: message.id, type: meta.type, parent: meta.parent, name: meta.name, date: message.date * 1000 };
-  if (meta.type === 'folder') return base;
-  const doc = message.media?.document;
-  if (!doc) return null;
-  const mimeType = doc.mimeType || 'application/octet-stream';
-  const name = meta.name || filenameOf(doc);
-  return {
-    ...base, name, size: Number(doc.size), mime: mimeType,
-    kind: kindOf(name, mimeType), thumb: Boolean(doc.thumbs?.length),
-  };
-}
-
-/** Índice en memoria del contenido, reconstruido desde Telegram. */
+/** Fachada: consulta el índice SQLite y delega las modificaciones (que también escriben en Telegram). */
 export class Catalog {
-  constructor(tg) {
+  constructor(tg, db) {
     this.tg = tg;
-    this.entries = new Map();
-    this.loadedAt = 0;
-    this.loading = null;
+    this.db = db;
+    this.tree = new FolderTree(db);
+    this.repo = new FilesRepo(db);
+    this.syncer = new Syncer({ tg, db, tree: this.tree, files: this.repo });
+    const shared = { tg, tree: this.tree, files: this.repo, lock: new Mutex() };
+    this.folderOps = new FolderOps(shared);
+    this.fileOps = new FileOps({ ...shared, toDto: (row) => this.toDto(row) });
   }
 
-  async ensureLoaded() {
-    if (!this.loadedAt) await this.reload();
+  startSync(options) { return this.syncer.start(options); }
+
+  toDto(row, paths = new Map()) {
+    if (!paths.has(row.folder)) paths.set(row.folder, this.tree.pathOf(row.folder));
+    return {
+      id: row.id, type: 'file', name: row.name, parent: paths.get(row.folder), size: row.size,
+      mime: row.mime, kind: row.kind, date: row.date, thumb: Boolean(row.thumb),
+    };
   }
 
-  reload() {
-    this.loading ??= (async () => {
-      const next = new Map();
-      for await (const message of this.tg.iterTagged()) {
-        const entry = toEntry(message);
-        if (entry) next.set(entry.id, entry);
-      }
-      this.entries = next;
-      this.loadedAt = Date.now();
-    })().finally(() => { this.loading = null; });
-    return this.loading;
-  }
-
-  // ---------- consultas ----------
-
-  #folderPaths() {
-    const set = new Set();
-    for (const e of this.entries.values()) {
-      const folder = e.type === 'folder' ? joinPath(e.parent, e.name) : e.parent;
-      ancestorsOf(folder).forEach((p) => set.add(p));
-    }
-    return set;
-  }
-
-  folderExists(path) {
-    return path === '/' || this.#folderPaths().has(path);
-  }
-
-  folders() {
-    return [...this.#folderPaths()].sort((a, b) => a.localeCompare(b, 'es'));
-  }
-
-  list(rawPath) {
-    const path = normalizePath(rawPath);
-    if (!this.folderExists(path)) throw notFound('La carpeta no existe');
-    const folders = [...this.#folderPaths()]
-      .filter((p) => parentOf(p) === path && p !== '/')
-      .map((p) => ({ type: 'folder', name: baseName(p), path: p }));
-    const files = [...this.entries.values()].filter((e) => e.type === 'file' && e.parent === path);
-    return { path, folders, files };
+  list(rawPath, { sort = 'name', offset = 0, limit = 300, kind } = {}) {
+    if (!SORTERS[sort]) throw badRequest('Orden no válido');
+    const id = this.tree.resolve(normalizePath(rawPath));
+    if (id === null) throw notFound('La carpeta no existe');
+    const rows = this.repo.inFolder(id, kind || undefined).sort(SORTERS[sort]);
+    const start = Math.max(0, Number(offset) || 0);
+    const size = Math.min(Math.max(1, Number(limit) || 300), MAX_LIMIT);
+    const paths = new Map();
+    return {
+      path: this.tree.pathOf(id),
+      total: rows.length,
+      folders: this.tree.childrenOf(id).map((f) => ({ type: 'folder', name: f.name, path: this.tree.pathOf(f.id) })),
+      files: rows.slice(start, start + size).map((r) => this.toDto(r, paths)),
+    };
   }
 
   search(query, limit = 200) {
-    const q = String(query).trim().toLowerCase();
-    if (q.length < 2) return [];
-    return [...this.entries.values()]
-      .filter((e) => e.type === 'file' && e.name.toLowerCase().includes(q))
-      .slice(0, limit);
-  }
-
-  stats() {
-    let files = 0; let bytes = 0;
-    for (const e of this.entries.values()) if (e.type === 'file') { files += 1; bytes += e.size; }
-    return { files, bytes, folders: this.#folderPaths().size };
+    if (String(query).trim().length < 2) return [];
+    const paths = new Map();
+    return this.repo.search(query, limit).map((r) => this.toDto(r, paths));
   }
 
   getFile(id) {
-    const entry = this.entries.get(Number(id));
-    if (!entry || entry.type !== 'file') throw notFound('Archivo no encontrado');
-    return entry;
+    const row = this.repo.get(Number(id));
+    if (!row) throw notFound('Archivo no encontrado');
+    return this.toDto(row);
   }
 
-  #takenNames(parent, type, skipId) {
-    const taken = new Set();
-    if (type === 'folder') {
-      this.#folderPaths().forEach((p) => parentOf(p) === parent && taken.add(baseName(p).toLowerCase()));
-    }
-    for (const e of this.entries.values()) {
-      if (e.type === 'file' && type === 'file' && e.parent === parent && e.id !== skipId) {
-        taken.add(e.name.toLowerCase());
-      }
-    }
-    return taken;
-  }
+  folderPaths() { return this.tree.allPaths(); }
 
-  // ---------- carpetas ----------
-
-  async createFolder(rawParent, rawName) {
-    const parent = normalizePath(rawParent);
-    const name = validateName(rawName);
-    if (!this.folderExists(parent)) throw notFound('La carpeta padre no existe');
-    if (this.#takenNames(parent, 'folder').has(name.toLowerCase())) throw conflict('Ya existe una carpeta con ese nombre');
-    const message = await this.tg.sendText(encodeFolder({ parent, name }));
-    const entry = { id: message.id, type: 'folder', parent, name, date: Date.now() };
-    this.entries.set(entry.id, entry);
-    return { type: 'folder', name, path: joinPath(parent, name) };
-  }
-
-  /** Renombra o mueve una carpeta (y todo su contenido) a `target`. */
-  async relocateFolder(rawFrom, rawTarget) {
-    const from = normalizePath(rawFrom);
-    const target = normalizePath(rawTarget);
-    if (from === '/' || !this.folderExists(from)) throw notFound('La carpeta no existe');
-    if (isWithin(target, from)) throw badRequest('No se puede mover una carpeta dentro de sí misma');
-    const targetParent = parentOf(target);
-    if (!this.folderExists(targetParent)) throw notFound('El destino no existe');
-    if (this.folderExists(target)) throw conflict('Ya existe una carpeta con ese nombre en el destino');
-
-    for (const e of [...this.entries.values()]) {
-      const own = e.type === 'folder' && joinPath(e.parent, e.name) === from;
-      if (own) {
-        const next = { ...e, parent: targetParent, name: baseName(target) };
-        await this.tg.editText(e.id, encodeFolder(next));
-        this.entries.set(e.id, next);
-      } else if (isWithin(e.parent, from)) {
-        const next = { ...e, parent: replacePrefix(e.parent, from, target) };
-        await this.tg.editText(e.id, e.type === 'folder' ? encodeFolder(next) : encodeFile(next));
-        this.entries.set(e.id, next);
-      }
-    }
-    // Carpeta puramente implícita (sin mensaje propio): materializa para que no desaparezca vacía.
-    return { path: target };
-  }
-
-  async renameFolder(path, rawName) {
-    const from = normalizePath(path);
-    return this.relocateFolder(from, joinPath(parentOf(from), validateName(rawName)));
-  }
-
-  async moveFolder(path, rawParent) {
-    const from = normalizePath(path);
-    return this.relocateFolder(from, joinPath(normalizePath(rawParent), baseName(from)));
-  }
-
-  async deleteFolder(rawPath) {
-    const path = normalizePath(rawPath);
-    if (path === '/' || !this.folderExists(path)) throw notFound('La carpeta no existe');
-    const ids = [...this.entries.values()]
-      .filter((e) => (e.type === 'folder' ? isWithin(joinPath(e.parent, e.name), path) : isWithin(e.parent, path)))
-      .map((e) => e.id);
-    await this.tg.remove(ids);
-    ids.forEach((id) => this.entries.delete(id));
-    return { deleted: ids.length };
-  }
-
-  // ---------- archivos ----------
-
-  async addUploaded({ parent: rawParent, name: rawName, path, size, onProgress }) {
-    const parent = normalizePath(rawParent);
-    if (!this.folderExists(parent)) throw notFound('La carpeta destino no existe');
-    const name = uniqueName(validateName(rawName), this.#takenNames(parent, 'file'));
-    const message = await this.tg.sendFile({
-      path, name, size, caption: encodeFile({ parent, name }), onProgress,
-    });
-    const entry = toEntry(message);
-    if (!entry) throw new Error('Telegram no devolvió el archivo subido');
-    entry.name = name;
-    this.entries.set(entry.id, entry);
-    return entry;
-  }
-
-  async renameFile(id, rawName) {
-    const entry = this.getFile(id);
-    const name = validateName(rawName);
-    if (this.#takenNames(entry.parent, 'file', entry.id).has(name.toLowerCase())) {
-      throw conflict('Ya existe un archivo con ese nombre');
-    }
-    const next = { ...entry, name, kind: kindOf(name, entry.mime) };
-    await this.tg.editText(entry.id, encodeFile(next));
-    this.entries.set(entry.id, next);
-    return next;
-  }
-
-  async moveFile(id, rawParent) {
-    const entry = this.getFile(id);
-    const parent = normalizePath(rawParent);
-    if (!this.folderExists(parent)) throw notFound('La carpeta destino no existe');
-    const name = uniqueName(entry.name, this.#takenNames(parent, 'file', entry.id));
-    const next = { ...entry, parent, name };
-    await this.tg.editText(entry.id, encodeFile(next));
-    this.entries.set(entry.id, next);
-    return next;
-  }
-
-  async deleteFile(id) {
-    const entry = this.getFile(id);
-    await this.tg.remove([entry.id]);
-    this.entries.delete(entry.id);
+  stats() {
+    return { ...this.repo.stats(), folders: this.tree.byId.size, sync: { ...this.syncer.state } };
   }
 }

@@ -19,8 +19,14 @@ else
 fi
 
 cd "$APP_DIR"
-echo "==> Instalando dependencias de producción"
-npm ci --omit=dev
+echo "==> Node $(node -v)"
+if node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=5)?0:1)'; then
+  echo "==> Instalando dependencias (SQLite integrado de Node)"
+  npm ci --omit=dev --omit=optional
+else
+  echo "==> Node < 22.5: instalando también better-sqlite3"
+  npm ci --omit=dev
+fi
 
 mkdir -p data
 chown -R "$RUN_USER:$RUN_USER" data

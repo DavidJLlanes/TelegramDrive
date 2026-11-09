@@ -54,3 +54,5 @@
 .upload-row .state { color: var(--muted); font-size: 12px; }
 .upload-row.error .state { color: var(--danger); }
 .upload-row.done .state { color: var(--ok); }
+
+.load-more { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }

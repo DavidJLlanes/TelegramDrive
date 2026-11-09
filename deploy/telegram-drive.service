@@ -10,6 +10,7 @@ Group=www-data
 WorkingDirectory=/var/www/djl.com.es/telegram
 ExecStart=/usr/bin/node server/index.js
 Environment=NODE_ENV=production
+Environment=NODE_NO_WARNINGS=1
 Restart=always
 RestartSec=5
 # Endurecimiento

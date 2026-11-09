@@ -20,6 +20,7 @@ export const config = Object.freeze({
   tmpDir: path.join(dataDir, 'tmp'),
   thumbsDir: path.join(dataDir, 'thumbs'),
   sessionFile: path.join(dataDir, 'telegram.session'),
+  dbFile: path.join(dataDir, 'index.db'),
   port: Number(env.PORT || 3100),
   host: env.HOST || '127.0.0.1',
   basePath: normalizeBase(env.BASE_PATH || '/'),

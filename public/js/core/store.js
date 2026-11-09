@@ -23,6 +23,6 @@ export const prefs = {
 };
 
 export const appState = createStore({
-  path: '/', folders: [], files: [], loading: true, query: '', results: null,
+  path: '/', folders: [], files: [], total: 0, loadingMore: false, loading: true, query: '', results: null,
   view: prefs.view, sort: prefs.sort, stats: null, playingId: null,
 });

@@ -3,9 +3,12 @@
 Tu cuenta de Telegram convertida en una unidad de almacenamiento personal, instalable como **PWA**:
 carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor de fotos con lightbox.
 
-- **Sin base de datos**: el catálogo (carpetas y archivos) se reconstruye siempre desde Telegram. Cada archivo se guarda como
-  documento en tus *Mensajes guardados* con un pie `#tgdrive {"t":"file","p":"/ruta","n":"nombre"}`; las carpetas son mensajes
-  `#tgdrive {"t":"folder",...}`. Renombrar/mover = editar el pie del mensaje.
+- **Telegram es la fuente de verdad; SQLite es solo una caché del índice** (`data/index.db`). Cada archivo se guarda como documento
+  en tus *Mensajes guardados* con un pie `#tgdrive {"v":2,"t":"file","f":"<idCarpeta>","n":"nombre"}`; cada carpeta es un mensaje
+  `#tgdrive {"v":2,"t":"folder","i":"<id>","p":"<idPadre>","n":"nombre"}`. Si borras `index.db`, se reconstruye solo.
+- **Pensado para colecciones grandes**: las carpetas tienen id propio, así que renombrar o mover una carpeta con miles de archivos
+  edita **un único mensaje**. El arranque es **incremental** (solo lee los mensajes nuevos), los listados se **paginan** con
+  scroll infinito (300 por página, orden natural: "Pista 2" antes que "Pista 10") y la cola del reproductor abarca toda la carpeta.
 - **Cuenta real (MTProto)** con [GramJS](https://github.com/gram-js/gramjs): hasta 2 GB por archivo (4 GB con Premium) y descargas
   sin el límite de 20 MB de la Bot API.
 - **Streaming con `Range`**: audio y vídeo se pueden buscar (seek) sin descargar el archivo entero.
@@ -17,8 +20,10 @@ carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor
 server/
   config/        Carga y validación de .env
   middleware/    Sesión (cookie firmada), rate-limit, cabeceras CSP, errores
-  routes/        auth.js · drive.js · serializers.js
-  services/      catalog.js (índice y operaciones) · streamer.js (Range) · uploads.js · thumbnails.js
+  db/            database.js (SQLite: node:sqlite o better-sqlite3) · folder-tree.js · files-repo.js
+  routes/        auth.js · drive.js
+  services/      catalog.js (fachada) · folder-ops.js · file-ops.js · sync.js (incremental/completa)
+                 streamer.js (Range) · uploads.js · thumbnails.js · records.js
   telegram/      service.js (único contacto con GramJS) · codec.js (formato del pie de mensaje)
   utils/         paths, crypto (scrypt/HMAC), errores, tipos de medio
 scripts/         setup.js · login.js · generate-icons.js · check.js
@@ -30,7 +35,7 @@ public/
   js/players/    audio-player · video-player · lightbox · viewer (despacho por tipo)
   js/pwa/        registro del service worker e instalación
 deploy/          nginx-telegram.conf · telegram-drive.service · deploy.sh
-test/            Integración con un Telegram simulado (npm test) y servidor demo (npm run dev:fake)
+test/            Integración con un Telegram simulado (npm test) y servidor demo (npm run dev:fake; FAKE_SEED=650 para 650 pistas)
 ```
 
 Regla de oro: ningún archivo de código supera ~220 líneas (`npm run check` lo verifica).
@@ -61,6 +66,9 @@ Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` d
 
 ## Notas y límites
 
-- Las carpetas vacías persisten (son mensajes propios); las carpetas con contenido existen mientras tengan algo dentro.
-- Si editas/borras mensajes `#tgdrive` a mano en Telegram, pulsa **Sincronizar** en la barra superior.
+- **Primera sincronización**: indexar miles de archivos tarda unos minutos (la barra inferior muestra el progreso). Después, cada
+  arranque solo lee lo nuevo. El botón **Sincronizar** hace una pasada completa y poda lo que hayas borrado a mano en Telegram
+  (si Telegram no devolviera nada, el índice se conserva por seguridad).
+- SQLite: se usa el integrado de Node ≥ 22.5; con Node 20/22.0–22.4 se usa `better-sqlite3` (dependencia opcional).
+- Subir una colección grande: sube la carpeta entera con **Subir → Subir carpeta**; las subidas van de una en una para respetar los límites de Telegram.
 - Los formatos que el navegador no reproduce (p. ej. MKV/HEVC) se pueden descargar desde el propio reproductor.

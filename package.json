@@ -17,7 +17,7 @@
     "login": "node scripts/login.js",
     "icons": "node scripts/generate-icons.js",
     "check": "node scripts/check.js",
-    "test": "node --test test/api.test.js",
+    "test": "node --test test/api.test.js test/sync.test.js",
     "dev:fake": "node test/helpers/dev-fake-server.js"
   },
   "dependencies": {
@@ -30,5 +30,8 @@
   },
   "devDependencies": {
     "sharp": "^0.35.5"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^13.0.3"
   }
 }

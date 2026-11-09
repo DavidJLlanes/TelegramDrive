@@ -2,7 +2,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
 import { appState, prefs } from '../core/store.js';
-import { reload, search, refreshStats } from '../core/drive.js';
+import { reload, search, watchSync } from '../core/drive.js';
 import { onInstallAvailable, promptInstall, isStandalone } from '../pwa/register.js';
 import { createFolder } from './actions.js';
 import { pickFiles } from './uploader.js';
@@ -27,7 +27,7 @@ export function renderTopbar({ onLogout }) {
   onInstallAvailable((available) => { installBtn.hidden = !available || isStandalone(); });
 
   const sortBtn = h('button', { class: 'btn', 'aria-haspopup': 'menu', onclick: (e) => {
-    const make = (label, sort) => ({ label: `${appState.get().sort === sort ? '✓ ' : ''}${label}`, icon: 'list', run: () => { prefs.save('sort', sort); appState.set({ sort }); } });
+    const make = (label, sort) => ({ label: `${appState.get().sort === sort ? '✓ ' : ''}${label}`, icon: 'list', run: () => { prefs.save('sort', sort); appState.set({ sort }); if (appState.get().results === null) reload(); } });
     openMenu(e.currentTarget, [make('Nombre', 'name'), make('Fecha', 'date'), make('Tamaño', 'size')]);
   } }, 'Ordenar');
 
@@ -37,7 +37,7 @@ export function renderTopbar({ onLogout }) {
   ]) }, icon('upload'), h('span', { class: 'hide-mobile' }, 'Subir'));
 
   const refreshBtn = h('button', { class: 'btn btn-icon', 'aria-label': 'Sincronizar con Telegram', onclick: async () => {
-    try { toast('Sincronizando con Telegram…'); await api.refresh(); await reload(); refreshStats(); toast('Sincronizado', { type: 'ok' }); } catch (e) { toastError(e); }
+    try { await api.refresh(); toast('Sincronizando con Telegram…'); watchSync(); } catch (e) { toastError(e); }
   } }, icon('refresh'));
 
   const header = h('header', { class: 'topbar' },

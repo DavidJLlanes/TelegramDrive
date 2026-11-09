@@ -52,13 +52,8 @@ export function ancestorsOf(path) {
   return out;
 }
 
-/** Devuelve un nombre libre: "foto.jpg" -> "foto (1).jpg". */
-export function uniqueName(name, taken) {
-  if (!taken.has(name.toLowerCase())) return name;
+/** Variante numerada de un nombre: ("foto.jpg", 1) -> "foto (1).jpg". */
+export function suffixed(name, n) {
   const dot = name.lastIndexOf('.');
-  const [stem, ext] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ''];
-  for (let n = 1; ; n += 1) {
-    const candidate = `${stem} (${n})${ext}`;
-    if (!taken.has(candidate.toLowerCase())) return candidate;
-  }
+  return dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
 }

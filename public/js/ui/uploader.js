@@ -70,7 +70,7 @@ async function drain() {
   while (queue.length) {
     const job = queue.shift();
     await runJob(job);
-    if (job.row.classList.contains('done')) { ok += 1; if (appState.get().path === job.base) reload(); }
+    if (job.row.classList.contains('done')) ok += 1;
   }
   running = false;
   createdFolders.clear();
