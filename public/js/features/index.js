@@ -2,3 +2,6 @@
 // (vistas con registerView, ganchos con onAppStart…). Para añadir una función basta con importarla aquí.
 import './icons.js';
 import './security/index.js';
+import './filters/index.js';
+import './dragmove/index.js';
+import './shortcuts/index.js';

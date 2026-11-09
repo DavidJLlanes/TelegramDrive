@@ -5,7 +5,7 @@ import { appState, watch } from '../core/store.js';
 import { search, watchSync } from '../core/drive.js';
 import { onInstallAvailable, promptInstall, isStandalone } from '../pwa/register.js';
 import { createFolder } from './actions.js';
-import { pickFiles } from './uploader.js';
+import { pickFiles } from '../features/uploads/index.js';
 import { openMenu } from './menu.js';
 import { toast, toastError } from './toast.js';
 import { offlineTracks } from '../core/offline.js';

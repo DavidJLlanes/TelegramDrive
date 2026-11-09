@@ -67,3 +67,23 @@
 /* Guardar como (móvil): acciones en columna y botones anchos para el pulgar */
 .save-actions { flex-wrap: wrap; }
 @media (max-width: 560px) { .save-actions { flex-direction: column-reverse; } .save-actions .btn { width: 100%; justify-content: center; min-height: 46px; } }
+
+/* Filtros de la lista (features/filters) */
+.fl-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 0 18px; }
+.fl-chips, .fl-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fl-chip { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.fl-chip:hover { color: var(--ink); border-color: var(--muted); }
+.fl-chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.fl-select { font: inherit; font-size: 0.88rem; padding: 6px 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--raised); color: var(--ink); }
+.fl-clear { padding: 6px 10px; }
+
+/* Arrastrar para mover (features/dragmove) */
+.tile.dragging, .sleeve.dragging { opacity: 0.45; }
+.sleeve.drop-target { outline: 3px dashed var(--accent); outline-offset: 3px; transform: scale(1.03); }
+
+/* Atajos de teclado (features/shortcuts) */
+.sc-help { display: grid; gap: 18px; min-width: min(460px, 100%); max-height: 60vh; overflow: auto; }
+.sc-help h3 { margin: 0 0 6px; font: 700 0.95rem var(--font-display); }
+.sc-help dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; align-items: center; }
+.sc-help dd { margin: 0; color: var(--muted); }
+.sc-help kbd { font: 600 0.82rem ui-monospace, monospace; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); white-space: nowrap; }

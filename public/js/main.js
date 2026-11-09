@@ -13,7 +13,7 @@ import { offlineTracks, removeOffline } from './core/offline.js';
 import { clearResume } from './players/resume.js';
 import { renderShell } from './ui/app-shell.js';
 import { renderOfflineHome } from './ui/offline-home.js';
-import { enableDropZone } from './ui/uploader.js';
+import { enableDropZone } from './features/uploads/index.js';
 import { registerServiceWorker } from './pwa/register.js';
 
 const root = document.getElementById('app');

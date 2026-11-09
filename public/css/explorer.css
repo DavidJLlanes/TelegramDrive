@@ -103,6 +103,10 @@
 .upload-row .state { color: var(--muted); font-size: 12.5px; }
 .upload-row.error .state { color: var(--danger); }
 .upload-row.done .state { color: var(--ok); }
+.upload-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
+.upload-foot:empty { display: none; }
+.upload-foot .ok { color: var(--ok); }
+.upload-foot .bad { color: var(--danger); }
 
 @media (max-width: 560px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }

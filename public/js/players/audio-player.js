@@ -8,6 +8,7 @@ import { saveAs } from '../ui/save-as.js';
 import { tint } from '../core/color.js';
 import { createQueue } from './audio-queue.js';
 import { saveResume, clearResume } from './resume.js';
+import { emitAudioReady } from './audio-hooks.js';
 import { toggleQueuePanel, refreshQueuePanel } from '../ui/queue-panel.js';
 
 const queue = createQueue();
@@ -79,6 +80,7 @@ function build() {
   audio.addEventListener('error', () => { ui.sub.textContent = 'No se pudo reproducir este archivo'; });
   setupMediaSession();
   syncModes();
+  emitAudioReady(audio, bar);
 }
 
 const syncPlay = (playing) => {
@@ -189,6 +191,17 @@ export function restoreQueue(files, position, { time = 0, shuffle, repeat } = {}
   go(file, { autoplay: false });
   audio.addEventListener('loadedmetadata', () => { if (time > 0 && time < audio.duration) audio.currentTime = time; }, { once: true });
 }
+
+/** Control desde fuera (atajos de teclado…). */
+export const audioControls = {
+  active: () => Boolean(bar && !bar.hidden && queue.current()),
+  toggle: () => audio && toggle(),
+  next: () => audio && go(queue.next()),
+  prev: () => audio && go(queue.prev()),
+  seekBy: (seconds) => { if (audio?.duration) audio.currentTime = Math.min(Math.max(audio.currentTime + seconds, 0), audio.duration); },
+  volumeBy: (delta) => { audio.volume = Math.min(Math.max(audio.volume + delta, 0), 1); audio.muted = false; ui.vol.value = audio.volume; fill(ui.vol, audio.volume); prefs.save('volume', audio.volume); syncVolume(); },
+  mute: () => { audio.muted = !audio.muted; syncVolume(); },
+};
 
 export const queueTracks = () => queue.ordered;
 export const playAudio = (file, list) => playList(list.length ? list : [file], { startId: file.id });

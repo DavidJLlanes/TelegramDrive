@@ -13,6 +13,7 @@ import { fileMenu, folderMenu } from './actions.js';
 import { sortFiles } from './sorting.js';
 import { fileCover } from './covers.js';
 import { openFile } from '../players/viewer.js';
+import { applyFileFilters, enhanceCard, explorerBars } from '../core/explorer-ext.js';
 
 const checkbox = (key) => h('button', {
   class: 'check', type: 'button', role: 'checkbox', 'aria-checked': String(isSelected(key)), 'aria-label': 'Seleccionar',
@@ -25,7 +26,7 @@ const clickOr = (key, open) => () => (appState.get().selected.length ? toggleSel
 function sleeve(folder) {
   const key = folderKey(folder);
   const open = clickOr(key, () => navigate(folder.path));
-  return tint(h('div', {
+  return enhanceCard(tint(h('div', {
     class: `sleeve${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
@@ -35,13 +36,13 @@ function sleeve(folder) {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
       onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
     }, icon('play')),
-    moreButton(() => folderMenu(folder))), folder.name);
+    moreButton(() => folderMenu(folder))), folder.name), folder, 'folder');
 }
 
 function tile(file, siblings, playingId) {
   const key = fileKey(file);
   const open = clickOr(key, () => openFile(file, siblings));
-  return h('div', {
+  return enhanceCard(h('div', {
     class: `tile kind-${file.kind}${file.id === playingId ? ' playing' : ''}${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'button', 'aria-label': file.name,
     dataset: { id: file.id }, onclick: open, onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, fileMenu(file, siblings)); },
@@ -49,7 +50,7 @@ function tile(file, siblings, playingId) {
   fileCover(file), checkbox(key),
   h('div', { class: 'tile-body' }, h('div', { class: 'tile-name', title: file.name }, file.name),
     h('div', { class: 'tile-meta' }, h('span', {}, file.tags?.artist || formatBytes(file.size)), h('span', {}, formatDate(file.date)))),
-  moreButton(() => fileMenu(file, siblings)));
+  moreButton(() => fileMenu(file, siblings))), file, 'file');
 }
 
 function emptyState(s, searching) {
@@ -68,9 +69,12 @@ export function renderExplorer(container) {
     return;
   }
   const searching = s.results !== null;
-  const files = searching ? sortFiles(s.results, s.sort) : s.files; // en carpetas, el servidor ya ordena
+  const all = searching ? sortFiles(s.results, s.sort) : s.files; // en carpetas, el servidor ya ordena
+  const files = applyFileFilters(all, s);
   const folders = searching ? [] : s.folders;
-  if (!files.length && !folders.length) { container.append(emptyState(s, searching)); return; }
+  if (!all.length && !folders.length) { container.append(emptyState(s, searching)); return; }
+  container.append(...explorerBars(s));
+  if (!files.length && !folders.length) { container.append(h('div', { class: 'empty' }, icon('search'), h('strong', {}, 'Nada coincide con los filtros'), h('span', {}, 'Cambia o quita algún filtro para ver más archivos.'))); return; }
 
   const both = folders.length > 0 && files.length > 0;
   if (folders.length) {
