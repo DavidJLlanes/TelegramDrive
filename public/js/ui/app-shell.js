@@ -1,5 +1,5 @@
 import { h } from '../core/dom.js';
-import { appState } from '../core/store.js';
+import { appState, watch } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
 import { renderTopbar } from './topbar.js';
 import { createSidebar, createMobileNav } from './sidebar.js';
@@ -38,6 +38,6 @@ export function renderShell(root, { onLogout }) {
     render(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };
-  appState.subscribe(paint);
+  watch(appState, explorer, paint);
   paint(appState.get());
 }

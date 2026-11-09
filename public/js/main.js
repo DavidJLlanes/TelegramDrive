@@ -6,6 +6,8 @@ import { loadTrash } from './core/trash.js';
 import { resumeSession } from './players/session.js';
 import { onRoute, currentRoute } from './core/router.js';
 import { renderLogin } from './ui/login.js';
+import { offlineTracks, removeOffline } from './core/offline.js';
+import { clearResume } from './players/resume.js';
 import { renderShell } from './ui/app-shell.js';
 import { renderOfflineHome } from './ui/offline-home.js';
 import { enableDropZone } from './ui/uploader.js';
@@ -19,8 +21,12 @@ function showLogin() {
   renderLogin(root, start);
 }
 
-async function logout() {
+async function logout({ wipe = false } = {}) {
   await api.logout().catch(() => {});
+  if (wipe) {
+    await removeOffline(offlineTracks().map((t) => t.id)).catch(() => {});
+    clearResume();
+  }
   location.reload();
 }
 

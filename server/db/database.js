@@ -25,6 +25,10 @@ export function openDatabase(file) {
   const db = d.open(file);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;');
   const version = db.prepare('PRAGMA user_version').get().user_version;
+  if (version > SCHEMA_VERSION) {
+    db.close();
+    throw new Error(`La base de datos (${file}) es de una versión más nueva de la aplicación. Bórrala para reconstruirla desde Telegram o actualiza el código.`);
+  }
   if (version < SCHEMA_VERSION) {
     migrate(db);
     db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);

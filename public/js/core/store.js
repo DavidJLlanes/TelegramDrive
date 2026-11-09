@@ -12,6 +12,17 @@ export function createStore(initial) {
   };
 }
 
+/** Suscribe `fn` mientras `el` siga en la página: al volver a pintar la aplicación (p. ej. tras volver a entrar) se libera sola. */
+export function watch(store, el, fn) {
+  let seen = false;
+  const off = store.subscribe((s) => {
+    if (el.isConnected) seen = true;
+    else if (seen) { off(); return; }
+    fn(s);
+  });
+  return off;
+}
+
 const read = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* modo privado */ } };
 

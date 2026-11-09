@@ -2,7 +2,7 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
-import { appState } from '../core/store.js';
+import { appState, watch } from '../core/store.js';
 import { reload, refreshStats } from '../core/drive.js';
 import { pickFolder } from './modal.js';
 import { downloadZip } from './download.js';
@@ -60,7 +60,7 @@ export function createSelectionBar() {
     btn('Añadir a lista', 'playlist', () => addToPlaylist(split(appState.get()).files.filter((f) => f.kind === 'audio').map((f) => f.id))),
     btn('Papelera', 'trash', () => bulk('trash'), 'btn-danger'));
   const paint = (s) => { bar.hidden = s.selected.length === 0; count.textContent = `${s.selected.length} seleccionado${s.selected.length === 1 ? '' : 's'}`; };
-  appState.subscribe(paint);
+  watch(appState, bar, paint);
   paint(appState.get());
   return bar;
 }

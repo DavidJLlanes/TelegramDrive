@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { Router } from 'express';
 import { config } from '../config/index.js';
 import { verifyPassword } from '../utils/crypto.js';
@@ -10,7 +12,10 @@ export function authRoutes({ tg }) {
   const router = Router();
   const limiter = rateLimit({ windowMs: 15 * 60_000, max: 10 });
   const { totpSecret } = config.auth;
-  let lastStep = 0; // un código TOTP solo vale una vez
+  // un código TOTP solo vale una vez; el último paso usado se guarda en disco para que reiniciar el servicio no permita reutilizarlo
+  const stepFile = path.join(config.dataDir, 'totp-last');
+  let lastStep = 0;
+  try { lastStep = Number(fs.readFileSync(stepFile, 'utf8')) || 0; } catch { /* primera vez */ }
 
   router.get('/status', (req, res) => {
     res.json({ authenticated: isAuthenticated(req), telegram: tg.connected, totp: Boolean(totpSecret) });
@@ -24,6 +29,7 @@ export function authRoutes({ tg }) {
       const step = verifyTotp(totpSecret, req.body?.code);
       if (step === null || step <= lastStep) return next(new HttpError(401, 'Código incorrecto o ya usado'));
       lastStep = step;
+      try { fs.writeFileSync(stepFile, String(step), { mode: 0o600 }); } catch { /* el límite en memoria sigue activo */ }
     }
     limiter.reset(req.ip); // un acceso correcto no cuenta para el límite
     issueSession(res, req.secure);

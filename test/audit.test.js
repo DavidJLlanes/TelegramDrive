@@ -47,3 +47,28 @@ test('Range inválido no provoca error 500', async () => {
     assert.ok(r.res.status < 500, `${range} -> ${r.res.status}`);
   }
 });
+
+test('papelera: solo se borra lo que está en ella', async () => {
+  await call('POST', '/api/folders', { parent: '/', name: 'C' });
+  const live = h.tg.addFile({ folder: h.catalog.tree.resolve('/C'), name: 'viva.txt', bytes: Buffer.from('hola') });
+  await call('POST', '/api/refresh'); await h.waitSync();
+  const r = await call('POST', '/api/trash/delete', { files: [live.id], folders: [h.catalog.tree.resolve('/C')] });
+  assert.equal(r.json.deleted, 0);
+  assert.equal((await call('GET', `/api/files/${live.id}/content`)).res.status, 200);
+});
+
+test('el reetiquetado masivo permite vaciar un campo, y quitar una corrección desde otro dispositivo se refleja al sincronizar', async () => {
+  await call('POST', '/api/folders', { parent: '/', name: 'D' });
+  const song = h.tg.addFile({ folder: h.catalog.tree.resolve('/D'), name: 'z.mp3', bytes: Buffer.alloc(3000, 3) });
+  await call('POST', '/api/refresh'); await h.waitSync();
+  await call('PATCH', `/api/files/${song.id}/tags`, { genre: 'Pop', artist: 'Quien', album: 'Cual' });
+  const r = await call('POST', '/api/library/retag', { filter: { artist: 'Quien' }, set: { genre: '' } });
+  assert.equal(r.res.status, 202);
+  for (let i = 0; i < 100 && h.catalog.retag.state().running; i += 1) await new Promise((ok) => setTimeout(ok, 50));
+  assert.equal((await call('GET', '/api/search?q=cual')).json.files[0].tags.genre, '');
+  await call('PATCH', `/api/files/${song.id}/tags`, { album: 'Temporal' });
+  assert.equal((await call('GET', '/api/search?q=temporal')).json.files.length, 1);
+  h.tg.messages.get(song.id).message = h.tg.messages.get(song.id).message.replace(/,"m":\{.*\}\}$/, '}');
+  await call('POST', '/api/refresh'); await h.waitSync();
+  assert.equal((await call('GET', '/api/search?q=temporal')).json.files.length, 0);
+});

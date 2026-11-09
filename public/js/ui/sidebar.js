@@ -1,6 +1,6 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { appState } from '../core/store.js';
+import { appState, watch } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
 import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
@@ -60,7 +60,7 @@ export function createMobileNav() {
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
       chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
   };
-  appState.subscribe(paint);
+  watch(appState, el, paint);
   paint(appState.get());
   return el;
 }
@@ -85,7 +85,7 @@ export function createSidebar() {
       h('strong', {}, s.stats ? formatBytes(s.stats.bytes) : '—'),
       h('span', {}, sync?.running ? `Sincronizando: ${sync.scanned} mensajes` : s.stats ? `${s.stats.files} archivos en Telegram` : ''));
   };
-  appState.subscribe(paint);
+  watch(appState, el, paint);
   paint(appState.get());
   return el;
 }

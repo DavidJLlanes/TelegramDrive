@@ -1,13 +1,14 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
-import { appState } from '../core/store.js';
+import { appState, watch } from '../core/store.js';
 import { search, watchSync } from '../core/drive.js';
 import { onInstallAvailable, promptInstall, isStandalone } from '../pwa/register.js';
 import { createFolder } from './actions.js';
 import { pickFiles } from './uploader.js';
 import { openMenu } from './menu.js';
 import { toast, toastError } from './toast.js';
+import { offlineTracks } from '../core/offline.js';
 import { manageShares } from './share-dialog.js';
 
 export function renderTopbar({ onLogout }) {
@@ -26,11 +27,11 @@ export function renderTopbar({ onLogout }) {
     { label: 'Enlaces compartidos', icon: 'link', run: manageShares },
     ...(canInstall ? [{ label: 'Instalar aplicación', icon: 'install', run: promptInstall }] : []),
     'sep',
-    { label: 'Cerrar sesión', icon: 'logout', run: onLogout },
+    { label: 'Cerrar sesión', icon: 'logout', run: () => onLogout() },
+    ...(offlineTracks().length ? [{ label: 'Cerrar sesión y borrar música guardada', icon: 'trash', danger: true, run: () => onLogout({ wipe: true }) }] : []),
   ]);
 
-  appState.subscribe((s) => { if (s.query === '' && searchInput.value) searchInput.value = ''; });
-  return h('header', { class: 'topbar' },
+  const header = h('header', { class: 'topbar' },
     h('span', { class: 'brand-mark' }, icon('plane')),
     h('div', { class: 'search' }, icon('search'), searchInput),
     h('div', { class: 'toolbar-spacer' }),
@@ -40,4 +41,6 @@ export function renderTopbar({ onLogout }) {
       { label: 'Subir carpeta', icon: 'folderPlus', run: () => pickFiles({ directory: true }) },
     ]) }, icon('upload'), 'Subir'),
     h('button', { class: 'btn btn-icon btn-ghost', 'aria-label': 'Más opciones', 'aria-haspopup': 'menu', onclick: overflow }, icon('more')));
+  watch(appState, header, (s) => { if (s.query === '' && searchInput.value) searchInput.value = ''; });
+  return header;
 }

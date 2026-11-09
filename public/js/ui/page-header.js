@@ -1,6 +1,6 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { appState, prefs } from '../core/store.js';
+import { appState, prefs, watch } from '../core/store.js';
 import { reload } from '../core/drive.js';
 import { navigate } from '../core/router.js';
 import { playFolder } from '../core/playback.js';
@@ -77,7 +77,7 @@ export function createPageHeader() {
     const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
     el.replaceChildren(...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
   };
-  appState.subscribe(paint);
+  watch(appState, el, paint);
   paint(appState.get());
   return el;
 }

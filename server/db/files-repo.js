@@ -11,13 +11,14 @@ export class FilesRepo {
 
   upsert(r) {
     const ovr = r.ovr && Object.keys(r.ovr).length ? JSON.stringify(r.ovr) : '';
+    const had = r.kind === 'audio' && this.db.stmt('SELECT ovr FROM files WHERE msg_id = ?').get(r.msgId)?.ovr;
     this.db.stmt(`INSERT INTO files (msg_id, folder, name, key, size, mime, kind, date, thumb, trashed, ovr)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(msg_id) DO UPDATE SET folder = excluded.folder, name = excluded.name, key = excluded.key,
         size = excluded.size, mime = excluded.mime, kind = excluded.kind, date = excluded.date,
         thumb = MAX(excluded.thumb, files.thumb), trashed = excluded.trashed, ovr = excluded.ovr`) // la portada extraída de las etiquetas se conserva
       .run(r.msgId, r.folder, r.name, searchKey(r.name), r.size, r.mime, r.kind, r.date, r.thumb ? 1 : 0, r.trashed ?? 0, ovr);
-    if (ovr) this.reapply(r.msgId);
+    if (ovr || had) this.reapply(r.msgId); // también si se quitó una corrección desde otro dispositivo
   }
 
   get(id) { return this.db.stmt(`SELECT ${COLS}, hidden FROM files WHERE msg_id = ?`).get(id); }

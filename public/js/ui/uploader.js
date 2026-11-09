@@ -79,7 +79,8 @@ async function drain() {
 }
 
 export function enqueueUploads(files) {
-  const base = appState.get().path;
+  const { path: base, section } = appState.get();
+  if (section !== 'files') { toast('Abre una carpeta para subir archivos'); return; }
   const items = [...files].filter((f) => f.size > 0 || f.name);
   if (!items.length) return;
   ensurePanel();
@@ -88,6 +89,7 @@ export function enqueueUploads(files) {
 }
 
 export function pickFiles({ directory = false } = {}) {
+  if (appState.get().section !== 'files') { toast('Abre una carpeta para subir archivos'); return; }
   const input = h('input', { type: 'file', multiple: true, hidden: true });
   if (directory) input.setAttribute('webkitdirectory', '');
   input.addEventListener('change', () => { enqueueUploads(input.files); input.remove(); });

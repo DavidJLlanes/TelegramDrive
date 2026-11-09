@@ -72,9 +72,12 @@ export class TrashOps {
     return { folders, files, days: TRASH_DAYS };
   }
 
+  /** Solo borra lo que está en la papelera: un id de algo que no se ha enviado a ella se ignora. */
   async destroy({ files = [], folders = [] }) {
-    let count = await this.fileOps.destroy(files.map(Number));
-    for (const id of folders) count += (await this.folderOps.destroy(id)).deleted;
+    const trashedFiles = files.map(Number).filter((id) => this.files.get(id)?.trashed > 0);
+    const trashedFolders = folders.filter((id) => typeof id === 'string' && this.tree.get(id)?.trashed > 0);
+    let count = await this.fileOps.destroy(trashedFiles);
+    for (const id of trashedFolders) count += (await this.folderOps.destroy(id)).deleted;
     return { deleted: count };
   }
 
