@@ -7,6 +7,7 @@ import { reload, refreshStats } from '../core/drive.js';
 import { pickFolder } from './modal.js';
 import { downloadZip } from './download.js';
 import { addToPlaylist } from './playlist-picker.js';
+import { editTagsBulk } from './tag-editor.js';
 import { toast, toastError } from './toast.js';
 
 export const fileKey = (f) => `f:${f.id}`;
@@ -57,6 +58,7 @@ export function createSelectionBar() {
     h('span', { class: 'toolbar-spacer' }),
     btn('Mover', 'move', async () => { const to = await pickFolder({ title: 'Mover selección' }); if (to !== null) bulk('move', to); }),
     btn('ZIP', 'archive', zip),
+    btn('Etiquetas', 'tag', async () => { const picked = split(appState.get()); await editTagsBulk(picked); clearSelection(); }),
     btn('Añadir a lista', 'playlist', () => addToPlaylist(split(appState.get()).files.filter((f) => f.kind === 'audio').map((f) => f.id))),
     btn('Papelera', 'trash', () => bulk('trash'), 'btn-danger'));
   const paint = (s) => { bar.hidden = s.selected.length === 0; count.textContent = `${s.selected.length} seleccionado${s.selected.length === 1 ? '' : 's'}`; };

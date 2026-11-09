@@ -61,3 +61,38 @@ export async function editArtistName(name) {
   });
   if (values?.band && values.band !== name) await runRetag({ artist: name }, { band: values.band }, () => navigateLib('artist', values.band));
 }
+
+const BULK_FIELDS = [['artist', 'Artista'], ['band', 'Artista del álbum'], ['album', 'Álbum'], ['genre', 'Género'], ['year', 'Año', 'number']];
+const MIXED = 'Varios valores: déjalo vacío para no cambiarlo';
+
+/**
+ * Edita las etiquetas de varias canciones a la vez: archivos elegidos con el check y/o carpetas (con sus subcarpetas).
+ * Cada campo muestra el valor común; si difieren queda vacío y no se toca. Vaciar un campo con valor común lo borra.
+ */
+export async function editTagsBulk({ files = [], folders = [] }) {
+  const found = files.filter((f) => f.kind === 'audio');
+  try { for (const path of folders) found.push(...(await api.queue(path, true)).files); } catch (err) { toastError(err); return; }
+  const tracks = [...new Map(found.map((t) => [t.id, t])).values()];
+  if (!tracks.length) { toast('No hay música en la selección'); return; }
+  if (tracks.length > 5000) { toast('Selecciona como máximo 5.000 canciones a la vez'); return; }
+
+  const initial = {};
+  const mixed = new Set();
+  for (const [key] of BULK_FIELDS) {
+    const values = new Set(tracks.map((t) => String(t.tags?.[key] || '')));
+    if (values.size === 1) initial[key] = [...values][0]; else { initial[key] = ''; mixed.add(key); }
+  }
+  const values = await formDialog({
+    title: `Editar etiquetas de ${tracks.length.toLocaleString('es-ES')} ${tracks.length === 1 ? 'canción' : 'canciones'}`,
+    confirmLabel: 'Aplicar',
+    fields: BULK_FIELDS.map(([name, label, type]) => ({ name, label, type, value: initial[name], placeholder: mixed.has(name) ? MIXED : '' })),
+  });
+  if (!values) return;
+  const set = Object.fromEntries(BULK_FIELDS.map(([k]) => k).filter((k) => values[k] !== initial[k]).map((k) => [k, values[k]]));
+  if (!Object.keys(set).length) return;
+  try {
+    await api.retagIds(tracks.map((t) => t.id), set);
+    toast('Actualizando etiquetas… puedes seguir usando la aplicación.');
+    watchSync();
+  } catch (err) { toastError(err.status === 409 ? new Error('Ya hay un cambio de etiquetas en curso') : err); }
+}

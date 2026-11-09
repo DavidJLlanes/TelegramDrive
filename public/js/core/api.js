@@ -65,6 +65,7 @@ export const api = {
   revokeShare: (token) => request(`shares/${token}`, { method: 'DELETE' }),
   setTags: (id, patch) => request(`files/${id}/tags`, { method: 'PATCH', body: patch }),
   retag: (filter, set) => request('library/retag', { method: 'POST', body: { filter, set } }),
+  retagIds: (ids, set) => request('library/retag', { method: 'POST', body: { ids, set } }),
 };
 
 export const contentUrl = (id, { download = false } = {}) =>

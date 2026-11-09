@@ -8,6 +8,7 @@ import { toast, toastError } from './toast.js';
 import { openFile } from '../players/viewer.js';
 import { download, downloadZip } from './download.js';
 import { playFolder } from '../core/playback.js';
+import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
 
@@ -57,6 +58,7 @@ export function folderMenu(folder) {
     { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
     { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
     'sep',
+    { label: 'Editar etiquetas de la carpeta…', icon: 'tag', run: () => editTagsBulk({ folders: [folder.path] }) },
     { label: 'Descargar como ZIP', icon: 'archive', run: () => downloadZip({ path: folder.path }) },
     { label: 'Compartir como ZIP…', icon: 'share', run: () => shareItem({ kind: 'folder', target: folder.path, label: folder.name }) },
     'sep',

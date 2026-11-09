@@ -72,3 +72,43 @@ test('el reetiquetado masivo permite vaciar un campo, y quitar una corrección d
   await call('POST', '/api/refresh'); await h.waitSync();
   assert.equal((await call('GET', '/api/search?q=temporal')).json.files.length, 0);
 });
+
+// --- orden de reproducción por carpeta y edición de etiquetas por selección ---
+import { mp3WithTags } from './helpers/id3.js';
+
+const queueNames = async (path, recursive = true) => (await call('GET', `/api/queue?path=${encodeURIComponent(path)}&recursive=${recursive ? 1 : 0}`)).json.files.map((f) => f.name);
+
+test('cola de una carpeta: etiquetas de pista, si no el número del nombre, si no aleatorio; subcarpetas después', async () => {
+  for (const [parent, name] of [['/', 'Q'], ['/Q', 'Con etiquetas'], ['/Q', 'Con numeros'], ['/Q', 'Sin nada'], ['/Q/Con etiquetas', 'Sub']]) await call('POST', '/api/folders', { parent, name });
+  const at = (p) => h.catalog.tree.resolve(p);
+  const add = (p, name, tags) => h.tg.addFile({ folder: at(p), name, bytes: mp3WithTags(tags ?? { title: name }) });
+  add('/Q/Con etiquetas', 'b.mp3', { title: 'B', track: '2' }); add('/Q/Con etiquetas', 'a.mp3', { title: 'A', track: '1' }); add('/Q/Con etiquetas', 'z-sin-pista.mp3', { title: 'Z' });
+  add('/Q/Con etiquetas/Sub', 'sub1.mp3', { title: 'S', track: '1' });
+  for (const n of ['10 - diez.mp3', '2 - dos.mp3', 'sin numero.mp3', '1 - uno.mp3']) add('/Q/Con numeros', n, { title: n });
+  for (const n of ['uno.mp3', 'dos.mp3', 'tres.mp3', 'cuatro.mp3', 'cinco.mp3', 'seis.mp3', 'siete.mp3', 'ocho.mp3']) add('/Q/Sin nada', n, { title: n });
+  await call('POST', '/api/refresh'); await h.waitSync(); await h.catalog.tagger.promise;
+
+  assert.deepEqual(await queueNames('/Q/Con etiquetas'), ['a.mp3', 'b.mp3', 'z-sin-pista.mp3', 'sub1.mp3']);   // sub1 = subcarpeta, después
+  assert.deepEqual(await queueNames('/Q/Con etiquetas', false), ['a.mp3', 'b.mp3', 'z-sin-pista.mp3']);
+  assert.deepEqual(await queueNames('/Q/Con numeros'), ['1 - uno.mp3', '2 - dos.mp3', '10 - diez.mp3', 'sin numero.mp3']);
+  const alphabetical = ['cinco.mp3', 'cuatro.mp3', 'dos.mp3', 'ocho.mp3', 'seis.mp3', 'siete.mp3', 'tres.mp3', 'uno.mp3'];
+  const runs = new Set();
+  for (let i = 0; i < 6; i += 1) runs.add((await queueNames('/Q/Sin nada')).join());
+  assert.ok(runs.size > 1 || ![...runs].includes(alphabetical.join()), 'sin etiquetas ni números debe ser aleatorio');
+  // toda la raíz: la carpeta primero y después cada subcarpeta (en orden de nombre) con su propio criterio
+  const all = await queueNames('/Q');
+  assert.deepEqual(all.slice(0, 4), ['a.mp3', 'b.mp3', 'z-sin-pista.mp3', 'sub1.mp3']);
+  assert.deepEqual(all.slice(4, 8), ['1 - uno.mp3', '2 - dos.mp3', '10 - diez.mp3', 'sin numero.mp3']);
+  assert.equal(all.length, 16);
+});
+
+test('edición masiva de etiquetas por selección de archivos', async () => {
+  const q = (await call('GET', '/api/queue?path=/Q/Con%20numeros&recursive=0')).json.files;
+  const r = await call('POST', '/api/library/retag', { ids: q.map((f) => f.id), set: { album: 'Recopilatorio', genre: 'Rock', year: 1999 } });
+  assert.equal(r.res.status, 202);
+  for (let i = 0; i < 100 && h.catalog.retag.state().running; i += 1) await new Promise((ok) => setTimeout(ok, 50));
+  const tracks = (await call('GET', '/api/library/tracks?album=Recopilatorio')).json.files;
+  assert.equal(tracks.length, 4);
+  assert.ok(tracks.every((t) => t.tags.genre === 'Rock' && t.tags.year === 1999));
+  assert.equal((await call('POST', '/api/library/retag', { ids: [], set: {} })).res.status, 400);
+});

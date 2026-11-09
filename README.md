@@ -20,6 +20,9 @@ carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor
   pistas, edición de etiquetas y fusión de artistas, y música guardada en el dispositivo para escuchar sin red.
 - **Gestión**: selección múltiple (mover, ZIP, papelera, añadir a lista), descarga de carpetas en ZIP en streaming, **papelera de 30 días**
   (eliminar ya no borra al instante), enlaces temporales para compartir un archivo o una carpeta y aviso si Telegram deja de responder.
+- **Orden de reproducción de una carpeta**: ▶ reproduce la carpeta y sus subcarpetas (primero la propia, luego cada subcarpeta por nombre).
+  Dentro de cada carpeta: por nº de pista de las etiquetas; si no hay, por el número del nombre del archivo; si tampoco, aleatorio.
+- **Edición masiva de etiquetas**: marca archivos con el check (y/o carpetas) → **Etiquetas**, o el menú de una carpeta → *Editar etiquetas de la carpeta*.
 - **Streaming con `Range`**: audio y vídeo se pueden buscar (seek) sin descargar el archivo entero.
 - **Frontend sin build**: HTML + CSS + módulos ES nativos. Cero dependencias en el navegador.
 

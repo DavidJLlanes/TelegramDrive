@@ -37,8 +37,12 @@ export class Retag {
 
   /** Cambia las etiquetas de todas las canciones de `filter` ({artist, album, genre}) en segundo plano. */
   start(filter, set) {
+    return this.startRows(this.library.repo.tracks({ band: filter.artist, album: filter.album, genre: filter.genre }), set, filter);
+  }
+
+  /** Aplica `set` a una lista concreta de canciones (selección o carpeta). */
+  startRows(rows, set, filter = {}) {
     if (this.job.running) return false;
-    const rows = this.library.repo.tracks({ band: filter.artist, album: filter.album, genre: filter.genre });
     this.job = { running: true, done: 0, total: rows.length, error: null };
     const renamesBand = set.band !== undefined && filter.artist !== undefined;
     (async () => {

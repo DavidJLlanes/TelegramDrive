@@ -28,14 +28,17 @@ export function libraryRoutes({ catalog }) {
     res.json(catalog.toDto(row));
   }));
   router.post('/library/retag', (req, res) => {
-    const { filter, set } = req.body ?? {};
+    const { filter, set, ids } = req.body ?? {};
     const where = { artist: text(filter?.artist), album: text(filter?.album), genre: text(filter?.genre) };
+    const byIds = Array.isArray(ids);
     // un valor vacío quita la corrección de ese campo
     const cleared = Object.fromEntries(TAG_KEYS.filter((k) => set?.[k] === '').map((k) => [k, '']));
     const changes = { ...cleanOverrides(set ?? {}), ...cleared };
-    if (!Object.values(where).some(Boolean)) throw badRequest('Indica artista, álbum o género a modificar');
+    if (!byIds && !Object.values(where).some(Boolean)) throw badRequest('Indica artista, álbum o género a modificar, o una lista de canciones');
     if (!Object.keys(changes).length) throw badRequest('No hay ningún cambio válido que aplicar');
-    const started = catalog.retag.start(where, changes);
+    const started = byIds
+      ? catalog.retag.startRows(catalog.repo.byIds(ids.map(Number).filter(Number.isInteger).slice(0, 5000)).filter((r) => r.kind === 'audio'), changes)
+      : catalog.retag.start(where, changes);
     res.status(started ? 202 : 409).json(catalog.retag.state());
   });
   return router;
