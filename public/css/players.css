@@ -89,3 +89,14 @@ body.has-player { --player-h: 116px; }
   .audio-volume .hide-mobile { display: none; }
   .audio-bar { grid-template-areas: "info controls" "seek volume"; }
 }
+
+/* Móviles estrechos (≤480 px): tres filas (título · controles · progreso); el volumen se deja al del dispositivo. */
+@media (max-width: 480px) {
+  body.has-player { --player-h: 176px; }
+  .audio-bar { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "info volume" "controls controls" "seek seek"; }
+  .audio-controls { justify-content: space-between; padding: 0 4px; }
+  .audio-volume .range { display: none; }
+}
+.queue-head { flex-wrap: wrap; }
+.queue-head .btn { white-space: nowrap; flex: none; }
+.queue-head strong { flex: 1 1 150px; min-width: 0; }
