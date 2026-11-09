@@ -138,3 +138,16 @@ test('las carpetas indican si contienen música, también en subcarpetas', async
   const again = (await call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Vacia');
   assert.equal(again.music, true);
 });
+
+test('al cambiar el chat de almacenamiento el índice se reconstruye desde cero', async () => {
+  const before = h.catalog.stats().files;
+  assert.ok(before > 0);
+  h.tg.chat = '-100999';            // otro chat distinto, sin mensajes
+  await h.catalog.syncer.start({});
+  await h.waitSync();
+  assert.equal(h.catalog.stats().files, 0);
+  h.tg.chat = 'me';
+  await h.catalog.syncer.start({});
+  await h.waitSync();
+  assert.equal(h.catalog.stats().files, before);
+});

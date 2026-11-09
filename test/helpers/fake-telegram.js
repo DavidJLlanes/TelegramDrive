@@ -7,6 +7,8 @@ export class FakeTelegram {
     this.messages = new Map();
     this.nextId = 1;
     this.connected = true;
+    this.chat = 'me';
+    this.homeChat = 'me'; // los mensajes del simulador viven en este chat; otro chat se ve vacío
     this.edits = 0;
     this.removeCalls = 0;
   }
@@ -32,7 +34,7 @@ export class FakeTelegram {
   }
 
   async *iterTagged({ minId = 0 } = {}) {
-    const list = [...this.messages.values()].filter((m) => m.id > minId && m.message.startsWith(TAG));
+    const list = this.chat !== this.homeChat ? [] : [...this.messages.values()].filter((m) => m.id > minId && m.message.startsWith(TAG));
     for (const m of list.sort((a, b) => b.id - a.id)) yield m;
   }
 

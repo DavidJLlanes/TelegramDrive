@@ -24,8 +24,11 @@ export class Syncer {
   }
 
   async #run(forceFull) {
-    const last = Number(this.db.meta.get('last_msg_id') || 0);
-    const full = forceFull || !last;
+    // Si cambia TG_CHAT, los ids de mensaje del chat anterior no sirven: sincronización completa y limpieza del índice.
+    const chat = String(this.tg.chat ?? 'me');
+    const chatChanged = (this.db.meta.get('chat') ?? 'me') !== chat;
+    const last = chatChanged ? 0 : Number(this.db.meta.get('last_msg_id') || 0);
+    const full = forceFull || chatChanged || !last;
     this.state = { running: true, scanned: 0, full, error: null };
 
     const seen = new Set();
@@ -51,8 +54,10 @@ export class Syncer {
     }
     flush();
 
-    if (full) this.#prune(seen, maxId);
+    if (full) this.#prune(seen, chatChanged ? Infinity : maxId, chatChanged);
     this.db.meta.set('last_msg_id', maxId);
+    this.db.meta.set('chat', chat);
+    if (chatChanged) console.log(`[sync] el chat de almacenamiento cambió a ${chat}: índice reconstruido`);
     console.log(`[sync] ${full ? 'completa' : 'incremental'}: ${this.state.scanned} mensajes revisados`);
   }
 
@@ -68,9 +73,9 @@ export class Syncer {
   }
 
   /** Borra del índice lo que ya no está en Telegram. Solo ids <= maxId: no toca subidas hechas durante el escaneo. */
-  #prune(seen, maxId) {
+  #prune(seen, maxId, force = false) {
     const known = this.files.allIds().length + this.tree.byId.size + this.playlists.allMsgIds().length;
-    if (!seen.size && known) {
+    if (!seen.size && known && !force) {
       console.warn('[sync] Telegram no devolvió ningún elemento; se conserva el índice por seguridad');
       return;
     }
