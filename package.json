@@ -15,6 +15,7 @@
     "dev": "node --watch server/index.js",
     "setup": "node scripts/setup.js",
     "login": "node scripts/login.js",
+    "login:qr": "node scripts/login-qr.js",
     "icons": "node scripts/generate-icons.js",
     "totp": "node scripts/totp.js",
     "check": "node scripts/check.js",
@@ -28,6 +29,7 @@
     "express": "^4.21.0",
     "mime-types": "^2.1.35",
     "music-metadata": "^12.3.5",
+    "qrcode-terminal": "^0.12.0",
     "telegram": "^2.26.22",
     "yazl": "^3.3.1"
   },

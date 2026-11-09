@@ -60,6 +60,7 @@ Requisitos: Node.js ≥ 20 y credenciales de API en <https://my.telegram.org> �
 npm ci --omit=dev
 npm run setup     # API ID/HASH, BASE_PATH y contraseña web  -> .env
 npm run login     # inicia sesión en Telegram (teléfono + código + 2FA) -> data/telegram.session
+npm run login:qr  # alternativa si el código no llega: escanea un QR desde Telegram > Ajustes > Dispositivos
 npm start
 ```
 
