@@ -46,7 +46,7 @@ function tools(s) {
     class: 'btn btn-icon', 'aria-label': s.view === 'grid' ? 'Ver como lista' : 'Ver como cuadrícula',
     onclick: () => { const view = appState.get().view === 'grid' ? 'list' : 'grid'; prefs.save('view', view); appState.set({ view }); },
   }, icon(s.view === 'grid' ? 'list' : 'grid'));
-  const mayHaveMusic = s.results === null && (s.folders.length > 0 || s.files.some((f) => f.kind === 'audio'));
+  const mayHaveMusic = s.results === null && (s.folders.some((f) => f.music !== false) || s.files.some((f) => f.kind === 'audio'));
   return h('div', { class: 'page-tools' }, mayHaveMusic ? playButtons((o) => playFolder(s.path, o)) : null, sortBtn, viewBtn);
 }
 

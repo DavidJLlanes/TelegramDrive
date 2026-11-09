@@ -55,8 +55,10 @@ export function fileMenu(file, siblings) {
 export function folderMenu(folder) {
   return [
     { label: 'Abrir', icon: 'folder', run: () => navigate(folder.path) },
-    { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
-    { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
+    ...(folder.music === false ? [] : [
+      { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
+      { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
+    ]),
     'sep',
     { label: 'Editar etiquetas de la carpeta…', icon: 'tag', run: () => editTagsBulk({ folders: [folder.path] }) },
     { label: 'Descargar como ZIP', icon: 'archive', run: () => downloadZip({ path: folder.path }) },

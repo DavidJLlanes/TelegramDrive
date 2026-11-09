@@ -31,7 +31,7 @@ function sleeve(folder) {
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
   }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'),
     checkbox(key),
-    h('button', {
+    folder.music === false ? null : h('button', {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
       onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
     }, icon('play')),

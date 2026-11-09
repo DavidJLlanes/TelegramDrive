@@ -115,6 +115,15 @@ export class FilesRepo {
     return out;
   }
 
+  /** ¿Hay algún audio visible en alguna de estas carpetas? */
+  hasAudio(folderIds) {
+    let found = false;
+    inChunks(folderIds, (c) => {
+      if (!found) found = Boolean(this.db.stmt(`SELECT 1 AS x FROM files WHERE kind = 'audio' AND hidden = 0 AND folder IN (${marks(c.length)}) LIMIT 1`).get(...c));
+    });
+    return found;
+  }
+
   stats() {
     const row = this.db.stmt('SELECT COUNT(*) AS files, COALESCE(SUM(size), 0) AS bytes FROM files WHERE hidden = 0').get();
     return { files: row.files, bytes: row.bytes };

@@ -120,3 +120,21 @@ test('un error de subida se devuelve completo aunque el archivo sea grande (el c
   const r = await call('POST', '/api/files', body);
   assert.ok(r.res.status >= 400 && r.res.status < 500, String(r.res.status));
 });
+
+test('las carpetas indican si contienen música, también en subcarpetas', async () => {
+  await call('POST', '/api/folders', { parent: '/', name: 'Vacia' });
+  await call('POST', '/api/folders', { parent: '/', name: 'ConMusica' });
+  h.tg.addFile({ folder: h.catalog.tree.resolve('/ConMusica'), name: 'm.mp3', bytes: Buffer.alloc(5000, 3) });
+  await call('POST', '/api/folders', { parent: '/', name: 'Fotos2' });
+  h.tg.addFile({ folder: h.catalog.tree.resolve('/Fotos2'), name: 'a.png', bytes: Buffer.alloc(100, 1) });
+  await call('POST', '/api/refresh'); await h.waitSync();
+  const music = Object.fromEntries((await call('GET', '/api/list?path=/')).json.folders.map((f) => [f.name, f.music]));
+  assert.equal(music.ConMusica, true);
+  assert.equal(music.Vacia, false);
+  assert.equal(music.Fotos2, false);
+  await call('POST', '/api/folders', { parent: '/Vacia', name: 'Dentro' });
+  h.tg.addFile({ folder: h.catalog.tree.resolve('/Vacia/Dentro'), name: 'y.mp3', bytes: Buffer.alloc(5000, 2) });
+  await call('POST', '/api/refresh'); await h.waitSync();
+  const again = (await call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Vacia');
+  assert.equal(again.music, true);
+});
