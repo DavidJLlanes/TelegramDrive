@@ -29,6 +29,12 @@ const PATHS = {
   chevronRight: '<path d="m9 5 7 7-7 7"/>',
   home: '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
   sort: '<path d="M7 5v14M4 16l3 3 3-3M17 19V5M14 8l3-3 3 3"/>',
+  shuffle: '<path d="M4 7h3.5c5 0 4 10 9 10H20M4 17h3.5c1.6 0 2.6-1 3.4-2.2M13 9.2C13.8 8 14.9 7 16.5 7H20"/><path d="m18 5 2 2-2 2M18 15l2 2-2 2"/>',
+  repeat: '<path d="M5 11V9a2 2 0 0 1 2-2h12M19 13v2a2 2 0 0 1-2 2H5"/><path d="m16 4 3 3-3 3M8 20l-3-3 3-3"/>',
+  repeatOne: '<path d="M5 11V9a2 2 0 0 1 2-2h12M19 13v2a2 2 0 0 1-2 2H5"/><path d="m16 4 3 3-3 3M8 20l-3-3 3-3M12 10.5l1.2-.8v5"/>',
+  disc: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"/>',
+  user: '<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+  tag: '<path d="M3.5 12.5V5a1.5 1.5 0 0 1 1.5-1.5h7.5l8 8-9 9z"/><circle cx="8.5" cy="8.5" r="1.3"/>',
   plane: '<path d="M21 4 3 11l6 2.5L11.5 20l3-4.5L19 18z"/><path d="m9 13.5 12-9.5"/>',
 };
 

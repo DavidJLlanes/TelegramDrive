@@ -1,6 +1,8 @@
 import { FolderTree } from '../db/folder-tree.js';
 import { FilesRepo } from '../db/files-repo.js';
 import { Syncer } from './sync.js';
+import { Tagger } from './tagger.js';
+import { Library } from './library.js';
 import { FolderOps } from './folder-ops.js';
 import { FileOps } from './file-ops.js';
 import { Mutex } from '../utils/mutex.js';
@@ -23,19 +25,28 @@ export class Catalog {
     this.tree = new FolderTree(db);
     this.repo = new FilesRepo(db);
     this.syncer = new Syncer({ tg, db, tree: this.tree, files: this.repo });
+    this.tagger = new Tagger({ tg, files: this.repo });
+    this.library = new Library({ db, tree: this.tree, files: this.repo, toDto: (row, paths) => this.toDto(row, paths) });
     const shared = { tg, tree: this.tree, files: this.repo, lock: new Mutex() };
     this.folderOps = new FolderOps(shared);
     this.fileOps = new FileOps({ ...shared, toDto: (row) => this.toDto(row) });
   }
 
-  startSync(options) { return this.syncer.start(options); }
+  /** Sincroniza con Telegram y, al terminar, lee en segundo plano las etiquetas de los audios nuevos. */
+  startSync(options) {
+    return this.syncer.start(options).then(() => { this.tagger.kick(); });
+  }
 
   toDto(row, paths = new Map()) {
     if (!paths.has(row.folder)) paths.set(row.folder, this.tree.pathOf(row.folder));
-    return {
+    const dto = {
       id: row.id, type: 'file', name: row.name, parent: paths.get(row.folder), size: row.size,
       mime: row.mime, kind: row.kind, date: row.date, thumb: Boolean(row.thumb),
     };
+    if (row.kind === 'audio' && row.tagged === 1) {
+      dto.tags = { title: row.title, artist: row.artist, album: row.album, band: row.band, genre: row.genre, track: row.track, disc: row.disc, year: row.year };
+    }
+    return dto;
   }
 
   list(rawPath, { sort = 'name', offset = 0, limit = 300, kind } = {}) {
@@ -69,6 +80,6 @@ export class Catalog {
   folderPaths() { return this.tree.allPaths(); }
 
   stats() {
-    return { ...this.repo.stats(), folders: this.tree.byId.size, sync: { ...this.syncer.state } };
+    return { ...this.repo.stats(), folders: this.tree.byId.size, sync: { ...this.syncer.state }, tagging: this.tagger.state() };
   }
 }

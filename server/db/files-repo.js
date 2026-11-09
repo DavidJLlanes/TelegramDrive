@@ -1,7 +1,7 @@
 import { inChunks } from './database.js';
 import { searchKey } from '../utils/text.js';
 
-const COLS = 'msg_id AS id, folder, name, size, mime, kind, date, thumb';
+const COLS = 'msg_id AS id, folder, name, size, mime, kind, date, thumb, tagged, title, artist, album, band, genre, track, disc, year';
 const marks = (n) => Array(n).fill('?').join(',');
 
 export class FilesRepo {
@@ -11,7 +11,8 @@ export class FilesRepo {
     this.db.stmt(`INSERT INTO files (msg_id, folder, name, key, size, mime, kind, date, thumb)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(msg_id) DO UPDATE SET folder = excluded.folder, name = excluded.name, key = excluded.key,
-        size = excluded.size, mime = excluded.mime, kind = excluded.kind, date = excluded.date, thumb = excluded.thumb`)
+        size = excluded.size, mime = excluded.mime, kind = excluded.kind, date = excluded.date,
+        thumb = MAX(excluded.thumb, files.thumb)`)  // conserva la portada extraída de las etiquetas
       .run(r.msgId, r.folder, r.name, searchKey(r.name), r.size, r.mime, r.kind, r.date, r.thumb ? 1 : 0);
   }
 
@@ -53,6 +54,28 @@ export class FilesRepo {
   }
 
   allIds() { return this.db.stmt('SELECT msg_id AS id FROM files').all().map((r) => r.id); }
+
+  /** Audios cuyas etiquetas aún no se han leído. */
+  untagged(limit) {
+    return this.db.stmt("SELECT msg_id AS id, name FROM files WHERE kind = 'audio' AND tagged = 0 ORDER BY msg_id DESC LIMIT ?").all(limit);
+  }
+
+  countUntagged() {
+    return this.db.stmt("SELECT COUNT(*) AS n FROM files WHERE kind = 'audio' AND tagged = 0").get().n;
+  }
+
+  setTags(id, tags, cover) {
+    const t = tags ?? {};
+    this.db.stmt(`UPDATE files SET tagged = ?, title = ?, artist = ?, album = ?, band = ?, genre = ?, track = ?, disc = ?, year = ?,
+      thumb = MAX(thumb, ?) WHERE msg_id = ?`)
+      .run(tags ? 1 : 2, t.title ?? '', t.artist ?? '', t.album ?? '', t.band ?? '', t.genre ?? '', t.track ?? 0, t.disc ?? 0, t.year ?? 0, cover ? 1 : 0, id);
+  }
+
+  audioIn(folderIds) {
+    const out = [];
+    inChunks(folderIds, (c) => out.push(...this.db.stmt(`SELECT ${COLS} FROM files WHERE kind = 'audio' AND folder IN (${marks(c.length)})`).all(...c)));
+    return out;
+  }
 
   stats() {
     const row = this.db.stmt('SELECT COUNT(*) AS files, COALESCE(SUM(size), 0) AS bytes FROM files').get();

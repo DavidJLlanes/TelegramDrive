@@ -11,6 +11,10 @@ carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor
   scroll infinito (300 por página, orden natural: "Pista 2" antes que "Pista 10") y la cola del reproductor abarca toda la carpeta.
 - **Cuenta real (MTProto)** con [GramJS](https://github.com/gram-js/gramjs): hasta 2 GB por archivo (4 GB con Premium) y descargas
   sin el límite de 20 MB de la Bot API.
+- **Música por carpetas y por etiquetas**: el botón ▶ de cada carpeta (y *Reproducir* / *Aleatorio* en su cabecera) reproduce toda su
+  música, subcarpetas incluidas. Además, el servidor lee en segundo plano las etiquetas (ID3v2/ID3v1, Vorbis, MP4) descargando solo
+  el principio de cada archivo y las guarda en el índice: la sección **Biblioteca** agrupa por **álbumes, artistas y géneros**, ordena
+  por disco y nº de pista y usa la portada incrustada. El reproductor tiene aleatorio y repetir (todo / una).
 - **Streaming con `Range`**: audio y vídeo se pueden buscar (seek) sin descargar el archivo entero.
 - **Frontend sin build**: HTML + CSS + módulos ES nativos. Cero dependencias en el navegador.
 
@@ -69,6 +73,8 @@ Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` d
 - **Primera sincronización**: indexar miles de archivos tarda unos minutos (la barra inferior muestra el progreso). Después, cada
   arranque solo lee lo nuevo. El botón **Sincronizar** hace una pasada completa y poda lo que hayas borrado a mano en Telegram
   (si Telegram no devolviera nada, el índice se conserva por seguridad).
+- **Etiquetas de música**: se leen una sola vez por archivo (la barra superior indica cuántas quedan). Los archivos sin etiquetas legibles
+  siguen en sus carpetas pero no aparecen en la Biblioteca. Una base de datos anterior se migra sola al arrancar.
 - SQLite: se usa el integrado de Node ≥ 22.5; con Node 20/22.0–22.4 se usa `better-sqlite3` (dependencia opcional).
 - Subir una colección grande: sube la carpeta entera con **Subir → Subir carpeta**; las subidas van de una en una para respetar los límites de Telegram.
 - Los formatos que el navegador no reproduce (p. ej. MKV/HEVC) se pueden descargar desde el propio reproductor.

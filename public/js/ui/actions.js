@@ -7,6 +7,7 @@ import { confirmDialog, pickFolder, promptText } from './modal.js';
 import { toast, toastError } from './toast.js';
 import { openFile } from '../players/viewer.js';
 import { download } from './download.js';
+import { playFolder } from '../core/playback.js';
 
 async function guarded(fn, okMessage) {
   try {
@@ -41,6 +42,8 @@ export function fileMenu(file, siblings) {
 export function folderMenu(folder) {
   return [
     { label: 'Abrir', icon: 'folder', run: () => navigate(folder.path) },
+    { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
+    { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
     'sep',
     { label: 'Renombrar', icon: 'edit', run: async () => {
       const name = await promptText({ title: 'Renombrar carpeta', label: 'Nombre', value: folder.name });

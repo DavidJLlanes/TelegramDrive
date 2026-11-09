@@ -1,7 +1,8 @@
 import { api, onUnauthorized } from './core/api.js';
 import { appState } from './core/store.js';
 import { loadPath, watchSync } from './core/drive.js';
-import { onRoute, pathFromHash } from './core/router.js';
+import { loadLibrary } from './core/library.js';
+import { onRoute, currentRoute } from './core/router.js';
 import { renderLogin } from './ui/login.js';
 import { renderShell } from './ui/app-shell.js';
 import { enableDropZone } from './ui/uploader.js';
@@ -20,14 +21,16 @@ async function logout() {
   location.reload();
 }
 
+const openRoute = (route) => (route.kind === 'lib' ? loadLibrary(route) : loadPath(route.path));
+
 function start() {
   renderShell(root, { onLogout: logout });
   if (!started) {
     started = true;
     enableDropZone();
-    onRoute((path) => loadPath(path));
+    onRoute(openRoute);
   }
-  loadPath(pathFromHash());
+  openRoute(currentRoute());
   watchSync();
 }
 

@@ -3,7 +3,10 @@ import { icon } from '../core/icons.js';
 import { appState, prefs } from '../core/store.js';
 import { reload } from '../core/drive.js';
 import { navigate } from '../core/router.js';
+import { playFolder } from '../core/playback.js';
 import { openMenu } from './menu.js';
+import { playButtons } from './play-buttons.js';
+import { libraryHead } from './library-head.js';
 
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
@@ -42,16 +45,24 @@ function tools(s) {
     class: 'btn btn-icon', 'aria-label': s.view === 'grid' ? 'Ver como lista' : 'Ver como cuadrícula',
     onclick: () => { const view = appState.get().view === 'grid' ? 'list' : 'grid'; prefs.save('view', view); appState.set({ view }); },
   }, icon(s.view === 'grid' ? 'list' : 'grid'));
-  return h('div', { class: 'page-tools' }, sortBtn, viewBtn);
+  const mayHaveMusic = s.results === null && (s.folders.length > 0 || s.files.some((f) => f.kind === 'audio'));
+  return h('div', { class: 'page-tools' }, mayHaveMusic ? playButtons((o) => playFolder(s.path, o)) : null, sortBtn, viewBtn);
+}
+
+function folderHead(s) {
+  return {
+    crumbs: s.results !== null ? null : crumbs(s.path),
+    title: s.results !== null ? 'Resultados' : s.path === '/' ? 'Inicio' : s.path.split('/').pop(),
+    sub: subtitle(s), tools: tools(s),
+  };
 }
 
 export function createPageHeader() {
   const el = h('header', { class: 'page-head' });
   const paint = (s) => {
-    const title = s.results !== null ? 'Resultados' : s.path === '/' ? 'Inicio' : s.path.split('/').pop();
-    el.replaceChildren(
-      h('div', { class: 'page-title' }, s.results !== null ? null : crumbs(s.path), h('h1', {}, title), h('p', {}, subtitle(s))),
-      tools(s));
+    const head = s.section === 'library' && s.results === null ? libraryHead(s.lib) : folderHead(s);
+    const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
+    el.replaceChildren(...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
   };
   appState.subscribe(paint);
   paint(appState.get());

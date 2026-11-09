@@ -5,6 +5,7 @@ import { renderTopbar } from './topbar.js';
 import { createSidebar } from './sidebar.js';
 import { createPageHeader } from './page-header.js';
 import { renderExplorer } from './explorer.js';
+import { renderLibrary } from './library.js';
 
 export function renderShell(root, { onLogout }) {
   const syncNote = h('p', { class: 'sync-note', role: 'status' });
@@ -18,7 +19,11 @@ export function renderShell(root, { onLogout }) {
     syncNote.hidden = !(sync?.running || sync?.error);
     syncNote.textContent = sync?.error ? `Error de sincronización: ${sync.error}`
       : `Sincronizando con Telegram… ${sync?.scanned ?? 0} mensajes revisados. Puedes seguir usando la aplicación.`;
-    renderExplorer(explorer);
+    if (!sync?.running && !sync?.error && s.stats?.tagging?.running) {
+      syncNote.hidden = false;
+      syncNote.textContent = `Leyendo las etiquetas de tu música… quedan ${s.stats.tagging.pending}. La biblioteca se completa sola.`;
+    }
+    (s.section === 'library' && s.results === null ? renderLibrary : renderExplorer)(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };
   appState.subscribe(paint);

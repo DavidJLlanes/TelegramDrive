@@ -2,7 +2,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
-import { navigate } from '../core/router.js';
+import { navigate, navigateLib } from '../core/router.js';
 import { compareNames } from '../core/text.js';
 
 const parentOf = (p) => p.slice(0, p.lastIndexOf('/')) || '/';
@@ -35,15 +35,30 @@ function item(path, label, iconName, depth, current) {
   return el;
 }
 
+const LIBRARY = [
+  { view: 'albums', label: 'Álbumes', icon: 'disc', also: ['album'] },
+  { view: 'artists', label: 'Artistas', icon: 'user', also: ['artist'] },
+  { view: 'genres', label: 'Géneros', icon: 'tag', also: ['genre'] },
+];
+
+function libraryItem(entry, s) {
+  const active = s.section === 'library' && s.results === null && [entry.view, ...entry.also].includes(s.lib.view);
+  return h('button', { class: 'tree-item', 'aria-current': active ? 'page' : null, onclick: () => navigateLib(entry.view) },
+    icon(entry.icon), h('span', {}, entry.label));
+}
+
 export function createSidebar() {
-  const tree = h('nav', { class: 'tree', 'aria-label': 'Carpetas' });
+  const tree = h('nav', { class: 'tree', 'aria-label': 'Carpetas y biblioteca' });
   const foot = h('div', { class: 'side-foot' });
   const el = h('aside', { class: 'sidebar' },
     h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('plane')), 'Telegram Drive'), tree, foot);
 
   const paint = (s) => {
-    const current = s.results !== null ? null : s.path;
-    tree.replaceChildren(item('/', 'Inicio', 'home', 0, current),
+    const current = s.results !== null || s.section === 'library' ? null : s.path;
+    tree.replaceChildren(
+      h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)),
+      h('div', { class: 'tree-heading' }, 'Carpetas'),
+      item('/', 'Inicio', 'home', 0, current),
       ...visibleTree(s.folderPaths, s.path).map((n) => item(n.path, n.path.split('/').pop(), 'folder', n.depth, current)));
     const sync = s.stats?.sync;
     foot.replaceChildren(

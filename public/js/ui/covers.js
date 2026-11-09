@@ -3,6 +3,7 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { tint } from '../core/color.js';
 import { thumbUrl, contentUrl } from '../core/api.js';
+import { trackNumber } from '../core/tags.js';
 
 const MAX_FULL_FALLBACK = 6 * 1024 * 1024;
 const noThumb = new Set(); // ids sin miniatura: evita repetir la petición en cada repintado
@@ -22,13 +23,9 @@ function photo(file, onFail) {
 
 const playBadge = () => h('span', { class: 'play-badge' }, icon('play'));
 const equalizer = () => h('span', { class: 'eq', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'));
-const trackNumber = (name) => {
-  const m = /^\s*(\d{1,3})(?=\D)/.exec(name);
-  return m ? m[1].padStart(2, '0') : null;
-};
 
 function audioCover(file) {
-  const num = trackNumber(file.name);
+  const num = trackNumber(file);
   return tint(h('div', { class: 'cover audio' },
     num ? h('span', { class: 'cover-num' }, num) : h('span', { class: 'cover-num' }, icon('music')),
     playBadge(), equalizer()), file.parent);

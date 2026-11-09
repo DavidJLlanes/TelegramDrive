@@ -6,23 +6,12 @@ import { navigate } from '../core/router.js';
 import { appState } from '../core/store.js';
 import { loadMore } from '../core/drive.js';
 import { openMenu } from './menu.js';
+import { moreButton } from './more-button.js';
+import { playFolder } from '../core/playback.js';
 import { fileMenu, folderMenu } from './actions.js';
 import { sortFiles } from './sorting.js';
 import { fileCover } from './covers.js';
 import { openFile } from '../players/viewer.js';
-
-function moreButton(getItems) {
-  return h('button', {
-    class: 'more', 'aria-label': 'Más opciones', 'aria-haspopup': 'menu',
-    onclick: (e) => {
-      e.stopPropagation();
-      const btn = e.currentTarget;
-      btn.setAttribute('aria-expanded', 'true');
-      openMenu(btn, getItems());
-      setTimeout(() => btn.removeAttribute('aria-expanded'), 0);
-    },
-  }, icon('more'));
-}
 
 function sleeve(folder) {
   const open = () => navigate(folder.path);
@@ -30,7 +19,12 @@ function sleeve(folder) {
     class: 'sleeve', tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
-  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'), moreButton(() => folderMenu(folder))), folder.name);
+  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'),
+    h('button', {
+      class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
+      onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
+    }, icon('play')),
+    moreButton(() => folderMenu(folder))), folder.name);
 }
 
 function tile(file, siblings, playingId) {

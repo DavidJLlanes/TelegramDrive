@@ -5,6 +5,7 @@ import { requireAuth } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { authRoutes } from './routes/auth.js';
 import { driveRoutes } from './routes/drive.js';
+import { libraryRoutes } from './routes/library.js';
 
 export function createApp({ tg, catalog }) {
   const app = express();
@@ -23,7 +24,7 @@ export function createApp({ tg, catalog }) {
 
   app.get('/healthz', (_req, res) => res.json({ ok: true, telegram: tg.connected }));
   app.use('/api/auth', authRoutes({ tg }));
-  app.use('/api', requireAuth, driveRoutes({ catalog, tg }));
+  app.use('/api', requireAuth, driveRoutes({ catalog, tg }), libraryRoutes({ catalog }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

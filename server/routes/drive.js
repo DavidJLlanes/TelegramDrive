@@ -40,7 +40,9 @@ export function driveRoutes({ catalog, tg }) {
   router.post('/files', wrap(async (req, res) => {
     const upload = await receiveUpload(req);
     try {
-      res.status(201).json(await fileOps.upload(upload));
+      const dto = await fileOps.upload(upload);
+      if (dto.kind === 'audio') catalog.tagger.kick();
+      res.status(201).json(dto);
     } finally {
       await upload.cleanup();
     }

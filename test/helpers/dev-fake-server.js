@@ -17,6 +17,7 @@ const { openDatabase } = await import('../../server/db/database.js');
 const { createApp } = await import('../../server/app.js');
 const { Catalog } = await import('../../server/services/catalog.js');
 const { FakeTelegram } = await import('./fake-telegram.js');
+const { mp3WithTags } = await import('./id3.js');
 
 ensureDirs();
 const tg = new FakeTelegram();
@@ -27,9 +28,27 @@ if (seed) { // datos de demostración (FAKE_SEED=650 npm run dev:fake)
   for (const name of ['Música', 'Fotos', 'Vídeos', 'Documentos']) await catalog.folderOps.create('/', name);
   for (const name of ['Rock clásico', 'Jazz de noche', 'Electrónica']) await catalog.folderOps.create('/Música', name);
   const at = (p) => catalog.tree.resolve(p);
-  const titles = ['Intro', 'Autopista', 'Cielo abierto', 'Luces de ciudad', 'Último tren', 'Marea', 'Cartas', 'Despedida'];
-  titles.forEach((t, i) => tg.addFile({ folder: at('/Música/Rock clásico'), name: `${String(i + 1).padStart(2, '0')} - ${t}.mp3`, size: 4096 }));
-  titles.slice(0, 5).forEach((t, i) => tg.addFile({ folder: at('/Música/Jazz de noche'), name: `${i + 1}. ${t}.flac`, size: 8192 }));
+  const cover = async (color) => {
+    try {
+      const { default: sharp } = await import('sharp');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${color}"/><stop offset="1" stop-color="#0b1020"/></linearGradient></defs>
+        <rect width="320" height="320" fill="url(#g)"/><circle cx="220" cy="110" r="70" fill="#fff" fill-opacity=".14"/>
+        <circle cx="110" cy="230" r="46" fill="#fff" fill-opacity=".10"/></svg>`;
+      return await sharp(Buffer.from(svg)).jpeg().toBuffer();
+    } catch { return undefined; }
+  };
+  const album = async (folder, artist, name, year, genre, color, titles) => {
+    const art = await cover(color);
+    titles.forEach((title, i) => tg.addFile({
+      folder: at(folder), name: `${String(i + 1).padStart(2, '0')} - ${title}.mp3`,
+      bytes: mp3WithTags({ title, artist, album: name, track: `${i + 1}/${titles.length}`, year, genre }, { cover: art, frames: 600 }), // ~15 s de silencio
+    }));
+  };
+  await album('/Música/Rock clásico', 'Los Faroles', 'Autopista', 1978, 'Rock', '#c2410c', ['Intro', 'Autopista', 'Cielo abierto', 'Luces de ciudad', 'Último tren']);
+  await album('/Música/Rock clásico', 'Los Faroles', 'Marea', 1981, 'Rock', '#0e7490', ['Marea', 'Cartas', 'Despedida']);
+  await album('/Música/Jazz de noche', 'Trío Sur', 'Noche en vela', 1964, 'Jazz', '#4338ca', ['Azul', 'Madrugada', 'Humo', 'Último bar']);
+  await album('/Música/Electrónica', 'Neón', 'Circuitos', 2019, 'Electrónica', '#be185d', ['Pulso', 'Fibra', 'Satélite', 'Eco']);
   tg.addFile({ folder: at('/Vídeos'), name: 'concierto 2025.mp4', size: 2_400_000 });
   tg.addFile({ folder: at('/Vídeos'), name: 'viaje a Lisboa.mov', size: 9_800_000 });
   tg.addFile({ folder: at('/Documentos'), name: 'factura-octubre.pdf', size: 88_000 });

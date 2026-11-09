@@ -27,8 +27,8 @@ export class FakeTelegram {
   }
 
   /** Inserta un archivo "desde fuera" (como si se hubiera subido desde otro cliente). */
-  addFile({ folder, name, size = 10 }) {
-    return this.#store({ message: encodeFile({ folder, name }), media: FakeTelegram.media(name, size, Buffer.alloc(size, 1)) });
+  addFile({ folder, name, size = 10, bytes = Buffer.alloc(size, 1) }) {
+    return this.#store({ message: encodeFile({ folder, name }), media: FakeTelegram.media(name, bytes.length, bytes) });
   }
 
   async *iterTagged({ minId = 0 } = {}) {
