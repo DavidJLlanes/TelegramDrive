@@ -44,7 +44,7 @@ function backupPanel(b) {
       : b.lastOk ? `Última copia: ${formatDateTime(b.lastOk)} (${formatBytes(b.lastSize)})` : 'Aún no se ha hecho ninguna copia.';
   return h('section', { class: 'pg-panel' },
     h('h2', {}, 'Copia de seguridad cifrada'),
-    h('p', { class: 'pg-hint' }, 'Guarda lo que no se puede reconstruir desde Telegram (enlaces compartidos, registro de accesos, ajustes). Se envía cifrada a un chat aparte.'),
+    h('p', { class: 'pg-hint' }, 'Guarda lo que no se puede reconstruir desde Telegram (enlaces compartidos, registro de accesos, letras, ajustes). Se envía cifrada a un chat aparte.'),
     h('div', { class: 'pg-rows' },
       row('Estado', state, b.enabled ? h('span', { class: 'pg-badge ok' }, `cada ${b.everyHours} h`) : h('span', { class: 'pg-badge' }, 'Automática desactivada')),
       row('Destino', `Chat ${b.chat} · se conservan ${b.keep} copias`, b.includesSession ? 'Incluye la sesión' : 'Sin la sesión')),

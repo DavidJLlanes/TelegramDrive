@@ -5,3 +5,6 @@ import './security/index.js';
 import './filters/index.js';
 import './dragmove/index.js';
 import './shortcuts/index.js';
+import './lyrics/index.js';
+import './audio-fx/index.js';
+import './library-audit/index.js';

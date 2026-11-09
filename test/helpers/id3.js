@@ -14,6 +14,7 @@ const syncsafe = (n) => Buffer.from([(n >> 21) & 0x7f, (n >> 14) & 0x7f, (n >> 7
 /** `frames`: nº de tramas MPEG de audio (~26 ms cada una, silencio). */
 export function mp3WithTags(tags = {}, { cover, frames: count = 4 } = {}) {
   const tagFrames = Object.entries(FRAMES).filter(([key]) => tags[key] !== undefined).map(([key, id]) => frame(id, text(tags[key])));
+  if (tags.lyrics !== undefined) tagFrames.push(frame('USLT', Buffer.concat([Buffer.from([3]), Buffer.from('eng'), Buffer.from('\0'), Buffer.from(String(tags.lyrics), 'utf8')])));
   if (cover) tagFrames.push(frame('APIC', Buffer.concat([Buffer.from([0]), Buffer.from('image/jpeg\0'), Buffer.from([3]), Buffer.from('\0'), cover])));
   const body = Buffer.concat(tagFrames);
   const header = Buffer.concat([Buffer.from('ID3'), Buffer.from([3, 0, 0]), syncsafe(body.length)]);

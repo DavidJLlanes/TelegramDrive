@@ -87,3 +87,40 @@
 .sc-help dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; align-items: center; }
 .sc-help dd { margin: 0; color: var(--muted); }
 .sc-help kbd { font: 600 0.82rem ui-monospace, monospace; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); white-space: nowrap; }
+
+/* Letras (features/lyrics) */
+.ly-panel {
+  position: fixed; z-index: 44; right: 20px; bottom: calc(var(--player-h, 96px) + 14px + var(--safe-b)); width: min(420px, calc(100% - 28px)); max-height: min(60vh, 520px);
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.ly-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ly-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 1.05rem var(--font-display); }
+.ly-body { overflow: auto; min-height: 80px; }
+.ly-text { white-space: pre-wrap; line-height: 1.65; font-size: 1.02rem; }
+.ly-empty { margin: 0; color: var(--muted); }
+.ly-edit { width: 100%; resize: vertical; min-height: 200px; }
+.ly-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+@media (max-width: 560px) { .ly-panel { right: 10px; left: 10px; width: auto; } }
+
+/* Ecualizador y fundido (features/audio-fx) */
+.fx-panel {
+  position: fixed; z-index: 44; right: 20px; bottom: calc(var(--player-h, 96px) + 14px + var(--safe-b)); width: min(380px, calc(100% - 28px)); max-height: 70vh; overflow: auto;
+  display: grid; gap: 12px; padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.fx-body { display: grid; gap: 18px; }
+.fx-body section { display: grid; gap: 10px; }
+.fx-switch { display: flex; align-items: center; gap: 10px; }
+.fx-bands { display: grid; gap: 8px; }
+.fx-col { display: grid; grid-template-columns: 56px 1fr 48px; align-items: center; gap: 10px; }
+.fx-band { width: 100%; }
+.fx-db { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+.fx-hz { font-size: 12px; color: var(--muted); }
+.fx-note { margin: 0; color: var(--muted); font-size: 12.5px; }
+@media (max-width: 560px) { .fx-panel { right: 10px; left: 10px; width: auto; } }
+@media (max-width: 560px) {
+  .fl-bar { gap: 8px; }
+  .fl-chips { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+  .fl-chip { flex: none; }
+  .fl-extra { width: 100%; }
+  .fl-extra .fl-select { flex: 1; min-width: 0; }
+}

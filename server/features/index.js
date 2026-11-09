@@ -10,12 +10,16 @@ import accessLog from './access-log/index.js';
 import shareAccess from './share-access/index.js';
 import backup from './backup/index.js';
 import duplicates from './duplicates/index.js';
+import lyrics from './lyrics/index.js';
+import libraryAudit from './library-audit/index.js';
 
 const FEATURES = [
   accessLog,
   shareAccess,
   backup,
   duplicates,
+  lyrics,
+  libraryAudit,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {
