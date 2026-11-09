@@ -41,7 +41,7 @@ export class FakeTelegram {
   static media(name, size, bytes) {
     return {
       document: {
-        size, mimeType: /\.png$/i.test(name) ? 'image/png' : /\.jpe?g$/i.test(name) ? 'image/jpeg' : 'audio/mpeg',
+        size, mimeType: /\.png$/i.test(name) ? 'image/png' : /\.jpe?g$/i.test(name) ? 'image/jpeg' : /\.html$/i.test(name) ? 'text/html' : 'audio/mpeg',
         attributes: [{ className: 'DocumentAttributeFilename', fileName: name }], thumbs: [], bytes,
       },
     };

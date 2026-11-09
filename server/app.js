@@ -1,6 +1,7 @@
 import express from 'express';
 import { config } from './config/index.js';
 import { securityHeaders } from './middleware/security.js';
+import { sameOriginOnly } from './middleware/csrf.js';
 import { requireAuth } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { authRoutes } from './routes/auth.js';
@@ -18,6 +19,7 @@ export function createApp({ tg, catalog, features = { routers: [], publicRouters
   app.set('trust proxy', 1);
 
   app.use(securityHeaders);
+  app.use(sameOriginOnly);
   app.use(express.json({ limit: '256kb' }));
 
   app.get('/sw.js', serviceWorkerHandler(config.publicDir));
@@ -30,8 +32,8 @@ export function createApp({ tg, catalog, features = { routers: [], publicRouters
   }));
 
   app.get('/healthz', (_req, res) => {
-    const { ok, reason, since } = catalog.health.state;
-    res.status(ok ? 200 : 503).json({ ok, telegram: tg.connected, reason, since });
+    const { ok } = catalog.health.state;
+    res.status(ok ? 200 : 503).json({ ok, telegram: tg.connected }); // sin detalles: es público
   });
   app.use('/api/auth', authRoutes({ tg }));
   app.use('/api', requireAuth, driveRoutes({ catalog, tg }), libraryRoutes({ catalog }), trashRoutes({ catalog }),

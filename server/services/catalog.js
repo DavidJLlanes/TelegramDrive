@@ -69,7 +69,7 @@ export class Catalog {
     if (!SORTERS[sort]) throw badRequest('Orden no válido');
     const id = this.tree.resolve(normalizePath(rawPath));
     if (id === null) throw notFound('La carpeta no existe');
-    const rows = this.repo.inFolder(id, kind || undefined).sort(SORTERS[sort]);
+    const rows = this.repo.inFolder(id, typeof kind === 'string' && kind ? kind : undefined).sort(SORTERS[sort]);
     const start = Math.max(0, Number(offset) || 0);
     const size = Math.min(Math.max(1, Number(limit) || 300), MAX_LIMIT);
     const paths = new Map();

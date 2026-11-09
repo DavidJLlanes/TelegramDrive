@@ -12,8 +12,10 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join('; ');
 
-export function securityHeaders(_req, res, next) {
+export function securityHeaders(req, res, next) {
+  if (req.secure) res.set('Strict-Transport-Security', 'max-age=31536000'); // solo HTTPS (detrás de Nginx llega por X-Forwarded-Proto)
   res.set({
+    'Cross-Origin-Opener-Policy': 'same-origin',
     'Content-Security-Policy': CSP,
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'same-origin',

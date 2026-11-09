@@ -5,6 +5,7 @@ export function rateLimit({ windowMs, max }) {
   const hits = new Map();
   const limiter = (req, _res, next) => {
     const now = Date.now();
+    if (hits.size > 5000) for (const [ip, r] of hits) if (r.reset < now) hits.delete(ip); // no crece sin límite
     const rec = hits.get(req.ip);
     if (!rec || rec.reset < now) {
       hits.set(req.ip, { count: 1, reset: now + windowMs });

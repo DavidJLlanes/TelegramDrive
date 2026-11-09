@@ -5,7 +5,7 @@ import { config } from '../config/index.js';
 import { verifyPassword } from '../utils/crypto.js';
 import { verifyTotp } from '../utils/totp.js';
 import { HttpError } from '../utils/errors.js';
-import { issueSession, clearSession, isAuthenticated } from '../middleware/auth.js';
+import { issueSession, endSession, isAuthenticated } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 import { emitSafe } from '../core/events.js';
 
@@ -43,8 +43,8 @@ export function authRoutes({ tg }) {
     return res.json({ authenticated: true });
   });
 
-  router.post('/logout', (_req, res) => {
-    clearSession(res);
+  router.post('/logout', (req, res) => {
+    endSession(req, res);
     res.json({ authenticated: false });
   });
 

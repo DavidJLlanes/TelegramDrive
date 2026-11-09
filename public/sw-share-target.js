@@ -6,6 +6,7 @@ const SHARE_CACHE = 'tgdrive-share';
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'POST' || !new URL(request.url).pathname.endsWith('/share-target')) return;
+  if (request.headers.get('Sec-Fetch-Site') === 'cross-site') { event.respondWith(Response.redirect(new URL('./', self.registration.scope).href, 303)); return; } // una web ajena no puede dejar archivos en la cola
   event.respondWith((async () => {
     try {
       const form = await request.formData();

@@ -1,6 +1,7 @@
 import { config } from '../config/index.js';
 import { sign, safeEqual } from '../utils/crypto.js';
 import { unauthorized } from '../utils/errors.js';
+import { isRevoked, revoke } from './session-revocation.js';
 
 const { cookieName, secret, ttlDays } = config.auth;
 
@@ -25,8 +26,14 @@ function readCookie(req) {
 
 export function isAuthenticated(req) {
   const [exp, sig] = readCookie(req).split('.');
-  if (!exp || !sig || Number(exp) < Date.now()) return false;
+  if (!exp || !sig || !(Number(exp) >= Date.now()) || isRevoked(sig)) return false; // «>=» rechaza también NaN
   return safeEqual(sig, sign(exp, secret));
+}
+
+/** Cierra la sesión: borra la cookie y deja inservible la copia que ya existiera. */
+export function endSession(req, res) {
+  if (isAuthenticated(req)) { const [exp, sig] = readCookie(req).split('.'); revoke(sig, exp); }
+  clearSession(res);
 }
 
 export function requireAuth(req, _res, next) {

@@ -20,6 +20,10 @@ export function parseRange(header, size) {
 const encodeName = (name) => encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 const asciiName = (name) => name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
 
+// Documentos que el navegador ejecutaría en el origen de la app si se abrieran en una pestaña: se aíslan con `sandbox`
+// (sin scripts ni acceso a la sesión). Los <img>/<video>/<audio> no se ven afectados.
+const ACTIVE = /^(text\/html|application\/xhtml\+xml|image\/svg\+xml|text\/xml|application\/xml|text\/javascript|application\/javascript)\b/i;
+
 export async function streamEntry({ req, res, tg, entry, download = false }) {
   const message = await tg.getMessage(entry.id);
   const size = Number(message.media.document.size);
@@ -41,6 +45,7 @@ export async function streamEntry({ req, res, tg, entry, download = false }) {
     'Cache-Control': 'private, max-age=3600',
     'X-Content-Type-Options': 'nosniff',
   });
+  if (ACTIVE.test(type)) res.set('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:");
   if (range) res.set('Content-Range', `bytes ${start}-${end}/${size}`);
   if (size === 0) { res.end(); return; }
 

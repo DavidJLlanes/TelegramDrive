@@ -36,9 +36,12 @@ chmod 700 data
 chown "$RUN_USER:$RUN_USER" .env
 chmod 600 .env
 
-if [ ! -f "/etc/systemd/system/$SERVICE.service" ]; then
+# la unidad se reinstala si cambia (así llegan los endurecimientos nuevos); si ya tenías cambios propios, se guarda copia .bak
+UNIT="/etc/systemd/system/$SERVICE.service"
+if [ ! -f "$UNIT" ] || ! cmp -s deploy/telegram-drive.service "$UNIT"; then
   echo "==> Instalando servicio systemd"
-  cp deploy/telegram-drive.service "/etc/systemd/system/$SERVICE.service"
+  [ -f "$UNIT" ] && cp "$UNIT" "$UNIT.bak"
+  cp deploy/telegram-drive.service "$UNIT"
   systemctl daemon-reload
   systemctl enable "$SERVICE"
 fi

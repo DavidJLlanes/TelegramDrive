@@ -12,6 +12,7 @@ import { HttpError } from '../utils/errors.js';
  * sin cargarlo en memoria. Devuelve { parent, name, path, size, cleanup }.
  */
 export function receiveUpload(req) {
+  if (!req.is('multipart/form-data')) return Promise.reject(new HttpError(415, 'La subida debe enviarse como multipart/form-data'));
   return new Promise((resolve, reject) => {
     let parent = '/';
     let received = null;
