@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/cover.png" alt="TeleDrive: tu nube personal sobre tu canal privado de Telegram" width="100%"></p>
+<p align="center"><img src="public/og-image.png" alt="TeleDrive: tu nube personal sobre tu canal privado de Telegram" width="100%"></p>
 
 # TeleDrive (Telegram Drive)
 
@@ -52,7 +52,7 @@ server/
   telegram/      service.js (único contacto con GramJS) · codec.js (formato del pie de mensaje)
   utils/         paths, crypto (scrypt/HMAC), errores, tipos de medio
 assets/brand/    Imágenes maestras de la marca (icono cuadrado y portada); de ellas salen todos los iconos
-docs/            ARCHITECTURE.md · cover.png (portada del README)
+docs/            ARCHITECTURE.md
 scripts/         setup.js · login.js · chats.js · migrate-chat.js · backup.js · restore.js · generate-icons.js · check.js
 public/
   index.html · manifest.webmanifest · sw.js · offline.html · icons/
@@ -73,8 +73,8 @@ Regla de oro: ningún archivo de código supera ~220 líneas (`npm run check` lo
 
 Las imágenes originales están en `assets/brand/` (`icon-master.png` cuadrada y `cover.png` apaisada). `npm run icons` regenera a partir de ellas:
 iconos PWA de 48 a 512 px, **maskable** de 192/512 (Android adaptable: el motivo queda dentro de la zona segura), `apple-touch-icon`
-(120/152/167/180 para iPhone y iPad), `favicon.ico` + PNG de 16/32/48, icono de mosaico de Windows, `public/og-image.png`
-(1200×630, vista previa al compartir el enlace; el servidor pone la URL absoluta según el dominio) y `docs/cover.png`.
+(120/152/167/180 para iPhone y iPad), `favicon.ico` + PNG de 16/32/48, icono de mosaico de Windows, y `public/og-image.png`
+(1200×630: cabecera del README y vista previa al compartir el enlace; el servidor pone la URL absoluta según el dominio).
 Para la vista previa del repositorio en GitHub, sube `public/og-image.png` en *Settings → Social preview*.
 
 ## Puesta en marcha

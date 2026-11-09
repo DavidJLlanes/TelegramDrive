@@ -1,6 +1,6 @@
 // Genera todos los iconos y la imagen social a partir de las imágenes maestras de assets/brand/ (requiere `sharp`, devDependency).
 //   icon-master.png  (cuadrada, a sangre)  → iconos PWA/Android/iOS/escritorio en public/icons/
-//   cover.png        (apaisada)            → public/og-image.png (1200×630) y docs/cover.png (README)
+//   cover.png        (apaisada)            → public/og-image.png (1200×630)
 // Uso: npm run icons
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,10 +50,8 @@ for (const s of [16, 32, 48]) put(`favicon-${s}.png`, plain(s));
 put('mstile-150.png', plain(150));
 jobs.push(ico([16, 32, 48]).then((buf) => fs.writeFileSync(path.join(out, 'favicon.ico'), buf)));
 
-// Imagen social 1200×630 (Open Graph / Twitter) y portada del README.
+// Imagen social 1200×630 (Open Graph / Twitter) .
 jobs.push(sharp(COVER).resize(1200, 630, { fit: 'cover' }).png({ compressionLevel: 9, palette: true, quality: 92 }).toFile(path.resolve('public/og-image.png')));
-fs.mkdirSync('docs', { recursive: true });
-jobs.push(sharp(COVER).resize(1600).png({ compressionLevel: 9, palette: true, quality: 92 }).toFile(path.resolve('docs/cover.png')));
 
 await Promise.all(jobs);
-console.log('Iconos y portada generados (public/icons, public/og-image.png, docs/cover.png)');
+console.log('Iconos y portada generados (public/icons, public/og-image.png)');

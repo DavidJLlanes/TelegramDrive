@@ -21,7 +21,7 @@ public/
   js/ui/                    componentes del núcleo (explorador, menús, diálogos…)
   js/features/<nombre>/     funciones del cliente
   css/                      tokens → base → componentes → layout → … → pages (vistas registradas)
-assets/brand/               imágenes maestras (icono, portada); `npm run icons` genera de ellas public/icons, og-image y docs/cover.png
+assets/brand/               imágenes maestras (icono, portada); `npm run icons` genera de ellas public/icons, og-image
 scripts/                    herramientas de línea de comandos (setup, login, backup, migrate…)
 test/                       pruebas de integración con Telegram simulado
 docs/                       esta documentación
