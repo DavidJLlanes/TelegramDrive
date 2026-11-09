@@ -51,16 +51,25 @@ async function runJob(job) {
   try {
     const rel = job.file.webkitRelativePath;
     const target = rel ? await ensureFolders(job.base, rel) : job.base;
-    const result = await uploadFile(job.file, target, (p) => {
+    const send = () => uploadFile(job.file, target, (p) => {
       job.bar.style.width = `${Math.round(p * 100)}%`;
       if (p >= 1) job.state.textContent = 'Enviando a Telegram…';
     });
+    let result;
+    try { result = await send(); } catch (e) {
+      if (e.status !== 0 || e.message === 'Subida cancelada') throw e;
+      job.state.textContent = 'Reintentando…';
+      await new Promise((r) => setTimeout(r, 1500));
+      result = await send();
+    }
     job.bar.style.width = '100%';
     job.row.classList.add('done');
     job.state.textContent = `Listo · ${formatBytes(result.size)}`;
   } catch (err) {
     job.row.classList.add('error');
     job.state.textContent = err.message;
+    job.state.title = err.message;
+    console.warn('[upload]', job.file.webkitRelativePath || job.file.name, err);
   }
 }
 

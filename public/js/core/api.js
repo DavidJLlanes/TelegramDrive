@@ -76,7 +76,10 @@ export const zipUrl = ({ path, ids }) => url('zip', ids ? { ids: ids.join(',') }
 export const shareUrl = (token) => new URL(`share/${token}`, document.baseURI).href;
 
 /** Subida con progreso (XHR, porque fetch no expone progreso de subida). */
-export function uploadFile(file, parent, onProgress) {
+export async function uploadFile(file, parent, onProgress) {
+  try { await file.slice(0, 1).arrayBuffer(); } catch {
+    throw new ApiError(0, 'El navegador no puede leer este archivo del disco (¿está en la nube sin descargar o abierto en otro programa?)');
+  }
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append('path', parent);
@@ -89,7 +92,7 @@ export function uploadFile(file, parent, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) resolve(data);
       else reject(new ApiError(xhr.status, data.error || `Error ${xhr.status}`));
     };
-    xhr.onerror = () => reject(new ApiError(0, 'Se cortó la conexión durante la subida'));
+    xhr.onerror = () => reject(new ApiError(0, `Se cortó la conexión durante la subida (${(file.size / 1048576).toFixed(1)} MB)`));
     xhr.onabort = () => reject(new ApiError(0, 'Subida cancelada'));
     xhr.send(form);
   });
