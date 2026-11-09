@@ -16,6 +16,8 @@ export function createEq(audio) {
     filters = BANDS.map(({ hz, type }) => Object.assign(ctx.createBiquadFilter(), { type }));
     filters.forEach((f, i) => { f.frequency.value = BANDS[i].hz; f.Q.value = 1; });
     [source, ...filters, ctx.destination].reduce((a, b) => { a.connect(b); return b; });
+    // Si el reproductor se creó sin gesto del usuario (al restaurar la cola) el contexto nace suspendido y no sonaría nada.
+    audio.addEventListener('play', () => { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); });
     return true;
   }
 

@@ -9,6 +9,7 @@ export default {
   migrations,
   create({ db, tg, catalog }) {
     const service = createService({ repo: createRepo(db), catalog, tg, settings: lyricsConfig });
-    return { router: createRoutes(service), api: service, start: () => service.purgeOrphans() };
+    // Sin purga de huérfanos al arrancar: con el índice vacío (primer arranque tras borrar index.db o cambiar de chat) se perderían las letras.
+    return { router: createRoutes(service), api: service };
   },
 };

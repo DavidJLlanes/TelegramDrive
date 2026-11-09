@@ -17,7 +17,6 @@ export default {
       router: createRoutes(service),
       api: service,
       start() {
-        service.purgeOrphans();
         first = setTimeout(() => scanner.run(), 8000);
         timer = setInterval(() => scanner.run(), photosConfig.scanEveryMinutes * 60_000);
         first.unref(); timer.unref();

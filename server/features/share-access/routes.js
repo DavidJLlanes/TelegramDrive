@@ -7,6 +7,7 @@ import { emitSafe } from '../../core/events.js';
 import { renderGate } from './page.js';
 
 const cookieName = (token) => `tgd_su_${token.slice(0, 10)}`;
+const grantName = (token) => `tgd_sg_${token.slice(0, 10)}`;
 function readCookie(req, name) {
   for (const part of (req.headers.cookie || '').split(';')) {
     const [k, ...v] = part.trim().split('=');
@@ -26,10 +27,11 @@ export function createPublicRouter({ service, shares }) {
   router.get('/:token', (req, res, next) => {
     const share = shares.resolve(req.params.token);
     if (!share) return next();
-    const verdict = service.evaluate(share.token, { unlockedCookie: readCookie(req, cookieName(share.token)), range: req.headers.range, method: req.method });
+    const verdict = service.evaluate(share.token, { unlockedCookie: readCookie(req, cookieName(share.token)), grantCookie: readCookie(req, grantName(share.token)), range: req.headers.range, method: req.method });
     if (verdict.state === 'locked') { emitSafe('share:access', { ...who(req), token: share.token, ok: false, reason: 'pide contraseña' }); return gate(res, share); }
     if (verdict.state === 'exhausted') { emitSafe('share:access', { ...who(req), token: share.token, ok: false, reason: 'límite alcanzado' }); return next(new HttpError(410, 'Este enlace ha alcanzado su límite de descargas')); }
     if (verdict.counted) emitSafe('share:access', { ...who(req), token: share.token, ok: true });
+    if (verdict.grant) res.cookie(grantName(share.token), service.grant(share.token), { httpOnly: true, sameSite: 'lax', secure: req.secure, path: `${config.basePath === '/' ? '' : config.basePath}/share/${share.token}`, maxAge: 6 * 3_600_000 });
     return next();
   });
 

@@ -12,11 +12,15 @@ export function fadeGain(position, duration, seconds) {
  */
 export function createFader(audio, getSeconds) {
   let base = audio.volume;
-  let own = false;
-  audio.addEventListener('volumechange', () => { if (own) own = false; else base = audio.volume; });
+  let own = 0; // cambios hechos por el fundido cuyo evento aún no llegó (puede haber varios en cola)
+  audio.addEventListener('volumechange', () => { if (own > 0) own -= 1; else base = audio.volume; });
   audio.addEventListener('timeupdate', () => {
     const seconds = getSeconds();
     const target = seconds ? base * fadeGain(audio.currentTime, audio.duration, seconds) : base;
-    if (Math.abs(audio.volume - target) > 0.01) { own = true; audio.volume = target; }
+    if (Math.abs(audio.volume - target) > 0.01) {
+      const before = audio.volume;
+      audio.volume = target;
+      if (audio.volume !== before) own += 1; // en iPhone el volumen no cambia y no llegará ningún evento
+    }
   });
 }

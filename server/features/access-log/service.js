@@ -39,7 +39,7 @@ export function createService({ repo, settings, notify = () => {}, now = Date.no
       if (e.ok) trackDevice(e); else checkBruteForce(e);
     },
     onShare(e) { record('share', e.ok, { ...e, detail: `${e.token?.slice(0, 6) ?? ''}… ${e.reason ?? ''}`.trim() }); },
-    list: (limit = 100, event) => repo.list(Math.min(Math.max(1, Number(limit) || 100), 500), event || undefined)
+    list: (limit = 100, event) => repo.list(Math.min(Math.max(1, Math.floor(Number(limit)) || 100), 500), event || undefined)
       .map((r) => ({ id: r.id, ts: r.ts, event: r.event, ok: Boolean(r.ok), ip: r.ip, device: describeAgent(r.agent), detail: r.detail })),
     summary() {
       const devices = repo.devices().map((d) => ({ id: d.id, label: d.label, firstSeen: d.first_seen, lastSeen: d.last_seen, ip: d.last_ip, seen: d.seen, isNew: !d.acked }));

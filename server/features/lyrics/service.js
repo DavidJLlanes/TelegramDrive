@@ -33,6 +33,5 @@ export function createService({ repo, catalog, tg, settings }) {
       repo.upsert(Number(id), text, 'file');
       return repo.get(Number(id));
     },
-    purgeOrphans: () => repo.purgeOrphans(),
   };
 }

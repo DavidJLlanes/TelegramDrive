@@ -5,6 +5,5 @@ export function createRepo(db) {
     upsert: (id, text, source) => db.stmt(`INSERT INTO lyrics (msg_id, text, source, updated_at) VALUES (?, ?, ?, ?)
       ON CONFLICT(msg_id) DO UPDATE SET text = excluded.text, source = excluded.source, updated_at = excluded.updated_at`).run(id, text, source, Date.now()),
     remove: (id) => db.stmt('DELETE FROM lyrics WHERE msg_id = ?').run(id).changes > 0,
-    purgeOrphans: () => db.stmt('DELETE FROM lyrics WHERE msg_id NOT IN (SELECT msg_id FROM files)').run().changes,
   };
 }

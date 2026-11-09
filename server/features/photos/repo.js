@@ -17,6 +17,5 @@ export function createRepo(db) {
       rows: db.stmt(`SELECT f.msg_id AS id, COALESCE(NULLIF(m.taken, 0), f.date) AS at, m.taken > 0 AS exif, m.lat AS lat, m.lon AS lon, m.camera AS camera
         FROM files f LEFT JOIN photo_meta m ON m.msg_id = f.msg_id WHERE ${IMAGE} ORDER BY at DESC, f.msg_id DESC LIMIT ? OFFSET ?`).all(limit, offset),
     }),
-    purgeOrphans: () => db.stmt('DELETE FROM photo_meta WHERE msg_id NOT IN (SELECT msg_id FROM files)').run().changes,
   };
 }

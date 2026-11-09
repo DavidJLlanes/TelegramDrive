@@ -36,6 +36,5 @@ export function createService({ repo, catalog }) {
       if (!Array.isArray(ids) || ids.length > MAX_IDS) throw badRequest(`Indica hasta ${MAX_IDS} fotos`);
       return { removed: repo.removeItems(a.id, ids.map(Number).filter(Number.isInteger)) };
     },
-    purgeOrphans: () => repo.purgeOrphans(),
   };
 }

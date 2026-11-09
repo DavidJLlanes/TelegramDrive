@@ -59,16 +59,27 @@ test('con contraseña: página de acceso, error si es incorrecta y cookie si es 
   assert.match(await forged.text(), /Enlace protegido/);
 });
 
-test('el límite cuenta descargas, no los trozos Range, y bloquea al agotarse', async () => {
+test('el límite cuenta descargas, no los trozos Range del mismo navegador, y bloquea al agotarse', async () => {
   const s = await newShare();
   await call('PUT', `/api/shares/${s.token}/policy`, { maxDownloads: 2 });
-  assert.equal((await pub(`/share/${s.token}`, { headers: { range: 'bytes=0-99' } })).status, 206);
-  for (let i = 0; i < 5; i += 1) assert.equal((await pub(`/share/${s.token}`, { headers: { range: 'bytes=100-199' } })).status, 206); // no cuentan
+  const first = await pub(`/share/${s.token}`, { headers: { range: 'bytes=0-99' } });
+  assert.equal(first.status, 206);
+  const grant = first.headers.get('set-cookie').split(';')[0];
+  for (let i = 0; i < 5; i += 1) assert.equal((await pub(`/share/${s.token}`, { headers: { range: 'bytes=100-199', cookie: grant } })).status, 206); // no cuentan
   assert.equal((await pub(`/share/${s.token}`)).status, 200);
   const third = await pub(`/share/${s.token}`);
   assert.equal(third.status, 410);
   assert.match((await third.json()).error, /límite/);
   assert.equal((await call('GET', '/api/shares/policy')).json.policies[s.token].downloads, 2);
+});
+
+test('no se puede esquivar el límite pidiendo trozos sin empezar por el principio', async () => {
+  const s = await newShare();
+  await call('PUT', `/api/shares/${s.token}/policy`, { maxDownloads: 1 });
+  assert.equal((await pub(`/share/${s.token}`, { headers: { range: 'bytes=1-' } })).status, 206); // sin cookie: cuenta
+  for (const range of ['bytes=1-', 'bytes=500-999', 'bytes=-100']) assert.equal((await pub(`/share/${s.token}`, { headers: { range } })).status, 410);
+  const forged = await pub(`/share/${s.token}`, { headers: { range: 'bytes=1-', cookie: `${`tgd_sg_${s.token.slice(0, 10)}`}=9999999999999.falsa` } });
+  assert.equal(forged.status, 410);
 });
 
 test('los enlaces anulados no dejan políticas huérfanas', async () => {

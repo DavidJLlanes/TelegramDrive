@@ -45,3 +45,13 @@ test('validación y sesión', async () => {
   assert.equal((await call('POST', '/api/photo-albums/1/items', { ids: 'no' })).res.status, 400);
   assert.equal((await fetch(`${h.base}/api/photo-albums`)).status, 401);
 });
+
+test('reiniciar con el índice vacío no borra letras ni álbumes (los datos propios sobreviven a reconstruir el índice)', async () => {
+  const { id } = (await call('POST', '/api/photo-albums', { name: 'Persistente', ids: [ids.a] })).json.album;
+  h.db.exec('DELETE FROM files');
+  h.db.stmt("INSERT INTO lyrics (msg_id, text, source, updated_at) VALUES (?, 'x', 'manual', 0)").run(ids.a);
+  h.features.stop(); h.features.start();
+  assert.equal(h.db.stmt('SELECT COUNT(*) AS n FROM photo_album_items WHERE album_id = ?').get(id).n, 1);
+  assert.equal(h.db.stmt('SELECT COUNT(*) AS n FROM lyrics').get().n, 1);
+  assert.equal((await call('GET', '/api/photo-albums')).json.albums.find((a) => a.id === id).count, 0); // el recuento solo cuenta fotos existentes
+});

@@ -85,7 +85,7 @@ export function renderExplorer(container) {
     if (both) container.append(h('h2', { class: 'section-title' }, 'Archivos'));
     container.append(h('div', { class: `tiles view-${s.view}`, role: 'list' }, files.map((f) => tile(f, files, s.playingId))));
   }
-  if (!searching && files.length < s.total) container.append(sentinel(s));
+  if (!searching && s.files.length < s.total) container.append(sentinel(s));
 }
 
 let observer = null;

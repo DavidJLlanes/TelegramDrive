@@ -10,7 +10,7 @@ if (!to || to === true) fail(new Error('Indica el destino: --to <ID del grupo> (
 try {
   const tg = await connectTelegram();
   const r = await migrateChat({ tg, from: String(from), to: String(to), dryRun: Boolean(option('dry-run')), log: (m) => console.log(m) });
-  console.log(r.dryRun ? '\nSimulación: no se ha copiado nada.' : `\nListo: ${r.copied} elementos copiados.\nAhora pon TG_CHAT=${to} en .env y reinicia el servicio.`);
+  console.log(r.dryRun ? '\nSimulación: no se ha copiado nada.' : `\nListo: ${r.copied} elementos copiados.\nAhora pon TG_CHAT=${to} en .env y reinicia el servicio.\n\nOJO: los archivos y carpetas se trasladan, pero lo que la app guarda aparte y apunta a mensajes concretos\n(enlaces compartidos, letras, álbumes de fotos, posiciones de vídeo…) seguirá apuntando a los mensajes antiguos\ny habrá que rehacerlo. Si ya usas esas funciones, valora no migrar.`);
   await tg.disconnect();
   process.exit(0);
 } catch (err) { fail(err); }

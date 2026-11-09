@@ -8,6 +8,7 @@ export default {
   migrations,
   create({ db, catalog }) {
     const service = createService({ repo: createRepo(db), catalog });
-    return { router: createRoutes(service), api: service, start: () => service.purgeOrphans() };
+    // Sin purga de huérfanos al arrancar: con el índice vacío se perdería la pertenencia a los álbumes. El recuento solo cuenta fotos existentes.
+    return { router: createRoutes(service), api: service };
   },
 };

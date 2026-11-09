@@ -6,6 +6,11 @@ const isStart = (range) => !range || /^bytes=0-/.test(range); // una reproducci�
 /** Reglas de acceso a enlaces compartidos: contraseña, límite de descargas y desbloqueo por cookie firmada. */
 export function createService({ repo, shares, settings, secret, now = Date.now }) {
   const unlockValue = (token, exp) => `${exp}.${sign(`${token}.${exp}`, secret)}`;
+  const grantValue = (token, exp) => `${exp}.${sign(`grant.${token}.${exp}`, secret)}`;
+  const valid = (cookie, make, token) => {
+    const [exp, sig] = String(cookie ?? '').split('.');
+    return Boolean(exp && sig && Number(exp) > now() && safeEqual(sig, make(token, exp).split('.')[1]));
+  };
 
   return {
     setPolicy(token, { password = '', maxDownloads = 0 } = {}) {
@@ -37,20 +42,26 @@ export function createService({ repo, shares, settings, secret, now = Date.now }
       return unlockValue(token, now() + settings.unlockTtlMs);
     },
 
-    isUnlocked(token, cookie = '') {
-      const [exp, sig] = String(cookie).split('.');
-      return Boolean(exp && sig && Number(exp) > now() && safeEqual(sig, unlockValue(token, exp).split('.')[1]));
-    },
+    isUnlocked: (token, cookie) => valid(cookie, unlockValue, token),
 
-    /** Decide el acceso: 'open' | 'locked' | 'exhausted' | 'ok'. `counted`: la petición inicia una descarga (se registra y, si hay límite, consume cupo). */
-    evaluate(token, { unlockedCookie, range, method = 'GET' }) {
-      const start = method === 'GET' && isStart(range);
+    /** Cookie que acredita que este navegador ya empezó una descarga contada (para sus trozos Range posteriores). */
+    grant: (token) => grantValue(token, now() + settings.grantTtlMs),
+
+    /**
+     * Decide el acceso: 'locked' | 'exhausted' | 'ok'. `counted`: la petición inicia una descarga (se registra y, si hay límite, consume cupo);
+     * `grant`: hay que dar al navegador la cookie de descarga. Con límite, una petición Range sin esa cookie también cuenta:
+     * si no, bastaría pedir «bytes=1-» una y otra vez para llevarse el archivo sin gastar cupo.
+     */
+    evaluate(token, { unlockedCookie, grantCookie, range, method = 'GET' }) {
       const p = repo.get(token);
+      const limited = Boolean(p?.max_downloads);
+      const granted = limited && valid(grantCookie, grantValue, token);
+      const start = method === 'GET' && (isStart(range) || (limited && !granted));
       if (!p) return { state: 'ok', counted: start };
       if (p.pw_hash && !this.isUnlocked(token, unlockedCookie)) return { state: 'locked' };
       if (!start) return { state: 'ok', counted: false };
       if (!repo.consume(token)) return { state: 'exhausted' };
-      return { state: 'ok', counted: true };
+      return { state: 'ok', counted: true, grant: limited };
     },
   };
 }

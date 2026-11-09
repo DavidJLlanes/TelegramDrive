@@ -6,7 +6,7 @@ import { reload, refreshStats } from '../../core/drive.js';
 import { toast } from '../../ui/toast.js';
 import { UploadQueue } from './queue.js';
 import { createFolderEnsurer } from './folders.js';
-import { resolveDuplicates } from './duplicates.js';
+import { findDuplicates, resolveDuplicates } from './duplicates.js';
 import { createPanel } from './panel.js';
 import { scanDrop } from './scan.js';
 
@@ -14,7 +14,11 @@ const folders = createFolderEnsurer((parent, name) => api.createFolder(parent, n
 const panel = createPanel({ running: () => queue.running, retryFailed: () => queue.retryFailed() });
 const queue = new UploadQueue({
   concurrency: 3,
-  run: async (job, onProgress) => uploadFile(job.file, job.rel ? await folders.ensure(job.base, job.rel) : job.base, onProgress),
+  run: async (job, onProgress) => {
+    // Tras un corte puede que el servidor sí llegara a guardar el archivo: se comprueba antes de reintentar para no duplicarlo.
+    if (job.attempt > 0 && (await findDuplicates(job.base, [{ file: job.file, rel: job.rel }])).same.length) return { size: job.file.size };
+    return uploadFile(job.file, job.rel ? await folders.ensure(job.base, job.rel) : job.base, onProgress);
+  },
   onChange: (jobs) => panel.update(jobs),
   onIdle: ({ done, failed }) => {
     folders.clear();
