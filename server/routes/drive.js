@@ -61,6 +61,9 @@ export function driveRoutes({ catalog, tg }) {
       const dto = await fileOps.upload(upload);
       if (dto.kind === 'audio') catalog.tagger.kick();
       res.status(201).json(dto);
+    } catch (err) {
+      console.warn(`[upload] fallo enviando "${upload.name}" a Telegram (${upload.size} bytes): ${err.message}`);
+      throw err;
     } finally {
       await upload.cleanup();
     }

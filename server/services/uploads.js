@@ -26,7 +26,12 @@ export function receiveUpload(req) {
     const fail = (err) => {
       if (failed) return;
       failed = true;
+      // se sigue leyendo (y descartando) el cuerpo: si se responde con el error mientras el navegador sigue enviando,
+      // Nginx corta la conexión y el cliente solo vería «Error de red» en lugar del motivo real
+      req.unpipe(bb);
+      req.resume();
       if (received) fsp.rm(received.path, { force: true });
+      console.warn(`[upload] fallo recibiendo "${received?.name ?? '?'}" (${received?.size ?? 0} bytes): ${err.message}`);
       reject(err);
     };
 

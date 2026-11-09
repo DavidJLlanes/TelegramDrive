@@ -112,3 +112,11 @@ test('edición masiva de etiquetas por selección de archivos', async () => {
   assert.ok(tracks.every((t) => t.tags.genre === 'Rock' && t.tags.year === 1999));
   assert.equal((await call('POST', '/api/library/retag', { ids: [], set: {} })).res.status, 400);
 });
+
+test('un error de subida se devuelve completo aunque el archivo sea grande (el cuerpo se descarta, no se corta la conexión)', async () => {
+  const body = new FormData();
+  body.append('path', '/no/existe/nada');
+  body.append('file', new Blob([Buffer.alloc(3_000_000, 7)]), 'grande.bin');
+  const r = await call('POST', '/api/files', body);
+  assert.ok(r.res.status >= 400 && r.res.status < 500, String(r.res.status));
+});

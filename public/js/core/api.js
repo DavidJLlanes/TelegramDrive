@@ -89,7 +89,7 @@ export function uploadFile(file, parent, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) resolve(data);
       else reject(new ApiError(xhr.status, data.error || `Error ${xhr.status}`));
     };
-    xhr.onerror = () => reject(new ApiError(0, 'Error de red'));
+    xhr.onerror = () => reject(new ApiError(0, 'Se cortó la conexión durante la subida'));
     xhr.onabort = () => reject(new ApiError(0, 'Subida cancelada'));
     xhr.send(form);
   });
