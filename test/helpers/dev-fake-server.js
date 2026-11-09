@@ -16,12 +16,16 @@ const { config, ensureDirs } = await import('../../server/config/index.js');
 const { openDatabase } = await import('../../server/db/database.js');
 const { createApp } = await import('../../server/app.js');
 const { Catalog } = await import('../../server/services/catalog.js');
+const { bootFeatures } = await import('../../server/features/index.js');
 const { FakeTelegram } = await import('./fake-telegram.js');
 const { mp3WithTags } = await import('./id3.js');
 
 ensureDirs();
 const tg = new FakeTelegram();
-const catalog = new Catalog(tg, openDatabase(config.dbFile));
+const db = openDatabase(config.dbFile);
+const catalog = new Catalog(tg, db);
+const features = bootFeatures({ db, tg, catalog });
+features.start();
 await catalog.startSync();
 const seed = Number(process.env.FAKE_SEED || 0);
 if (seed) { // datos de demostración (FAKE_SEED=650 npm run dev:fake)
@@ -60,6 +64,6 @@ if (seed) { // datos de demostración (FAKE_SEED=650 npm run dev:fake)
   await catalog.startSync({ full: true });
 }
 const port = Number(process.env.FAKE_PORT || 3199);
-createApp({ tg, catalog }).listen(port, '127.0.0.1', () => {
+createApp({ tg, catalog, features }).listen(port, '127.0.0.1', () => {
   console.log(`Telegram Drive (demo, sin Telegram) en http://127.0.0.1:${port}  · contraseña: demo-password`);
 });

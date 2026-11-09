@@ -14,14 +14,17 @@ export async function makeHarness() {
   const { openDatabase } = await import('../../server/db/database.js');
   const { Catalog } = await import('../../server/services/catalog.js');
   const { createApp } = await import('../../server/app.js');
+  const { bootFeatures } = await import('../../server/features/index.js');
   const { FakeTelegram } = await import('./fake-telegram.js');
 
   ensureDirs();
   const db = openDatabase(config.dbFile);
   const tg = new FakeTelegram();
   const catalog = new Catalog(tg, db);
+  const features = bootFeatures({ db, tg, catalog });
+  features.start();
   await catalog.startSync();
-  const server = createApp({ tg, catalog }).listen(0);
+  const server = createApp({ tg, catalog, features }).listen(0);
   const base = `http://127.0.0.1:${server.address().port}`;
   let cookie = '';
 
@@ -38,7 +41,7 @@ export async function makeHarness() {
   };
 
   return {
-    tg, db, catalog, call, dataDir, Catalog, base,
+    tg, db, catalog, features, call, dataDir, Catalog, base,
     raw: (url) => fetch(`${base}${url}`, { headers: { cookie } }), // respuesta sin leer (binarios)
     setCookie: (value) => { cookie = value; },
     async login() {
@@ -54,6 +57,6 @@ export async function makeHarness() {
       }
       throw new Error('La sincronización no terminó');
     },
-    close() { server.close(); db.close(); fs.rmSync(dataDir, { recursive: true, force: true }); },
+    close() { server.close(); features.stop(); db.close(); fs.rmSync(dataDir, { recursive: true, force: true }); },
   };
 }

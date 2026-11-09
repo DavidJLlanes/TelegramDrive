@@ -1,0 +1,9 @@
+/* Página de contraseña de un enlace compartido (se sirve fuera de la aplicación). */
+body { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
+.gate { width: min(420px, 100%); display: grid; gap: 14px; padding: 28px; border-radius: 18px; background: var(--surface); box-shadow: 0 10px 40px rgb(0 0 0 / 0.12); }
+.gate h1 { font-size: 1.5rem; }
+.gate p { margin: 0; color: var(--muted); word-break: break-word; }
+.gate form { display: grid; gap: 10px; }
+.gate .input { min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); }
+.gate .btn { min-height: 46px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.gate-error { color: var(--danger) !important; }

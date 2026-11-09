@@ -1,4 +1,5 @@
 import { config } from '../config/index.js';
+import { notify } from '../core/notify.js';
 
 const INTERVAL = 60_000;
 
@@ -29,14 +30,8 @@ export class Health {
     if (ok !== this.state.ok) {
       this.state = { ok, since: Date.now(), reason };
       console[ok ? 'log' : 'error'](`[salud] ${ok ? 'Telegram vuelve a responder' : reason}`);
-      this.#notify(ok ? 'Telegram Drive: Telegram vuelve a responder.' : `Telegram Drive: ${reason}`);
+      notify(ok ? 'Telegram Drive: Telegram vuelve a responder.' : `Telegram Drive: ${reason}`, { webhook: this.webhook });
     } else if (!ok) this.state.reason = reason;
     return this.state;
-  }
-
-  #notify(text) {
-    if (!this.webhook) return;
-    fetch(this.webhook, { method: 'POST', headers: { 'Content-Type': 'text/plain; charset=utf-8', Title: 'Telegram Drive' }, body: text, signal: AbortSignal.timeout(10_000) })
-      .catch((err) => console.warn('[salud] el webhook falló:', err.message));
   }
 }

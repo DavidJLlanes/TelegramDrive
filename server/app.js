@@ -10,8 +10,9 @@ import { trashRoutes } from './routes/trash.js';
 import { playlistRoutes } from './routes/playlists.js';
 import { sharingRoutes } from './routes/sharing.js';
 import { shareRoutes } from './routes/share.js';
+import { serviceWorkerHandler } from './services/shell.js';
 
-export function createApp({ tg, catalog }) {
+export function createApp({ tg, catalog, features = { routers: [], publicRouters: [], api: {} } }) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -19,6 +20,7 @@ export function createApp({ tg, catalog }) {
   app.use(securityHeaders);
   app.use(express.json({ limit: '256kb' }));
 
+  app.get('/sw.js', serviceWorkerHandler(config.publicDir));
   app.use(express.static(config.publicDir, {
     index: 'index.html',
     setHeaders(res, file) {
@@ -32,8 +34,8 @@ export function createApp({ tg, catalog }) {
   });
   app.use('/api/auth', authRoutes({ tg }));
   app.use('/api', requireAuth, driveRoutes({ catalog, tg }), libraryRoutes({ catalog }), trashRoutes({ catalog }),
-    playlistRoutes({ catalog }), sharingRoutes({ catalog }));
-  app.use('/share', shareRoutes({ catalog, tg }));
+    playlistRoutes({ catalog }), sharingRoutes({ catalog }), ...features.routers);
+  app.use('/share', ...features.publicRouters, shareRoutes({ catalog, tg }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -4,6 +4,7 @@ import { appState, watch } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
 import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
+import { menuViews, navigateView } from '../core/views.js';
 
 const parentOf = (p) => p.slice(0, p.lastIndexOf('/')) || '/';
 
@@ -49,6 +50,9 @@ function libraryItem(entry, s) {
     icon(entry.icon), h('span', {}, entry.label));
 }
 
+const pageItem = (view, s) => h('button', { class: 'tree-item', 'aria-current': s.section === 'page' && s.page.id === view.id ? 'page' : null, onclick: () => navigateView(view.id) },
+  icon(view.icon), h('span', {}, view.label));
+
 /** Navegación en móvil (donde la barra lateral está oculta): biblioteca, carpetas y papelera en una fila deslizable. */
 export function createMobileNav() {
   const el = h('nav', { class: 'mobile-nav', 'aria-label': 'Secciones' });
@@ -58,6 +62,7 @@ export function createMobileNav() {
     el.replaceChildren(
       chip('Archivos', 'folder', s.section === 'files' || s.results !== null, () => navigate('/')),
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
+      ...[...menuViews('library'), ...menuViews('more')].map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
       chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
   };
   watch(appState, el, paint);
@@ -74,11 +79,12 @@ export function createSidebar() {
   const paint = (s) => {
     const current = s.results !== null || s.section !== 'files' ? null : s.path;
     tree.replaceChildren(
-      h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)),
+      h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)), ...menuViews('library').map((v) => pageItem(v, s)),
       h('div', { class: 'tree-heading' }, 'Carpetas'),
       item('/', 'Inicio', 'home', 0, current),
       ...visibleTree(s.folderPaths, s.path).map((n) => item(n.path, n.path.split('/').pop(), 'folder', n.depth, current)),
       h('div', { class: 'tree-heading' }, 'Más'),
+      ...menuViews('more').map((v) => pageItem(v, s)),
       h('button', { class: 'tree-item', 'aria-current': s.section === 'trash' ? 'page' : null, onclick: navigateTrash }, icon('trash'), h('span', {}, 'Papelera')));
     const sync = s.stats?.sync;
     foot.replaceChildren(

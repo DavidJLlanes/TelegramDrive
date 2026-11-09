@@ -7,6 +7,7 @@ import { verifyTotp } from '../utils/totp.js';
 import { HttpError } from '../utils/errors.js';
 import { issueSession, clearSession, isAuthenticated } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
+import { emitSafe } from '../core/events.js';
 
 export function authRoutes({ tg }) {
   const router = Router();
@@ -22,17 +23,23 @@ export function authRoutes({ tg }) {
   });
 
   router.post('/login', limiter, (req, res, next) => {
+    const who = { ip: req.ip, ua: req.get('user-agent') };
     if (!verifyPassword(req.body?.password ?? '', config.auth.passwordHash)) {
+      emitSafe('auth:login', { ...who, ok: false, reason: 'contraseña incorrecta' });
       return next(new HttpError(401, 'Contraseña incorrecta'));
     }
     if (totpSecret) {
       const step = verifyTotp(totpSecret, req.body?.code);
-      if (step === null || step <= lastStep) return next(new HttpError(401, 'Código incorrecto o ya usado'));
+      if (step === null || step <= lastStep) {
+        emitSafe('auth:login', { ...who, ok: false, reason: 'código TOTP incorrecto' });
+        return next(new HttpError(401, 'Código incorrecto o ya usado'));
+      }
       lastStep = step;
       try { fs.writeFileSync(stepFile, String(step), { mode: 0o600 }); } catch { /* el límite en memoria sigue activo */ }
     }
     limiter.reset(req.ip); // un acceso correcto no cuenta para el límite
     issueSession(res, req.secure);
+    emitSafe('auth:login', { ...who, ok: true });
     return res.json({ authenticated: true });
   });
 

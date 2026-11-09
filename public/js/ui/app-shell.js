@@ -8,6 +8,7 @@ import { renderExplorer } from './explorer.js';
 import { renderLibrary } from './library.js';
 import { renderTrash } from './trash-view.js';
 import { createSelectionBar } from './selection.js';
+import { renderPage } from './page-view.js';
 
 export function renderShell(root, { onLogout }) {
   const syncNote = h('p', { class: 'sync-note', role: 'status' });
@@ -34,7 +35,7 @@ export function renderShell(root, { onLogout }) {
       syncNote.hidden = false;
       syncNote.textContent = `Actualizando etiquetas… quedan ${s.stats.retag.pending ?? 0}.`;
     }
-    const render = s.results !== null ? renderExplorer : s.section === 'library' ? renderLibrary : s.section === 'trash' ? renderTrash : renderExplorer;
+    const render = s.results !== null ? renderExplorer : s.section === 'library' ? renderLibrary : s.section === 'trash' ? renderTrash : s.section === 'page' ? renderPage : renderExplorer;
     render(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };

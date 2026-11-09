@@ -2,6 +2,7 @@
 // Independiente del prefijo de despliegue.
 const LIB_PREFIX = '#!/musica';
 const TRASH_HASH = '#!/papelera';
+import { getView } from './views.js';
 const decode = (v) => { try { return decodeURIComponent(v); } catch { return v; } };
 
 export const pathFromHash = () => {
@@ -9,9 +10,11 @@ export const pathFromHash = () => {
   return `/${raw.split('/').filter(Boolean).map(decode).join('/')}`;
 };
 
-/** { kind: 'folder', path } | { kind: 'lib', view, a, b } | { kind: 'trash' } */
+/** { kind: 'folder', path } | { kind: 'lib', view, a, b } | { kind: 'trash' } | { kind: 'page', id, parts } */
 export function currentRoute() {
   if (location.hash.startsWith(TRASH_HASH)) return { kind: 'trash' };
+  const [pageId, ...pageParts] = location.hash.startsWith('#!/') ? location.hash.slice(3).split('/').map(decode) : [];
+  if (getView(pageId)) return { kind: 'page', id: pageId, parts: pageParts };
   if (location.hash.startsWith(LIB_PREFIX)) {
     const [view, a, b] = location.hash.slice(LIB_PREFIX.length).split('/').slice(1).map(decode);
     return { kind: 'lib', view: view || 'albums', a, b };

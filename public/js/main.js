@@ -3,6 +3,8 @@ import { appState } from './core/store.js';
 import { loadPath, watchSync } from './core/drive.js';
 import { loadLibrary } from './core/library.js';
 import { loadTrash } from './core/trash.js';
+import { loadPage } from './core/page.js';
+import './features/index.js';
 import { resumeSession } from './players/session.js';
 import { onRoute, currentRoute } from './core/router.js';
 import { renderLogin } from './ui/login.js';
@@ -30,7 +32,12 @@ async function logout({ wipe = false } = {}) {
   location.reload();
 }
 
-const openRoute = (route) => (route.kind === 'lib' ? loadLibrary(route) : route.kind === 'trash' ? loadTrash() : loadPath(route.path));
+const openRoute = (route) => {
+  if (route.kind === 'lib') return loadLibrary(route);
+  if (route.kind === 'trash') return loadTrash();
+  if (route.kind === 'page') return loadPage(route.id, route.parts);
+  return loadPath(route.path);
+};
 
 function start() {
   renderShell(root, { onLogout: logout });

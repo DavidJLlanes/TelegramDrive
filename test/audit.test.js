@@ -151,3 +151,13 @@ test('al cambiar el chat de almacenamiento el índice se reconstruye desde cero'
   await h.waitSync();
   assert.equal(h.catalog.stats().files, before);
 });
+
+test('el service worker se sirve con versión y lista de archivos generadas del contenido de public/', async () => {
+  const sw = (await h.raw('/sw.js'));
+  assert.equal(sw.headers.get('cache-control'), 'no-cache');
+  const text = await sw.text();
+  assert.doesNotMatch(text, /__BUILD__|__SHELL__/);
+  assert.match(text, /const VERSION = "[0-9a-f]{10}"/);
+  for (const f of ['js/main.js', 'css/tokens.css', 'js/core/views.js', 'index.html']) assert.ok(text.includes(`"${f}"`), f);
+  assert.ok(!text.includes('"sw.js"'));
+});

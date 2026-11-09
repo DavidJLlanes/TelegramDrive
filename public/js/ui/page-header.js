@@ -8,6 +8,7 @@ import { openMenu } from './menu.js';
 import { playButtons } from './play-buttons.js';
 import { libraryHead } from './library-head.js';
 import { emptyTrash } from './trash-view.js';
+import { pageHead } from './page-view.js';
 
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
@@ -73,6 +74,7 @@ export function createPageHeader() {
     if (s.results !== null) head = folderHead(s);
     else if (s.section === 'library') head = libraryHead(s.lib);
     else if (s.section === 'trash') head = trashHead(s);
+    else if (s.section === 'page') head = pageHead(s);
     else head = folderHead(s);
     const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
     el.replaceChildren(...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));

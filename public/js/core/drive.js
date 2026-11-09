@@ -4,6 +4,7 @@ import { appState } from './store.js';
 import { toastError } from '../ui/toast.js';
 import { loadLibrary } from './library.js';
 import { loadTrash } from './trash.js';
+import { loadPage } from './page.js';
 
 let token = 0;
 /** Invalida las cargas en curso (la última navegación gana, sea carpeta o biblioteca). */
@@ -47,6 +48,7 @@ export async function loadMore() {
 export function reload() {
   const { section, lib } = appState.get();
   if (section === 'trash') return loadTrash();
+  if (section === 'page') return loadPage(appState.get().page.id, appState.get().page.parts);
   return section === 'library' ? loadLibrary(lib) : loadPath();
 }
 

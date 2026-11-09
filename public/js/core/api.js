@@ -68,6 +68,14 @@ export const api = {
   retagIds: (ids, set) => request('library/retag', { method: 'POST', body: { ids, set } }),
 };
 
+/** Cliente genérico para las funciones (features/*): cada una define sus llamadas en su propia carpeta, no aquí. */
+export const http = {
+  get: (path, query) => request(path, { query }),
+  post: (path, body) => request(path, { method: 'POST', body }),
+  put: (path, body) => request(path, { method: 'PUT', body }),
+  delete: (path) => request(path, { method: 'DELETE' }),
+};
+
 export const contentUrl = (id, { download = false } = {}) =>
   url(`files/${id}/content`, download ? { download: 1 } : undefined).href;
 export const thumbUrl = (id) => url(`files/${id}/thumb`).href;

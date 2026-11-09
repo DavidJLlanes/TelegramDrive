@@ -3,6 +3,7 @@ import { openDatabase } from './db/database.js';
 import { TelegramService } from './telegram/service.js';
 import { Catalog } from './services/catalog.js';
 import { createApp } from './app.js';
+import { bootFeatures } from './features/index.js';
 
 process.on('unhandledRejection', (err) => console.error('[error] promesa sin capturar:', err));
 assertRuntimeConfig();
@@ -12,15 +13,17 @@ const db = openDatabase(config.dbFile);
 console.log(`[db] ${config.dbFile} (${db.driver})`);
 const tg = new TelegramService();
 const catalog = new Catalog(tg, db);
+const features = bootFeatures({ db, tg, catalog });
 await tg.connect();
 console.log('[telegram] conectado');
 catalog.health.start();
+features.start();
 catalog.startSync(); // incremental si ya hay índice; completa la primera vez
 const purge = () => catalog.trash.purge().then((r) => r.deleted && console.log(`[papelera] ${r.deleted} elementos eliminados definitivamente`)).catch((e) => console.warn('[papelera]', e.message));
 setTimeout(purge, 60_000).unref();
 setInterval(purge, 6 * 3600_000).unref();
 
-const server = createApp({ tg, catalog }).listen(config.port, config.host, () => {
+const server = createApp({ tg, catalog, features }).listen(config.port, config.host, () => {
   console.log(`[http] http://${config.host}:${config.port}  (base ${config.basePath})`);
 });
 server.requestTimeout = 0;      // subidas/streams largos
@@ -28,6 +31,7 @@ server.headersTimeout = 65_000;
 
 async function shutdown() {
   server.close();
+  features.stop();
   await tg.disconnect().catch(() => {});
   db.close();
   process.exit(0);
