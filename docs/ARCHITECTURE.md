@@ -51,25 +51,33 @@ docs/                       esta documentación
 
 ## Cómo añadir una función (servidor)
 
+Plantilla real, tomada de `features/access-log`:
+
 ```js
 // server/features/mi-funcion/index.js
+import { migrations } from './migrations.js';
 import { createRepo } from './repo.js';
 import { createService } from './service.js';
 import { createRoutes } from './routes.js';
-import { migrations } from './migrations.js';
 
 export default {
   name: 'mi-funcion',
-  migrations,                                   // [{ id: '020-mi-funcion', up(db) {…} }]
-  create({ db, events, config, features }) {
-    const service = createService({ repo: createRepo(db) });
-    const off = events.on('auth:login', (e) => service.onLogin(e)) && (() => events.off('auth:login', service.onLogin));
-    return { router: createRoutes(service), api: service, start() {}, stop: off };
+  migrations,                                   // [{ id: '050-mi-funcion', up(db) {…} }]
+  create({ db, tg, catalog, events }) {
+    const service = createService({ repo: createRepo(db), catalog });
+    const onLogin = (e) => service.onLogin(e);
+    return {
+      router: createRoutes(service),            // se monta bajo /api, con sesión obligatoria
+      api: service,                             // lo que otras funciones ven en ctx.features['mi-funcion']
+      start() { events.on('auth:login', onLogin); },
+      stop() { events.off('auth:login', onLogin); },
+    };
   },
 };
 ```
 
-Después, importarla en `server/features/index.js`. Las rutas se montan bajo `/api` con sesión obligatoria.
+Después, importarla y añadirla a la lista en `server/features/index.js`. `publicRouter` (opcional) monta rutas sin sesión en `/share`.
+Rangos de migraciones en uso: 010 access-log · 020 share-access · 030 lyrics · 040 photos · 041 photo-albums.
 
 ## Cómo añadir una pantalla (cliente)
 
@@ -82,19 +90,34 @@ registerView({ id: 'mi-funcion', label: 'Mi función', icon: 'tag', group: 'more
 
 y una línea en `public/js/features/index.js`.
 
+## Puntos de extensión del cliente
+
+| Quieres… | Usa | Ejemplo |
+|---|---|---|
+| Una pantalla con entrada de menú | `registerView` (`core/views.js`) | `features/usage` |
+| Código al abrir la sesión | `onAppStart` (`core/hooks.js`) | `features/security`, `share-target` |
+| Filtrar la lista de archivos o añadir una barra encima | `addFileFilter`, `addExplorerBar` (`core/explorer-ext.js`) | `features/filters` |
+| Comportamiento en cada tarjeta (arrastrar…) | `addCardEnhancer` | `features/dragmove` |
+| Entradas en el menú de un archivo | `addFileMenuItems` | `features/photos` |
+| Enganchar el reproductor de audio / vídeo | `onAudioReady` (`players/audio-hooks.js`), `onVideoLoad` (`players/video-hooks.js`) | `lyrics`, `audio-fx`, `video-resume` |
+| Atajos de teclado | `bindShortcut` (`features/shortcuts`) | — |
+| Iconos propios | `registerIcons` (`core/icons.js`) | `features/icons.js` |
+
 ## Funciones actuales
 
 | Función | Servidor | Cliente |
 |---|---|---|
 | Registro de accesos y avisos | `features/access-log` | `features/security` |
-| Enlaces con caducidad, contraseña y límite | `features/share-access` | (diálogo de compartir) |
-| Copia de seguridad cifrada | `features/backup` + `scripts/backup.js` | `features/security` |
-| Migración a otro chat | `scripts/migrate-chat.js` | — |
-| Subidas en paralelo con reintentos y duplicados | `features/uploads` | `features/uploads` |
-| Filtros por tipo, arrastrar para mover, atajos | — | `features/filters`, `features/dragmove`, `features/shortcuts` |
+| Enlaces con contraseña y límite de descargas | `features/share-access` | `features/share-policy` (diálogo de compartir) |
+| Copia de seguridad cifrada | `features/backup`, `tools/restore-backup.js`, `scripts/backup.js`, `scripts/restore.js` | `features/security` |
+| Migración a otro chat | `tools/migrate-chat.js`, `scripts/migrate-chat.js` | — |
+| Subidas en paralelo, reintentos, duplicados | `features/duplicates` | `features/uploads` |
+| Filtros, arrastrar para mover, atajos | — | `features/filters`, `features/dragmove`, `features/shortcuts` |
 | Letras | `features/lyrics` | `features/lyrics` |
 | Ecualizador y fundido | — | `features/audio-fx` |
 | Revisión de la biblioteca | `features/library-audit` | `features/library-audit` |
 | Fotos (línea de tiempo EXIF) | `features/photos` | `features/photos` |
+| Álbumes de fotos | `features/photo-albums` | `features/photos` |
 | Uso de espacio | `features/usage` | `features/usage` |
-| Compartir hacia la app (Android) | — | `features/share-target` |
+| Retomar vídeos | — | `features/video-resume` |
+| Compartir hacia la app (Android) | — | `features/share-target` + `public/sw-share-target.js` |

@@ -24,6 +24,13 @@ carpetas, subida/descarga, reproductor de música, reproductor de vídeo y visor
   Dentro de cada carpeta: por nº de pista de las etiquetas; si no hay, por el número del nombre del archivo; si tampoco, aleatorio.
 - **Edición masiva de etiquetas**: marca archivos con el check (y/o carpetas) → **Etiquetas**, o el menú de una carpeta → *Editar etiquetas de la carpeta*.
 - **Streaming con `Range`**: audio y vídeo se pueden buscar (seek) sin descargar el archivo entero.
+- **Más funciones** (cada una vive en su carpeta, ver `docs/ARCHITECTURE.md`): subidas en paralelo con reintentos y aviso de repetidos ·
+  filtros por tipo, fecha y tamaño · arrastrar archivos sobre una carpeta para moverlos · atajos de teclado (`?` muestra la lista) ·
+  letras de canciones (escritas o importadas de las etiquetas) · ecualizador de 5 bandas y fundido entre canciones · revisión de la
+  biblioteca (álbumes incompletos, pistas repetidas, etiquetas incoherentes) · **Fotos** con línea de tiempo por fecha EXIF y enlace
+  al mapa · álbumes de fotos · retomar vídeos donde se dejaron · **Espacio** (uso por tipo y carpeta) · enlaces compartidos con
+  contraseña, caducidad y límite de descargas · **Seguridad** (registro de accesos, aviso de dispositivo nuevo) · copia de seguridad
+  cifrada · compartir hacia la app desde Android.
 - **Frontend sin build**: HTML + CSS + módulos ES nativos. Cero dependencias en el navegador.
 
 ## Estructura
@@ -33,17 +40,23 @@ server/
   config/        Carga y validación de .env
   middleware/    Sesión (cookie firmada), rate-limit, cabeceras CSP, errores
   db/            database.js (SQLite: node:sqlite o better-sqlite3) · folder-tree.js · files-repo.js
+  core/          events.js (bus interno) · notify.js (avisos por webhook)
+  features/      UNA CARPETA POR FUNCIÓN: access-log · share-access · backup · duplicates · lyrics · library-audit ·
+                 photos · photo-albums · usage  (index.js las registra)
+  tools/         migrate-chat.js · restore-backup.js (usadas por los scripts)
   routes/        auth.js · drive.js
   services/      catalog.js (fachada) · folder-ops.js · file-ops.js · sync.js (incremental/completa)
                  streamer.js (Range) · uploads.js · thumbnails.js · records.js
   telegram/      service.js (único contacto con GramJS) · codec.js (formato del pie de mensaje)
   utils/         paths, crypto (scrypt/HMAC), errores, tipos de medio
-scripts/         setup.js · login.js · generate-icons.js · check.js
+scripts/         setup.js · login.js · chats.js · migrate-chat.js · backup.js · restore.js · generate-icons.js · check.js
 public/
   index.html · manifest.webmanifest · sw.js · offline.html · icons/
   css/           tokens → base → components → layout → explorer → players → lightbox
   js/core/       api · store · router · drive (datos) · dom (DOM seguro) · icons · format
-  js/ui/         topbar · explorer · actions · modal · menu · uploader · login · toast …
+  js/ui/         topbar · explorer · actions · modal · menu · login · toast …
+  js/features/   uploads · filters · dragmove · shortcuts · lyrics · audio-fx · library-audit · photos · usage ·
+                 video-resume · share-target · security · share-policy
   js/players/    audio-player · video-player · lightbox · viewer (despacho por tipo)
   js/pwa/        registro del service worker e instalación
 deploy/          nginx-telegram.conf · telegram-drive.service · deploy.sh
@@ -69,7 +82,14 @@ Desarrollo de la interfaz sin Telegram: `npm run dev:fake` → <http://127.0.0.1
 ### Guardar en un grupo o canal privado
 
 Por defecto los archivos van a *Mensajes guardados* (`TG_CHAT=me`). Para usar un grupo propio: `npm run chats` lista tus
-grupos y canales con su ID; copia el del tuyo en `.env` como `TG_CHAT=-100…` y reinicia. Los archivos ya subidos no se mueven.
+grupos y canales con su ID; copia el del tuyo en `.env` como `TG_CHAT=-100…` y reinicia. Los archivos que ya estuvieran en otro chat se
+copian al nuevo con `npm run migrate -- --from me --to -100… [--dry-run]` (no duplica lo que ya esté y no borra el origen).
+
+### Copia de seguridad cifrada y restauración
+
+Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor envía cada `BACKUP_EVERY_HOURS` horas una copia cifrada
+(AES-256-GCM) de lo que **no** se puede reconstruir desde Telegram: enlaces compartidos, registro de accesos, letras, álbumes de fotos…
+`npm run backup` la hace al momento y `npm run restore -- [archivo.tgb] [--out carpeta]` la descarga de Telegram (o abre el archivo indicado), la descifra y deja los datos en una carpeta (por defecto `restaurado/`). **Sin la frase no hay forma de abrirla.**
 
 ## Seguridad
 
@@ -91,5 +111,11 @@ Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` d
 - **Etiquetas de música**: se leen una sola vez por archivo (la barra superior indica cuántas quedan). Los archivos sin etiquetas legibles
   siguen en sus carpetas pero no aparecen en la Biblioteca. Una base de datos anterior se migra sola al arrancar.
 - SQLite: se usa el integrado de Node ≥ 22.5; con Node 20/22.0–22.4 se usa `better-sqlite3` (dependencia opcional).
-- Subir una colección grande: sube la carpeta entera con **Subir → Subir carpeta**; las subidas van de una en una para respetar los límites de Telegram.
+- Subir una colección grande: sube la carpeta entera con **Subir → Subir carpeta**; las subidas van de 3 en 3, con reintentos si se corta la conexión.
+- **Fotos**: la línea de tiempo lee el EXIF de los JPEG en segundo plano (solo la cabecera de cada uno); PNG, HEIC y similares se
+  ordenan por su fecha de subida. El mapa es un enlace a OpenStreetMap: la CSP impide cargar teselas dentro de la app.
+- **Ecualizador**: usa Web Audio y está desactivado por defecto; en iPhone/iPad puede cortar la música con la pantalla bloqueada. El
+  fundido es «baja al final, sube al principio» (no solapa canciones) y no tiene efecto en iOS, donde el volumen es de solo lectura.
+- **Compartir hacia la app** solo funciona en Android/Chrome con la PWA instalada (iOS no admite *share target*).
+- Las miniaturas de vídeo dependen de las que genere Telegram para cada documento.
 - Los formatos que el navegador no reproduce (p. ej. MKV/HEVC) se pueden descargar desde el propio reproductor.
