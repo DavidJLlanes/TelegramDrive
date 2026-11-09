@@ -88,3 +88,31 @@ test('restaurar una cola guardada conserva posición, aleatorio y repetición', 
   assert.equal(q.repeat, 'all');
   assert.equal(q.next().id, 6);
 });
+
+test('aleatorio sin repeticiones: ni al repetir todo, ni al activarlo a mitad, ni con ids duplicados ni al encolar de nuevo', () => {
+  for (let round = 0; round < 200; round += 1) {
+    const q = createQueue();
+    q.set(files(6), 1, { shuffle: true });
+    q.cycleRepeat();                                   // repetir todo
+    let previous = q.current().id;
+    for (let i = 0; i < 30; i += 1) {
+      const next = q.next(true).id;
+      assert.notEqual(next, previous, 'la misma canción dos veces seguidas');
+      previous = next;
+    }
+  }
+  const q = createQueue();
+  q.set(files(8), 1);
+  q.next(); q.next(); q.next();                        // ya han sonado 1, 2 y 3; suena la 4
+  q.toggleShuffle();
+  const heardAfter = [q.current().id];
+  for (let f = q.next(); f; f = q.next()) heardAfter.push(f.id);
+  assert.deepEqual([...heardAfter].sort((a, b) => a - b), [4, 5, 6, 7, 8]);   // solo las que faltan, sin repetir las ya oídas
+  const d = createQueue();
+  d.set([{ id: 1 }, { id: 2 }, { id: 1 }, { id: 3 }], 1);
+  assert.equal(d.length, 3);
+  d.enqueue({ id: 3 }, { last: false });               // ya estaba: se recoloca
+  d.enqueue({ id: 2 }, { last: true });
+  assert.equal(d.length, 3);
+  assert.deepEqual(d.ordered.map((f) => f.id), [1, 3, 2]);
+});

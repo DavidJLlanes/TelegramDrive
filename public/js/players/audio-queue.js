@@ -8,6 +8,9 @@ const shuffled = (n, first) => {
   return first >= 0 ? [first, ...rest] : rest;
 };
 
+/** Sin canciones repetidas en la cola (se conserva la primera aparición). */
+const unique = (files) => [...new Map(files.map((f) => [f.id, f])).values()];
+
 export const REPEAT_MODES = ['off', 'all', 'one'];
 
 export function createQueue() {
@@ -32,18 +35,19 @@ export function createQueue() {
 
     /** Sustituye la cola y sitúa la reproducción en `startId` (o en la primera pista). */
     set(files, startId, { shuffle: mix = shuffle } = {}) {
-      items = files;
+      items = unique(files);
       shuffle = mix;
-      const start = Math.max(files.findIndex((f) => f.id === startId), 0);
-      rebuild(files.length ? start : -1);
+      const start = Math.max(items.findIndex((f) => f.id === startId), 0);
+      rebuild(items.length ? start : -1);
     },
 
     /** Amplía la lista conservando la pista actual (p. ej. al cargar la carpeta completa). */
     extend(files) {
       const id = this.current()?.id;
-      const at = files.findIndex((f) => f.id === id);
+      const list = unique(files);
+      const at = list.findIndex((f) => f.id === id);
       if (at < 0) return false;
-      items = files;
+      items = list;
       rebuild(at);
       return true;
     },
@@ -53,7 +57,10 @@ export function createQueue() {
       if (auto && repeat === 'one') return this.current();
       if (pos + 1 < order.length) { pos += 1; return this.current(); }
       if (repeat !== 'all') return null;
+      const last = order[order.length - 1];
       rebuild(shuffle ? -1 : 0);
+      // en la nueva vuelta aleatoria, la primera no puede ser la que acaba de sonar
+      if (shuffle && order.length > 1 && order[0] === last) { const k = 1 + Math.floor(Math.random() * (order.length - 1)); [order[0], order[k]] = [order[k], order[0]]; }
       pos = 0;
       return this.current();
     },
@@ -97,6 +104,17 @@ export function createQueue() {
 
     /** Inserta `file` justo después de la actual (o al final con `last`). */
     enqueue(file, { last = false } = {}) {
+      const existing = items.findIndex((f) => f.id === file.id);
+      if (existing >= 0 && pos >= 0) { // ya está en la cola: se recoloca en vez de repetirla
+        const from = order.indexOf(existing);
+        if (from === pos) return;
+        const playing = order[pos];
+        order.splice(from, 1);
+        const at = last ? order.length : order.indexOf(playing) + 1;
+        order.splice(at, 0, existing);
+        pos = order.indexOf(playing);
+        return;
+      }
       items = [...items, file];
       const idx = items.length - 1;
       order.splice(last || pos < 0 ? order.length : pos + 1, 0, idx);
@@ -115,7 +133,13 @@ export function createQueue() {
     toggleShuffle() {
       shuffle = !shuffle;
       const current = order[pos];
-      rebuild(current ?? -1);
+      if (shuffle && current !== undefined) {
+        // lo ya escuchado queda detrás y lo que falta se baraja: no se repite nada hasta terminar la vuelta
+        const heard = order.slice(0, pos);
+        const rest = shuffled(items.length, -1).filter((i) => i !== current && !heard.includes(i));
+        order = [...heard, current, ...rest];
+        pos = heard.length;
+      } else rebuild(current ?? -1);
       return shuffle;
     },
 
