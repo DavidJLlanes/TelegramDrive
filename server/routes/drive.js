@@ -19,8 +19,8 @@ export function driveRoutes({ catalog, tg }) {
   router.get('/stats', (_req, res) => res.json(catalog.stats()));
 
   /** Sincronización completa en segundo plano; el cliente consulta /stats hasta que termine. */
-  router.post('/refresh', (_req, res) => {
-    catalog.startSync({ full: true });
+  router.post('/refresh', (req, res) => {
+    catalog.startSync({ full: true, confirmPrune: req.body?.confirmPrune === true });
     res.status(202).json(catalog.stats());
   });
 

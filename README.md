@@ -119,7 +119,8 @@ Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` d
 
 - **Primera sincronización**: indexar miles de archivos tarda unos minutos (la barra inferior muestra el progreso). Después, cada
   arranque solo lee lo nuevo. El botón **Sincronizar** hace una pasada completa y poda lo que hayas borrado a mano en Telegram
-  (si Telegram no devolviera nada, el índice se conserva por seguridad).
+  (si Telegram no devolviera nada, el índice se conserva por seguridad). Protección contra borrados masivos: si faltan más de la
+  mitad de los elementos (con 20 o más en el índice) no se poda nada y aparece un aviso con el botón «Quitarlos de la lista» para confirmarlo.
 - **Etiquetas de música**: se leen una sola vez por archivo (la barra superior indica cuántas quedan). Los archivos sin etiquetas legibles
   siguen en sus carpetas pero no aparecen en la Biblioteca. Una base de datos anterior se migra sola al arrancar.
 - SQLite: se usa el integrado de Node ≥ 22.5; con Node 20/22.0–22.4 se usa `better-sqlite3` (dependencia opcional).

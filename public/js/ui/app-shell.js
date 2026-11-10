@@ -9,6 +9,7 @@ import { renderLibrary } from './library.js';
 import { renderTrash } from './trash-view.js';
 import { createSelectionBar } from './selection.js';
 import { renderPage } from './page-view.js';
+import { showPruneGuard } from './prune-guard.js';
 
 export function renderShell(root, { onLogout }) {
   const syncNote = h('p', { class: 'sync-note', role: 'status' });
@@ -23,7 +24,8 @@ export function renderShell(root, { onLogout }) {
     syncNote.hidden = !(sync?.running || sync?.error);
     syncNote.textContent = sync?.error ? `Error de sincronización: ${sync.error}`
       : `Sincronizando con Telegram… ${sync?.scanned ?? 0} mensajes revisados. Puedes seguir usando la aplicación.`;
-    if (!sync?.running && !sync?.error && s.stats?.tagging?.running) {
+    if (!sync?.running && sync?.pruneBlocked) { syncNote.hidden = false; showPruneGuard(syncNote, sync.pruneBlocked); }
+    if (!sync?.running && !sync?.error && !sync?.pruneBlocked && s.stats?.tagging?.running) {
       syncNote.hidden = false;
       syncNote.textContent = `Leyendo las etiquetas de tu música… quedan ${s.stats.tagging.pending}. La biblioteca se completa sola.`;
     }
@@ -31,7 +33,7 @@ export function renderShell(root, { onLogout }) {
     banner.hidden = !offline;
     banner.textContent = s.offline ? 'Sin conexión: puedes escuchar la música guardada en este dispositivo.'
       : 'Telegram no responde ahora mismo. Se reintenta solo; mientras tanto no se podrán abrir archivos nuevos.';
-    if (!sync?.running && !sync?.error && s.stats?.retag?.running) {
+    if (!sync?.running && !sync?.error && !sync?.pruneBlocked && s.stats?.retag?.running) {
       syncNote.hidden = false;
       syncNote.textContent = `Actualizando etiquetas… quedan ${s.stats.retag.pending ?? 0}.`;
     }

@@ -41,7 +41,7 @@ export const api = {
   genres: () => request('library/genres'),
   albums: (filter = {}) => request('library/albums', { query: filter }),
   tracks: (filter = {}) => request('library/tracks', { query: filter }),
-  refresh: () => request('refresh', { method: 'POST' }),
+  refresh: (confirmPrune = false) => request('refresh', { method: 'POST', body: { confirmPrune } }),
   createFolder: (parent, name) => request('folders', { method: 'POST', body: { parent, name } }),
   renameFolder: (path, name) => request('folders', { method: 'PATCH', body: { path, name } }),
   moveFolder: (path, parent) => request('folders', { method: 'PATCH', body: { path, parent } }),
