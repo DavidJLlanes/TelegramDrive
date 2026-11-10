@@ -1,4 +1,4 @@
-import { h } from '../../core/dom.js';
+import { h, fill } from '../../core/dom.js';
 import { icon } from '../../core/icons.js';
 import { navigateView } from '../../core/views.js';
 import { reload } from '../../core/drive.js';
@@ -18,8 +18,8 @@ const card = (album) => {
   const cover = h('div', { class: 'ph-album-cover' }, icon('image'));
   if (album.cover) {
     const img = h('img', { src: thumbUrl(album.cover), alt: '', loading: 'lazy' });
-    cover.replaceChildren(img);
-    img.addEventListener('error', () => cover.replaceChildren(icon('image')));
+    fill(cover, img);
+    img.addEventListener('error', () => fill(cover, icon('image')));
   }
   return h('div', { class: 'ph-album', tabindex: 0, role: 'link', 'aria-label': album.name, onclick: open, onkeydown: (e) => e.key === 'Enter' && open() },
     cover, h('strong', {}, album.name), h('span', {}, `${album.count} ${album.count === 1 ? 'foto' : 'fotos'}`));
@@ -44,10 +44,10 @@ export function renderAlbums(el, { data }) {
   if (data.open) {
     const { album, photos } = data.open;
     const menuExtra = (p) => [{ label: 'Quitar de este álbum', icon: 'close', run: async () => { try { await photosApi.removeFromAlbum(album.id, [p.id]); reload(); } catch (err) { toastError(err); } } }];
-    el.replaceChildren(h('button', { class: 'btn btn-ghost ph-back', type: 'button', onclick: () => navigateView('albumes-fotos') }, icon('chevronLeft'), 'Álbumes'),
+    fill(el, h('button', { class: 'btn btn-ghost ph-back', type: 'button', onclick: () => navigateView('albumes-fotos') }, icon('chevronLeft'), 'Álbumes'),
       ...(photos.length ? photoGrid(photos, { menuExtra }) : [h('div', { class: 'empty' }, h('strong', {}, 'Álbum vacío'), h('span', {}, 'Abre el menú de una foto y elige «Añadir a un álbum de fotos…».'))]));
     return;
   }
-  el.replaceChildren(data.albums.length ? h('div', { class: 'ph-albums' }, data.albums.map(card))
+  fill(el, data.albums.length ? h('div', { class: 'ph-albums' }, data.albums.map(card))
     : h('div', { class: 'empty' }, icon('image'), h('strong', {}, 'Todavía no tienes álbumes'), h('span', {}, 'Crea uno y añade fotos desde su menú. Los álbumes no mueven ni duplican las fotos.')));
 }

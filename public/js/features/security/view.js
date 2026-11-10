@@ -1,4 +1,4 @@
-import { h } from '../../core/dom.js';
+import { h, fill } from '../../core/dom.js';
 import { formatBytes, formatDateTime } from '../../core/format.js';
 import { reload } from '../../core/drive.js';
 import { toast, toastError } from '../../ui/toast.js';
@@ -52,5 +52,5 @@ function backupPanel(b) {
 }
 
 export function renderSecurity(el, { data }) {
-  el.replaceChildren(devicesPanel(data.summary), activityPanel(data.entries, data.summary.failed24h), backupPanel(data.backup));
+  fill(el, devicesPanel(data.summary), activityPanel(data.entries, data.summary.failed24h), backupPanel(data.backup));
 }

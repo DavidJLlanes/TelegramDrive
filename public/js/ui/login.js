@@ -1,4 +1,4 @@
-import { h } from '../core/dom.js';
+import { h, fill } from '../core/dom.js';
 import { api } from '../core/api.js';
 import { icon } from '../core/icons.js';
 import { tint } from '../core/color.js';
@@ -34,7 +34,7 @@ export function renderLogin(root, onSuccess) {
   h('p', {}, 'Escribe la contraseña de tu unidad.'),
   input, code, error, button);
 
-  root.replaceChildren(h('div', { class: 'login' },
+  fill(root, h('div', { class: 'login' },
     h('section', { class: 'login-art' },
       h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 38, height: 38 })), 'Telegram Drive'),
       h('h2', {}, 'Tu música, vídeos y fotos, en tu Telegram.'),

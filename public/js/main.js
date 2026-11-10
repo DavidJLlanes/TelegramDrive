@@ -16,6 +16,7 @@ import { renderOfflineHome } from './ui/offline-home.js';
 import { enableDropZone } from './features/uploads/index.js';
 import { registerServiceWorker } from './pwa/register.js';
 import './pwa/no-zoom.js';
+import './pwa/global-errors.js';
 
 const root = document.getElementById('app');
 let started = false;

@@ -1,4 +1,4 @@
-import { h } from '../core/dom.js';
+import { h, fill } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState, prefs, watch } from '../core/store.js';
 import { reload } from '../core/drive.js';
@@ -77,7 +77,7 @@ export function createPageHeader() {
     else if (s.section === 'page') head = pageHead(s);
     else head = folderHead(s);
     const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
-    el.replaceChildren(...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
+    fill(el, ...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
   };
   watch(appState, el, paint);
   paint(appState.get());

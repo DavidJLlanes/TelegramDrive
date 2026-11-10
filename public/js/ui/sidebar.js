@@ -1,4 +1,4 @@
-import { h } from '../core/dom.js';
+import { h, fill } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState, watch } from '../core/store.js';
 import { formatBytes } from '../core/format.js';
@@ -59,7 +59,7 @@ export function createMobileNav() {
   const chip = (label, iconName, active, go) => h('button', { class: 'chip', 'aria-current': active ? 'page' : null, onclick: go }, icon(iconName), label);
   const paint = (s) => {
     const lib = s.section === 'library' && s.results === null;
-    el.replaceChildren(
+    fill(el, 
       chip('Archivos', 'folder', s.section === 'files' || s.results !== null, () => navigate('/')),
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
       ...[...menuViews('library'), ...menuViews('more')].map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
@@ -78,7 +78,7 @@ export function createSidebar() {
 
   const paint = (s) => {
     const current = s.results !== null || s.section !== 'files' ? null : s.path;
-    tree.replaceChildren(
+    fill(tree, 
       h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)), ...menuViews('library').map((v) => pageItem(v, s)),
       h('div', { class: 'tree-heading' }, 'Carpetas'),
       item('/', 'Inicio', 'home', 0, current),
@@ -87,7 +87,7 @@ export function createSidebar() {
       ...menuViews('more').map((v) => pageItem(v, s)),
       h('button', { class: 'tree-item', 'aria-current': s.section === 'trash' ? 'page' : null, onclick: navigateTrash }, icon('trash'), h('span', {}, 'Papelera')));
     const sync = s.stats?.sync;
-    foot.replaceChildren(
+    fill(foot, 
       h('strong', {}, s.stats ? formatBytes(s.stats.bytes) : '—'),
       h('span', {}, sync?.running ? `Sincronizando: ${sync.scanned} mensajes` : s.stats ? `${s.stats.files} archivos en Telegram` : ''));
   };

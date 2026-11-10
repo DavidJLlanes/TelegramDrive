@@ -1,4 +1,4 @@
-import { h } from '../../core/dom.js';
+import { h, fill } from '../../core/dom.js';
 import { navigate } from '../../core/router.js';
 import { auditApi } from './api.js';
 
@@ -19,7 +19,7 @@ const trackNumbers = (missing) => missing.map((m) => (m.disc > 1 ? `${m.disc}-${
 
 export function renderAudit(el, { data }) {
   const { totals } = data;
-  el.replaceChildren(
+  fill(el, 
     h('section', { class: 'pg-panel' }, h('h2', {}, 'Resumen'),
       h('p', { class: 'pg-hint' }, `${plural(totals.tracks, 'canción', 'canciones')} · ${plural(totals.albums, 'álbum', 'álbumes')} con etiquetas · ${plural(totals.untagged, 'sin etiquetas', 'sin etiquetas')}. Esta revisión solo lee: no cambia nada. Para corregir, usa «Etiquetas» en el menú de las canciones.`)),
     panel('Álbumes incompletos', 'Faltan números de pista entre la primera y la última.', data.incompleteAlbums,

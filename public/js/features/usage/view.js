@@ -1,4 +1,4 @@
-import { h } from '../../core/dom.js';
+import { h, fill } from '../../core/dom.js';
 import { navigate } from '../../core/router.js';
 import { formatBytes } from '../../core/format.js';
 import { usageApi } from './api.js';
@@ -22,7 +22,7 @@ function barRow(main, sub, fraction, side, onOpen) {
 export function renderUsage(el, { data }) {
   const { total, kinds, folders, biggest, trash } = data;
   const top = Math.max(1, ...folders.map((f) => f.bytes));
-  el.replaceChildren(
+  fill(el, 
     h('section', { class: 'pg-panel' }, h('h2', {}, 'Por tipo'),
       h('p', { class: 'pg-hint' }, `${formatBytes(total.bytes)} en ${files(total.count)}${trash.count ? ` · ${formatBytes(trash.bytes)} más en la papelera` : ''}`),
       h('div', { class: 'pg-rows' }, kinds.map((k) => barRow(KIND[k.kind] ?? k.kind, files(k.count), share(k.bytes, total.bytes), `${formatBytes(k.bytes)} · ${pct(share(k.bytes, total.bytes))}`)))),

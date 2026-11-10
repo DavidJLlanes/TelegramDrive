@@ -1,5 +1,5 @@
 // Enlaces temporales: cualquiera con el enlace puede ver o descargar SOLO ese archivo (o el ZIP de esa carpeta) hasta que caduque.
-import { h } from '../core/dom.js';
+import { h, fill } from '../core/dom.js';
 import { api, shareUrl } from '../core/api.js';
 import { icon } from '../core/icons.js';
 import { dialog } from './modal.js';
@@ -49,7 +49,7 @@ export async function manageShares() {
   try { [{ shares }, policies] = await Promise.all([api.shares(), policyApi.list().catch(() => ({}))]); } catch (err) { toastError(err); return; }
   const list = h('div', { class: 'shares' });
   const paint = () => {
-    list.replaceChildren(...(shares.length ? shares.map((s) => h('div', { class: 'share-row' },
+    fill(list, ...(shares.length ? shares.map((s) => h('div', { class: 'share-row' },
       h('div', { class: 'share-info' }, h('strong', {}, s.label), h('span', {}, [`Caduca ${when(s.exp)}`, policyLabel(policies[s.token])].filter(Boolean).join(' · '))),
       h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': 'Copiar enlace', onclick: () => copy(shareUrl(s.token)) }, icon('copy')),
       h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': 'Anular enlace', onclick: async () => {

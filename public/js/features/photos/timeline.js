@@ -1,4 +1,4 @@
-import { h } from '../../core/dom.js';
+import { h, fill } from '../../core/dom.js';
 import { toastError } from '../../ui/toast.js';
 import { photosApi } from './api.js';
 import { photoGrid } from './grid.js';
@@ -17,7 +17,7 @@ export function renderTimeline(el, { data }) {
       try { const next = await photosApi.timeline(photos.length, PAGE); photos.push(...next.photos); total = next.total; } catch (err) { toastError(err); }
       paint();
     } }, `Cargar más (${photos.length} de ${total})`) : null;
-    el.replaceChildren(...(photos.length ? photoGrid(photos) : [h('div', { class: 'empty' }, h('strong', {}, 'Aún no hay fotos'), h('span', {}, 'Sube imágenes a cualquier carpeta y aparecerán aquí ordenadas por la fecha en que se hicieron.'))]), more);
+    fill(el, ...(photos.length ? photoGrid(photos) : [h('div', { class: 'empty' }, h('strong', {}, 'Aún no hay fotos'), h('span', {}, 'Sube imágenes a cualquier carpeta y aparecerán aquí ordenadas por la fecha en que se hicieron.'))]), more);
   };
   paint();
 }

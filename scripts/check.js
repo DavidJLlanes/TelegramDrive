@@ -18,7 +18,11 @@ for (const root of roots) {
   for (const file of walk(root)) {
     try { execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' }); }
     catch (e) { bad += 1; console.error(`SINTAXIS ${file}\n${e.stderr}`); }
-    const lines = fs.readFileSync(file, 'utf8').split('\n').length;
+    const source = fs.readFileSync(file, 'utf8');
+    if (file.startsWith('public/js') && !file.endsWith('core/dom.js') && /\.replaceChildren\([^)]/.test(source)) {
+      bad += 1; console.error(`USA fill() en ${file}: replaceChildren(null) pinta el texto «null»`);
+    }
+    const lines = source.split('\n').length;
     if (lines > MAX_LINES) { bad += 1; console.error(`DEMASIADO LARGO ${file}: ${lines} líneas`); }
   }
 }

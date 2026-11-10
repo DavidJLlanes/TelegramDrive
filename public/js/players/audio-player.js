@@ -1,4 +1,4 @@
-import { h } from '../core/dom.js';
+import { h, fill as setChildren } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl, thumbUrl } from '../core/api.js';
 import { appState, prefs } from '../core/store.js';
@@ -84,22 +84,22 @@ function build() {
 }
 
 const syncPlay = (playing) => {
-  ui.play.replaceChildren(icon(playing ? 'pause' : 'play'));
+  setChildren(ui.play, icon(playing ? 'pause' : 'play'));
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 };
-const syncVolume = () => ui.mute.replaceChildren(icon(audio.muted || audio.volume === 0 ? 'mute' : 'volume'));
+const syncVolume = () => setChildren(ui.mute, icon(audio.muted || audio.volume === 0 ? 'mute' : 'volume'));
 const toggle = () => (audio.paused ? audio.play().catch(() => {}) : audio.pause());
 
 function syncModes() {
   ui.shuffle.setAttribute('aria-pressed', String(queue.shuffle));
   ui.repeat.setAttribute('aria-pressed', String(queue.repeat !== 'off'));
   ui.repeat.setAttribute('aria-label', REPEAT_LABEL[queue.repeat]);
-  ui.repeat.replaceChildren(icon(REPEAT_ICON[queue.repeat]));
+  setChildren(ui.repeat, icon(REPEAT_ICON[queue.repeat]));
 }
 
 function paintArt(file) {
   tint(ui.art, file.parent);
-  ui.art.replaceChildren(icon('music'));
+  setChildren(ui.art, icon('music'));
   if (!file.thumb) return;
   const img = h('img', { src: thumbUrl(file.id), alt: '' });
   img.addEventListener('error', () => img.remove());
