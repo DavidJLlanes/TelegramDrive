@@ -1,4 +1,4 @@
-<p align="center"><img src="public/og-image.png" alt="TeleDrive: tu nube personal sobre tu canal privado de Telegram" width="100%"></p>
+<p align="center"><img src="public/og-image.png" alt="Telegram Drive: tu espacio privado para tus archivos" width="100%"></p>
 
 # TeleDrive (Telegram Drive)
 
