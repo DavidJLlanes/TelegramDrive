@@ -1,7 +1,7 @@
 import { h, fill } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { appState } from '../core/store.js';
-import { watchScreen, indicator } from '../core/motion.js';
+import { appState, watch } from '../core/store.js';
+import { indicator, indicatorRect } from '../core/motion.js';
 import { formatBytes } from '../core/format.js';
 import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
@@ -57,19 +57,25 @@ const pageItem = (view, s) => h('button', { class: 'tree-item', 'aria-current': 
 /** Navegación en móvil (donde la barra lateral está oculta): biblioteca, carpetas y papelera en una fila deslizable. */
 export function createMobileNav() {
   const el = h('nav', { class: 'mobile-nav', 'aria-label': 'Secciones' });
+  let shown = null;
   const chip = (label, iconName, active, go) => h('button', { class: 'chip', 'aria-current': active ? 'page' : null, onclick: go }, icon(iconName), label);
   const paint = (s) => {
     const lib = s.section === 'library' && s.results === null;
+    const from = indicatorRect(el, 'tab-ind');
     fill(el, 
       chip('Archivos', 'folder', s.section === 'files' || s.results !== null, () => navigate('/')),
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
       ...[...menuViews('library'), ...menuViews('more')].map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
       chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
-    indicator(el, '.chip[aria-current="page"]', 'tab-ind');
+    indicator(el, '.chip[aria-current="page"]', 'tab-ind', from);
     const active = el.querySelector('.chip[aria-current="page"]');
-    if (active) el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
+    if (active && active.textContent !== shown) { // solo al cambiar de sección: no pelea con el desplazamiento manual
+      shown = active.textContent;
+      el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
+    }
   };
-  watchScreen(el, paint);
+  watch(appState, el, paint); // al instante: el indicador se desliza en cuanto se toca
+  paint(appState.get());
   return el;
 }
 
@@ -81,6 +87,7 @@ export function createSidebar() {
 
   const paint = (s) => {
     const current = s.results !== null || s.section !== 'files' ? null : s.path;
+    const from = indicatorRect(tree, 'side-ind');
     fill(tree, 
       h('div', { class: 'tree-heading' }, 'Biblioteca'), ...LIBRARY.map((e) => libraryItem(e, s)), ...menuViews('library').map((v) => pageItem(v, s)),
       h('div', { class: 'tree-heading' }, 'Carpetas'),
@@ -93,8 +100,9 @@ export function createSidebar() {
     fill(foot, 
       h('strong', {}, s.stats ? formatBytes(s.stats.bytes) : '—'),
       h('span', {}, sync?.running ? `Sincronizando: ${sync.scanned} mensajes` : s.stats ? `${s.stats.files} archivos en Telegram` : ''));
-    indicator(tree, '.tree-item[aria-current="page"]', 'side-ind');
+    indicator(tree, '.tree-item[aria-current="page"]', 'side-ind', from);
   };
-  watchScreen(el, paint);
+  watch(appState, el, paint); // al instante: el indicador se desliza en cuanto se toca
+  paint(appState.get());
   return el;
 }

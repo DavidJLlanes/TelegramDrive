@@ -8,45 +8,16 @@
   --t-fast: 0.16s; --t-mid: 0.32s; --t-slow: 0.52s;
 }
 
-/* ===== Cambio de pantalla (View Transitions) =====
-   Solo se mueven la cabecera y el contenido; barras, menú lateral y reproductor quedan quietos.
-   Entrar en una carpeta empuja hacia la izquierda; volver, hacia la derecha; cambiar de sección, fundido con leve escala. */
-.page-head { view-transition-name: page-head; }
-.content { view-transition-name: content; }
+/* ===== Cambio de pantalla: coreografía en motion.js (salida breve + entrada deslizada) ===== */
 html:not([data-nav="morph"])::view-transition-old(root), html:not([data-nav="morph"])::view-transition-new(root) { animation: none; }
-::view-transition-group(*) { animation-duration: var(--t-slow); animation-timing-function: var(--spring-soft); }
-
-::view-transition-old(content), ::view-transition-old(page-head) { animation: vt-fade-out var(--t-fast) var(--in) both; }
-::view-transition-new(content), ::view-transition-new(page-head) { animation: vt-fade-in var(--t-slow) var(--out) 0.04s both; }
-html[data-nav="forward"]::view-transition-old(content) { animation: vt-out-left 0.22s var(--in) both; }
-html[data-nav="forward"]::view-transition-new(content) { animation: vt-in-right var(--t-slow) var(--spring-soft) 0.03s both; }
-html[data-nav="back"]::view-transition-old(content) { animation: vt-out-right 0.22s var(--in) both; }
-html[data-nav="back"]::view-transition-new(content) { animation: vt-in-left var(--t-slow) var(--spring-soft) 0.03s both; }
-html[data-nav="forward"]::view-transition-new(page-head) { animation: vt-in-right-sm var(--t-slow) var(--spring-soft) both; }
-html[data-nav="back"]::view-transition-new(page-head) { animation: vt-in-left-sm var(--t-slow) var(--spring-soft) both; }
-
 @keyframes vt-fade-out { to { opacity: 0; } }
-@keyframes vt-fade-in { from { opacity: 0; transform: translateY(6px) scale(0.992); } }
-@keyframes vt-out-left { to { opacity: 0; transform: translateX(-28px); } }
-@keyframes vt-out-right { to { opacity: 0; transform: translateX(28px); } }
-@keyframes vt-in-right { from { opacity: 0; transform: translateX(44px); } }
-@keyframes vt-in-left { from { opacity: 0; transform: translateX(-44px); } }
-@keyframes vt-in-right-sm { from { opacity: 0; transform: translateX(18px); } }
-@keyframes vt-in-left-sm { from { opacity: 0; transform: translateX(-18px); } }
+@keyframes vt-fade-in { from { opacity: 0; transform: translateY(6px); } }
 
-/* Héroe: el nombre de la carpeta viaja de su tarjeta al título (y vuelve) */
-.page-title h1, .sleeve-name { width: fit-content; max-width: 100%; }
-::view-transition-group(hero) { z-index: 5; animation-duration: 0.56s; animation-timing-function: var(--spring); }
-::view-transition-old(hero), ::view-transition-new(hero) { height: 100%; animation-duration: 0.4s; animation-timing-function: var(--out); }
-
-/* Indicadores que se deslizan entre pestañas (móvil) y elementos del menú lateral (escritorio) */
-.tab-ind { view-transition-name: tab-ind; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); pointer-events: none; }
+/* Indicadores (se deslizan con FLIP desde motion.js) */
+.tab-ind { position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); pointer-events: none; transform-origin: 0 0; }
 .tree-item { position: relative; isolation: isolate; }
 .tree-item[aria-current="page"] { background: transparent; }
-.side-ind { view-transition-name: side-ind; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--accent-soft); pointer-events: none; }
-::view-transition-group(tab-ind), ::view-transition-group(side-ind) { animation-duration: 0.46s; animation-timing-function: var(--spring); }
-::view-transition-old(tab-ind), ::view-transition-new(tab-ind), ::view-transition-old(side-ind), ::view-transition-new(side-ind) { animation: none; height: 100%; }
-::view-transition-old(tab-ind), ::view-transition-old(side-ind) { opacity: 0; }
+.side-ind { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--accent-soft); pointer-events: none; transform-origin: 0 0; }
 
 /* Miniatura ↔ visor de fotos */
 ::view-transition-group(media) { z-index: 10; animation-duration: 0.5s; animation-timing-function: var(--spring-soft); }
@@ -55,16 +26,13 @@ html[data-nav="morph"]::view-transition-old(root) { animation: vt-fade-out 0.3s 
 html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 0.34s var(--out) both; }
 @keyframes vt-fade-in-plain { from { opacity: 0; } }
 
-/* Sin View Transitions: el contenido entra con fundido */
-.content.enter { animation: vt-fade-in var(--t-slow) var(--out) both; }
-
 /* Datos que llegan tras el esqueleto: entrada escalonada de las primeras tarjetas */
-.stagger :is(.sleeves, .tiles) > * { animation: item-in 0.6s var(--spring-soft) both; }
+.stagger :is(.sleeves, .tiles) > * { animation: item-in 0.5s var(--out) both; }
 .stagger :is(.sleeves, .tiles) > :nth-child(2) { animation-delay: 30ms; } .stagger :is(.sleeves, .tiles) > :nth-child(3) { animation-delay: 60ms; }
 .stagger :is(.sleeves, .tiles) > :nth-child(4) { animation-delay: 90ms; } .stagger :is(.sleeves, .tiles) > :nth-child(5) { animation-delay: 120ms; }
 .stagger :is(.sleeves, .tiles) > :nth-child(6) { animation-delay: 150ms; } .stagger :is(.sleeves, .tiles) > :nth-child(7) { animation-delay: 175ms; }
 .stagger :is(.sleeves, .tiles) > :nth-child(8) { animation-delay: 200ms; } .stagger :is(.sleeves, .tiles) > :nth-child(n+9) { animation-delay: 220ms; }
-@keyframes item-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+@keyframes item-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* Esqueleto: aparece con retraso (si los datos llegan rápido ni se ve) y brilla con calma */
 .skeleton { animation: sk-in 0.4s var(--out) 0.18s both, shimmer 1.8s ease-in-out infinite; }

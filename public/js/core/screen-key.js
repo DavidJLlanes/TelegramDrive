@@ -25,12 +25,3 @@ export function screenDirection(from, to) {
   const a = screenDepth(from); const b = screenDepth(to);
   return b > a ? 'forward' : b < a ? 'back' : 'fade';
 }
-
-const parent = (p) => p.slice(0, Math.max(p.lastIndexOf('/'), 0)) || '/';
-/** Carpeta cuyo nombre «viaja» al título (al entrar) o del título a su tarjeta (al salir). */
-export function heroFolder(from, to, dir) {
-  if (from?.section !== 'files' || to.section !== 'files' || to.results !== null || from.results !== null) return null;
-  if (dir === 'forward' && parent(to.path) === from.path) return to.path;
-  if (dir === 'back' && parent(from.path) === to.path) return from.path;
-  return null;
-}
