@@ -4,7 +4,7 @@ import { formatBytes } from '../../core/format.js';
 
 /** Panel flotante de subidas. `controller`: { running(), retryFailed() }. Pinta por trabajo y un resumen al final. */
 export function createPanel(controller) {
-  let root = null; let list = null; let foot = null;
+  let root = null; let list = null; let foot = null; let timer = null;
   const rows = new WeakMap();
 
   const ensure = () => {
@@ -17,7 +17,8 @@ export function createPanel(controller) {
       list, foot);
     document.body.append(root);
   };
-  const close = () => { root?.remove(); root = null; list = null; };
+  const cancelClose = () => { clearTimeout(timer); timer = null; };
+  const close = () => { cancelClose(); root?.remove(); root = null; list = null; };
 
   const label = (job) => {
     if (job.status === 'done') return `Listo · ${formatBytes(job.result?.size ?? job.file.size)}`;
@@ -43,7 +44,7 @@ export function createPanel(controller) {
   }
 
   return {
-    update(jobs) { ensure(); jobs.forEach(paint); },
+    update(jobs) { cancelClose(); ensure(); jobs.forEach(paint); }, // una subida nueva cancela el cierre automático
     /** Resumen cuando la cola queda vacía: cuántos fueron bien y botón para reintentar los fallidos. */
     finish({ done, failed }) {
       if (!root) return;
@@ -51,6 +52,8 @@ export function createPanel(controller) {
       fill(foot, h('span', { class: failed ? 'bad' : 'ok' }, text),
         failed ? h('button', { class: 'btn', type: 'button', onclick: () => { fill(foot); controller.retryFailed(); } }, 'Reintentar fallidos') : null);
     },
-    clearFoot: () => foot?.replaceChildren(),
+    /** Cierra el panel pasados `ms` (si no hay errores que revisar ni subidas nuevas). */
+    closeLater(ms = 2200) { cancelClose(); timer = setTimeout(() => { if (!controller.running()) close(); }, ms); },
+    clearFoot: () => foot && fill(foot),
   };
 }

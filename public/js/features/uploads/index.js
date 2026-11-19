@@ -25,7 +25,10 @@ const queue = new UploadQueue({
     refreshStats();
     if (done) reload();
     panel.finish({ done, failed });
-    if (done && !failed) toast(`${done} archivo${done > 1 ? 's' : ''} subido${done > 1 ? 's' : ''}`, { type: 'ok' });
+    if (done && !failed) {
+      toast(`${done === 1 ? 'Archivo subido' : `${done} archivos subidos`} correctamente`, { type: 'ok' });
+      panel.closeLater(); // el panel se cierra solo; si hubo errores se queda para poder reintentar
+    }
   },
 });
 

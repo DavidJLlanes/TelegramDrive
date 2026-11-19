@@ -10,8 +10,8 @@ export async function getThumbnail(tg, id) {
   try {
     return await fs.readFile(file);
   } catch { /* no cacheada */ }
-  const message = await tg.getMessage(id);
-  const data = await tg.downloadThumb(message);
+  let data = await tg.downloadThumb(await tg.getMessage(id));
+  if (!data) data = await tg.downloadThumb(await tg.getMessage(id, { fresh: true })); // quizá Telegram la generó después de subirse
   if (data) await fs.writeFile(file, data).catch(() => {});
   return data;
 }

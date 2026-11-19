@@ -11,6 +11,7 @@ const { TelegramClient, Api } = telegram;
 const { StringSession } = sessions;
 const CHUNK = 512 * 1024;
 const MESSAGE_TTL = 10 * 60 * 1000;
+const NO_THUMB_TTL = 15 * 1000; // Telegram genera las miniaturas tras subir el archivo: no se guarda mucho tiempo un mensaje que aún no las tiene
 
 /** Envoltorio fino sobre GramJS: todo el contacto con MTProto vive aquí. */
 export class TelegramService {
@@ -117,9 +118,10 @@ export class TelegramService {
     ids.forEach((id) => this.messageCache.delete(id));
   }
 
-  async getMessage(id) {
+  /** `fresh`: ignora la caché (para volver a mirar si Telegram ya generó la miniatura). */
+  async getMessage(id, { fresh = false } = {}) {
     const hit = this.messageCache.get(id);
-    if (hit && Date.now() - hit.at < MESSAGE_TTL) return hit.message;
+    if (!fresh && hit && Date.now() - hit.at < (hit.message.media.document?.thumbs?.length ? MESSAGE_TTL : NO_THUMB_TTL)) return hit.message;
     const [message] = await this.client.getMessages(this.chat, { ids: [id] });
     if (!message?.media) throw new HttpError(404, 'El archivo ya no existe en Telegram');
     this.messageCache.set(id, { message, at: Date.now() });

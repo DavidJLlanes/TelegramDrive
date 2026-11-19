@@ -31,10 +31,25 @@ function audioCover(file) {
     playBadge(), equalizer()), file.parent);
 }
 
+const RECENT = 15 * 60 * 1000;
+
+/** Un archivo recién subido aún puede no tener miniatura en Telegram: se vuelve a intentar una vez a los pocos segundos. */
+function retryLater(file, cover) {
+  if (Date.now() - file.date > RECENT) return;
+  setTimeout(() => {
+    noThumb.delete(file.id);
+    const img = h('img', { src: `${thumbUrl(file.id)}?r=${Date.now()}`, alt: '', decoding: 'async' });
+    img.addEventListener('load', () => { cover.querySelector(':scope > .icon')?.remove(); cover.prepend(img); });
+    img.addEventListener('error', () => { // sin miniatura en Telegram: la propia imagen, si es de tamaño razonable
+      if (file.kind === 'image' && !img.dataset.full && file.size <= MAX_FULL_FALLBACK) { img.dataset.full = '1'; img.src = contentUrl(file.id); }
+    });
+  }, 8000);
+}
+
 function videoCover(file) {
   const cover = tint(h('div', { class: 'cover video' }, icon('video', 'big'), playBadge()), file.parent);
-  if (file.thumb) {
-    const img = photo(file, () => {});
+  if (file.thumb || Date.now() - file.date < RECENT) {
+    const img = photo(file, () => retryLater(file, cover));
     if (img) cover.prepend(img);
   }
   return cover;
@@ -42,7 +57,7 @@ function videoCover(file) {
 
 function imageCover(file) {
   const cover = h('div', { class: 'cover' });
-  const img = photo(file, () => cover.append(icon('image', 'big')));
+  const img = photo(file, () => { cover.append(icon('image', 'big')); retryLater(file, cover); });
   cover.append(img ?? icon('image', 'big'));
   return cover;
 }

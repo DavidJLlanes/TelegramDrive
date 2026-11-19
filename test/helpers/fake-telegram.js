@@ -66,7 +66,7 @@ export class FakeTelegram {
 
   async editText(id, text) { this.edits += 1; this.messages.get(id).message = text; }
   async remove(ids) { this.removeCalls += 1; ids.forEach((id) => this.messages.delete(id)); }
-  async getMessage(id) { return this.messages.get(id); }
+  async getMessage(id, _opts) { return this.messages.get(id); }
   async *readRange(message, start, end) { yield message.media.document.bytes.subarray(start, end + 1); }
   async downloadThumb() { return null; }
   async ping() { if (this.down) throw new Error('sin conexión'); }
