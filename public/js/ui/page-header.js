@@ -13,10 +13,17 @@ import { pageHead } from './page-view.js';
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
 
+/** Pulsar la casa: rebote + onda y, un instante después, navega (la animación se aprecia antes del cambio de vista). */
+function goHome(e) {
+  const btn = e.currentTarget;
+  btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
+  setTimeout(() => navigate('/'), 220);
+}
+
 function crumbs(path) {
   const parts = path.split('/').filter(Boolean);
   if (!parts.length) return null;
-  const nodes = [h('button', { class: 'crumb', onclick: () => navigate('/') }, 'Inicio')];
+  const nodes = [h('button', { class: 'crumb crumb-home', type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: goHome }, icon('home'))];
   parts.slice(0, -1).forEach((part, i) => {
     nodes.push(h('span', { class: 'crumb-sep', 'aria-hidden': 'true' }, '/'));
     nodes.push(h('button', { class: 'crumb', onclick: () => navigate(`/${parts.slice(0, i + 1).join('/')}`) }, part));
