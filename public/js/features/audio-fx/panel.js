@@ -1,3 +1,4 @@
+import { leave } from '../../core/motion.js';
 import { h, fill } from '../../core/dom.js';
 import { icon } from '../../core/icons.js';
 import { BANDS, GAIN_RANGE, PRESETS } from './presets.js';
@@ -8,7 +9,7 @@ const isIos = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform 
 /** Panel flotante del ecualizador y el fundido. `ctl`: { get(), update(patch), setBand(i, db), supported }. */
 export function createFxPanel(ctl) {
   let root = null;
-  const close = () => { root?.remove(); root = null; };
+  const close = () => { leave(root); root = null; };
 
   function paint() {
     const s = ctl.get();

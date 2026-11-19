@@ -1,3 +1,4 @@
+import { leave } from '../core/motion.js';
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
@@ -25,7 +26,7 @@ export function openVideo(file, list) {
   const step = (d) => { const n = index + d; if (n >= 0 && n < queue.length) load(n); };
   const close = () => {
     video.pause(); video.removeAttribute('src'); video.load();
-    modal?.remove(); modal = null;
+    leave(modal); modal = null;
     document.removeEventListener('keydown', onKey);
     previous?.focus?.();
   };

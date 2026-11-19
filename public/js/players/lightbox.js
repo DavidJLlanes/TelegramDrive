@@ -1,3 +1,4 @@
+import { leave } from '../core/motion.js';
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
@@ -29,7 +30,7 @@ export function openLightbox(file, list) {
   };
   const step = (d) => queue.length > 1 && show(index + d);
   const close = () => {
-    box?.remove(); box = null;
+    leave(box); box = null;
     document.removeEventListener('keydown', onKey);
     previous?.focus?.();
   };

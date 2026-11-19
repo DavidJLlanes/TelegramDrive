@@ -1,4 +1,5 @@
 import { h, fill } from '../../core/dom.js';
+import { leave } from '../../core/motion.js';
 import { icon } from '../../core/icons.js';
 import { formatBytes } from '../../core/format.js';
 
@@ -18,7 +19,7 @@ export function createPanel(controller) {
     document.body.append(root);
   };
   const cancelClose = () => { clearTimeout(timer); timer = null; };
-  const close = () => { cancelClose(); root?.remove(); root = null; list = null; };
+  const close = () => { cancelClose(); leave(root); root = null; list = null; };
 
   const label = (job) => {
     if (job.status === 'done') return `Listo · ${formatBytes(job.result?.size ?? job.file.size)}`;

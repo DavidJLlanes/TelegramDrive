@@ -1,5 +1,7 @@
 import { h, fill } from '../core/dom.js';
 import { appState, watch } from '../core/store.js';
+import { swap } from '../core/motion.js';
+import { screenKey } from '../core/screen-key.js';
 import { formatBytes } from '../core/format.js';
 import { renderTopbar } from './topbar.js';
 import { createSidebar, createMobileNav } from './sidebar.js';
@@ -13,7 +15,7 @@ import { showPruneGuard } from './prune-guard.js';
 
 export function renderShell(root, { onLogout }) {
   const syncNote = h('p', { class: 'sync-note', role: 'status' });
-  const explorer = h('div');
+  const explorer = h('div', { class: 'content' });
   const foot = h('div', { class: 'foot-stats' });
   const banner = h('p', { class: 'sync-note warn', role: 'status', hidden: true });
   const main = h('main', { class: 'main' }, createMobileNav(), banner, syncNote, createPageHeader(), explorer, foot);
@@ -41,6 +43,12 @@ export function renderShell(root, { onLogout }) {
     render(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };
-  watch(appState, explorer, paint);
+  let last = screenKey(appState.get());
+  watch(appState, explorer, (s) => {
+    const key = screenKey(s);
+    if (key === last) { paint(s); return; }
+    last = key;
+    swap(() => paint(appState.get()), explorer); // otra pantalla: fundido suave
+  });
   paint(appState.get());
 }

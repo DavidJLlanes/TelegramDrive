@@ -1,8 +1,9 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
+import { leave } from '../core/motion.js';
 
 let current = null;
-const closeMenu = () => { current?.remove(); current = null; };
+const closeMenu = () => { leave(current, 120); current = null; };
 document.addEventListener('pointerdown', (e) => current && !current.contains(e.target) && closeMenu(), true);
 document.addEventListener('keydown', (e) => e.key === 'Escape' && closeMenu());
 window.addEventListener('scroll', closeMenu, true);

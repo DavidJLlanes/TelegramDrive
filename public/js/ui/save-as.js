@@ -1,3 +1,4 @@
+import { leave } from '../core/motion.js';
 import { h, $ } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
@@ -81,7 +82,7 @@ function viaSheet(file) {
   let blob = null;
   const bar = h('i');
   const status = h('p', {}, `Preparando ${formatBytes(file.size)}…`);
-  const close = () => { ctrl.abort(); overlay.remove(); };
+  const close = () => { ctrl.abort(); leave(overlay); };
   const save = h('button', { class: 'btn btn-primary', type: 'button', disabled: true, onclick: async () => {
     try {
       await navigator.share({ files: [new File([blob], file.name, { type: blob.type })] });

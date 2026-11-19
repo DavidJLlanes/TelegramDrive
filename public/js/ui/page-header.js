@@ -4,6 +4,8 @@ import { appState, prefs, watch } from '../core/store.js';
 import { reload } from '../core/drive.js';
 import { navigate } from '../core/router.js';
 import { playFolder } from '../core/playback.js';
+import { swap } from '../core/motion.js';
+import { screenKey } from '../core/screen-key.js';
 import { openMenu } from './menu.js';
 import { playButtons } from './play-buttons.js';
 import { libraryHead } from './library-head.js';
@@ -88,7 +90,13 @@ export function createPageHeader() {
     const tools = head.tools && (head.tools instanceof Node ? head.tools : h('div', { class: 'page-tools' }, head.tools));
     fill(el, ...[h('div', { class: 'page-title' }, head.crumbs, h('h1', {}, head.title), h('p', {}, head.sub)), tools].filter(Boolean));
   };
-  watch(appState, el, paint);
+  let last = screenKey(appState.get());
+  watch(appState, el, (s) => {
+    const key = screenKey(s);
+    if (key === last) { paint(s); return; }
+    last = key;
+    swap(() => paint(appState.get()));
+  });
   paint(appState.get());
   return el;
 }

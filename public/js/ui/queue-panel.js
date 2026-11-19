@@ -1,4 +1,5 @@
 // Panel "Cola de reproducción": ver lo que viene, saltar, reordenar, quitar y guardar como lista.
+import { leave } from '../core/motion.js';
 import { h, fill } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { trackTitle } from '../core/tags.js';
@@ -37,7 +38,7 @@ function paint() {
   panel.querySelector('.queue-row.playing')?.scrollIntoView({ block: 'nearest' });
 }
 
-function close() { panel?.remove(); panel = null; }
+function close() { leave(panel); panel = null; }
 
 export function toggleQueuePanel(api) {
   if (panel) { close(); return; }

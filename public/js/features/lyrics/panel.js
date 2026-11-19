@@ -1,3 +1,4 @@
+import { leave } from '../../core/motion.js';
 import { h, fill } from '../../core/dom.js';
 import { icon } from '../../core/icons.js';
 import { trackTitle } from '../../core/tags.js';
@@ -10,7 +11,7 @@ export function createLyricsPanel(current) {
   let shownId = null;
   let editing = false;
 
-  const close = () => { root?.remove(); root = null; shownId = null; };
+  const close = () => { leave(root); root = null; shownId = null; };
 
   async function load(file) {
     shownId = file.id; editing = false;
