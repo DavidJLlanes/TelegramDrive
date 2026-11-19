@@ -17,7 +17,7 @@ test('el manifest y el HTML solo enlazan iconos que existen', () => {
   assert.ok(refs.length >= 12);
   for (const ref of refs) assert.ok(fs.existsSync(path.join(pub, ref)), `falta ${ref}`);
   assert.ok(manifest.icons.some((i) => i.purpose === 'maskable' && i.sizes === '512x512'));
-  assert.ok(fs.existsSync(path.join(pub, 'og-image.png')));
+  assert.ok(fs.existsSync(path.join(pub, 'readme-cover.png')));
 });
 
 test('la portada sirve las metaetiquetas Open Graph con URL absoluta y el prefijo de la app', async () => {
@@ -30,6 +30,6 @@ test('la portada sirve las metaetiquetas Open Graph con URL absoluta y el prefij
 
 test('el service worker no precachea la imagen social ni los iconos grandes', async () => {
   const sw = await (await fetch(`${h.base}/sw.js`)).text();
-  assert.ok(!sw.includes('og-image.png') && !sw.includes('icon-512.png') && !sw.includes('icon-maskable'));
+  assert.ok(!sw.includes('readme-cover.png') && !sw.includes('icon-512.png') && !sw.includes('icon-maskable'));
   assert.ok(sw.includes('icons/apple-touch-icon.png'));
 });
