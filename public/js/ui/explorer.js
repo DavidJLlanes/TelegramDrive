@@ -28,6 +28,7 @@ function sleeve(folder) {
   const open = clickOr(key, () => navigate(folder.path));
   return enhanceCard(tint(h('div', {
     class: `sleeve${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
+    dataset: { path: folder.path },
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
   }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'),

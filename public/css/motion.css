@@ -1,0 +1,135 @@
+/* ---------- Movimiento: muelles suaves, dirección espacial y continuidad entre pantallas ---------- */
+:root {
+  /* Muelles (amortiguamiento 0,72 y 0,85): rebote apenas perceptible, nunca «gomoso» */
+  --spring: linear(0, 0.098, 0.303, 0.524, 0.715, 0.858, 0.952, 1.006, 1.032, 1.038, 1.035, 1.027, 1.019, 1.011, 1.006, 1.002, 1, 0.999, 1);
+  --spring-soft: linear(0, 0.083, 0.255, 0.442, 0.609, 0.742, 0.84, 0.908, 0.952, 0.98, 0.995, 1.003, 1.006, 1.006, 1.005, 1.003, 1.001, 1);
+  --out: cubic-bezier(0.16, 1, 0.3, 1);     /* salida exponencial: arranca rápido, se posa despacio */
+  --in: cubic-bezier(0.55, 0, 0.75, 0.3);   /* para lo que se va */
+  --t-fast: 0.16s; --t-mid: 0.32s; --t-slow: 0.52s;
+}
+
+/* ===== Cambio de pantalla (View Transitions) =====
+   Solo se mueven la cabecera y el contenido; barras, menú lateral y reproductor quedan quietos.
+   Entrar en una carpeta empuja hacia la izquierda; volver, hacia la derecha; cambiar de sección, fundido con leve escala. */
+.page-head { view-transition-name: page-head; }
+.content { view-transition-name: content; }
+html:not([data-nav="morph"])::view-transition-old(root), html:not([data-nav="morph"])::view-transition-new(root) { animation: none; }
+::view-transition-group(*) { animation-duration: var(--t-slow); animation-timing-function: var(--spring-soft); }
+
+::view-transition-old(content), ::view-transition-old(page-head) { animation: vt-fade-out var(--t-fast) var(--in) both; }
+::view-transition-new(content), ::view-transition-new(page-head) { animation: vt-fade-in var(--t-slow) var(--out) 0.04s both; }
+html[data-nav="forward"]::view-transition-old(content) { animation: vt-out-left 0.22s var(--in) both; }
+html[data-nav="forward"]::view-transition-new(content) { animation: vt-in-right var(--t-slow) var(--spring-soft) 0.03s both; }
+html[data-nav="back"]::view-transition-old(content) { animation: vt-out-right 0.22s var(--in) both; }
+html[data-nav="back"]::view-transition-new(content) { animation: vt-in-left var(--t-slow) var(--spring-soft) 0.03s both; }
+html[data-nav="forward"]::view-transition-new(page-head) { animation: vt-in-right-sm var(--t-slow) var(--spring-soft) both; }
+html[data-nav="back"]::view-transition-new(page-head) { animation: vt-in-left-sm var(--t-slow) var(--spring-soft) both; }
+
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; transform: translateY(6px) scale(0.992); } }
+@keyframes vt-out-left { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes vt-out-right { to { opacity: 0; transform: translateX(28px); } }
+@keyframes vt-in-right { from { opacity: 0; transform: translateX(44px); } }
+@keyframes vt-in-left { from { opacity: 0; transform: translateX(-44px); } }
+@keyframes vt-in-right-sm { from { opacity: 0; transform: translateX(18px); } }
+@keyframes vt-in-left-sm { from { opacity: 0; transform: translateX(-18px); } }
+
+/* Héroe: el nombre de la carpeta viaja de su tarjeta al título (y vuelve) */
+.page-title h1, .sleeve-name { width: fit-content; max-width: 100%; }
+::view-transition-group(hero) { z-index: 5; animation-duration: 0.56s; animation-timing-function: var(--spring); }
+::view-transition-old(hero), ::view-transition-new(hero) { height: 100%; animation-duration: 0.4s; animation-timing-function: var(--out); }
+
+/* Indicadores que se deslizan entre pestañas (móvil) y elementos del menú lateral (escritorio) */
+.tab-ind { view-transition-name: tab-ind; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); pointer-events: none; }
+.tree-item { position: relative; isolation: isolate; }
+.tree-item[aria-current="page"] { background: transparent; }
+.side-ind { view-transition-name: side-ind; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--accent-soft); pointer-events: none; }
+::view-transition-group(tab-ind), ::view-transition-group(side-ind) { animation-duration: 0.46s; animation-timing-function: var(--spring); }
+::view-transition-old(tab-ind), ::view-transition-new(tab-ind), ::view-transition-old(side-ind), ::view-transition-new(side-ind) { animation: none; height: 100%; }
+::view-transition-old(tab-ind), ::view-transition-old(side-ind) { opacity: 0; }
+
+/* Miniatura ↔ visor de fotos */
+::view-transition-group(media) { z-index: 10; animation-duration: 0.5s; animation-timing-function: var(--spring-soft); }
+::view-transition-old(media), ::view-transition-new(media) { width: 100%; height: 100%; object-fit: cover; animation-duration: 0.3s; }
+html[data-nav="morph"]::view-transition-old(root) { animation: vt-fade-out 0.3s var(--out) both; }
+html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 0.34s var(--out) both; }
+@keyframes vt-fade-in-plain { from { opacity: 0; } }
+
+/* Sin View Transitions: el contenido entra con fundido */
+.content.enter { animation: vt-fade-in var(--t-slow) var(--out) both; }
+
+/* Datos que llegan tras el esqueleto: entrada escalonada de las primeras tarjetas */
+.stagger :is(.sleeves, .tiles) > * { animation: item-in 0.6s var(--spring-soft) both; }
+.stagger :is(.sleeves, .tiles) > :nth-child(2) { animation-delay: 30ms; } .stagger :is(.sleeves, .tiles) > :nth-child(3) { animation-delay: 60ms; }
+.stagger :is(.sleeves, .tiles) > :nth-child(4) { animation-delay: 90ms; } .stagger :is(.sleeves, .tiles) > :nth-child(5) { animation-delay: 120ms; }
+.stagger :is(.sleeves, .tiles) > :nth-child(6) { animation-delay: 150ms; } .stagger :is(.sleeves, .tiles) > :nth-child(7) { animation-delay: 175ms; }
+.stagger :is(.sleeves, .tiles) > :nth-child(8) { animation-delay: 200ms; } .stagger :is(.sleeves, .tiles) > :nth-child(n+9) { animation-delay: 220ms; }
+@keyframes item-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+
+/* Esqueleto: aparece con retraso (si los datos llegan rápido ni se ve) y brilla con calma */
+.skeleton { animation: sk-in 0.4s var(--out) 0.18s both, shimmer 1.8s ease-in-out infinite; }
+@keyframes sk-in { from { opacity: 0; } }
+
+/* Miniaturas: fundido al cargar, sin «pop» */
+.cover > img { opacity: 0; transform: scale(1.03); transition: opacity 0.5s var(--out), transform 0.7s var(--out); }
+.cover > img.ready { opacity: 1; transform: none; }
+
+/* ===== Respuesta al tacto: hunde rápido, recupera con muelle ===== */
+.btn, .chip, .sleeve, .tile, .tree-item, .menu-item, .folder-option, .crumb, .home-title, .queue-btn, .lb-nav {
+  transition: transform 0.5s var(--spring), background-color 0.2s var(--out), color 0.2s var(--out), box-shadow 0.3s var(--out), opacity 0.2s var(--out);
+}
+.btn:active, .chip:active, .menu-item:active, .folder-option:active, .crumb:active, .queue-btn:active { transform: scale(0.955); transition-duration: 0.09s; }
+.tree-item:active { transform: scale(0.98); transition-duration: 0.09s; }
+.sleeve:hover { transform: translateY(-3px); }
+.sleeve:active { transform: translateY(-1px) scale(0.975); transition-duration: 0.1s; }
+.tile:active { transform: scale(0.97); transition-duration: 0.1s; }
+.tile .cover { transition: box-shadow 0.3s var(--out); }
+.input { transition: border-color 0.2s var(--out), box-shadow 0.3s var(--out), background-color 0.2s var(--out); }
+.check, .play-badge, .more { transition: opacity 0.22s var(--out), transform 0.45s var(--spring), background-color 0.2s var(--out); }
+.progress > i { transition: width 0.4s var(--out); }
+@media (hover: none) { .sleeve:hover { transform: none; } }
+
+/* ===== Capas que aparecen y se van ===== */
+.overlay { animation: ov-in 0.3s var(--out); }
+.dialog { animation: dlg-in 0.46s var(--spring); }
+.menu { animation: menu-in 0.32s var(--spring); }
+.menu > * { animation: menu-item-in 0.32s var(--out) both; animation-delay: calc(var(--i, 0) * 18ms + 40ms); }
+.toast { animation: toast-in 0.5s var(--spring); }
+.upload-panel, .queue-panel, .ly-panel, .fx-panel { animation: panel-in 0.5s var(--spring-soft); }
+.lightbox, .video-modal { animation: ov-in 0.28s var(--out); }
+.selection-bar:not([hidden]) { animation: panel-in 0.45s var(--spring); }
+@keyframes ov-in { from { opacity: 0; backdrop-filter: blur(0); } }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.88); } }
+@keyframes menu-item-in { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(18px) scale(0.94); } }
+@keyframes panel-in { from { opacity: 0; transform: translateY(22px) scale(0.98); } }
+
+.leaving { pointer-events: none; animation: fade-out 0.2s var(--in) forwards !important; }
+.overlay.leaving { animation: fade-out 0.24s var(--in) 0.04s forwards !important; }
+.overlay.leaving > .dialog { animation: dlg-out 0.2s var(--in) forwards !important; }
+.menu.leaving { animation: menu-out 0.14s var(--in) forwards !important; }
+.menu.leaving > * { animation: none; }
+.toast.leaving { animation: toast-out 0.24s var(--in) forwards !important; }
+:is(.upload-panel, .queue-panel, .ly-panel, .fx-panel).leaving { animation: panel-out 0.24s var(--in) forwards !important; }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes dlg-out { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
+@keyframes menu-out { to { opacity: 0; transform: scale(0.94); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(10px) scale(0.96); } }
+@keyframes panel-out { to { opacity: 0; transform: translateY(18px) scale(0.98); } }
+
+/* Móvil: los diálogos sin campos de texto suben como hoja desde abajo (con el teclado abierto se quedan centrados) */
+@media (max-width: 600px) {
+  .overlay:not(:has(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select)) { place-items: end stretch; padding: 0; }
+  .overlay:not(:has(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select)) > .dialog {
+    width: 100%; max-height: 88vh; border-radius: 26px 26px 0 0; padding: 14px 20px calc(20px + var(--safe-b));
+    animation: sheet-in 0.55s var(--spring-soft);
+  }
+  .overlay:not(:has(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select)) > .dialog::before {
+    content: ''; align-self: center; width: 38px; height: 5px; border-radius: 3px; background: var(--line); margin-bottom: 2px;
+  }
+  .overlay.leaving:not(:has(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select)) > .dialog { animation: sheet-out 0.26s var(--in) forwards !important; }
+  .dialog-actions .btn { flex: 1; min-height: 46px; }
+}
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes sheet-out { to { transform: translateY(100%); } }

@@ -12,6 +12,7 @@ function photo(file, onFail) {
   const useFull = noThumb.has(file.id);
   if (useFull && (file.kind !== 'image' || file.size > MAX_FULL_FALLBACK)) return null;
   const img = h('img', { src: useFull ? contentUrl(file.id) : thumbUrl(file.id), alt: '', loading: 'lazy', decoding: 'async' });
+  img.addEventListener('load', () => img.classList.add('ready')); // aparece con fundido al cargar
   img.addEventListener('error', () => {
     noThumb.add(file.id);
     if (img.dataset.fallback || file.kind !== 'image' || file.size > MAX_FULL_FALLBACK) { img.remove(); onFail?.(); return; }
@@ -39,7 +40,7 @@ function retryLater(file, cover) {
   setTimeout(() => {
     noThumb.delete(file.id);
     const img = h('img', { src: `${thumbUrl(file.id)}?r=${Date.now()}`, alt: '', decoding: 'async' });
-    img.addEventListener('load', () => { cover.querySelector(':scope > .icon')?.remove(); cover.prepend(img); });
+    img.addEventListener('load', () => { cover.querySelector(':scope > .icon')?.remove(); cover.prepend(img); requestAnimationFrame(() => img.classList.add('ready')); });
     img.addEventListener('error', () => { // sin miniatura en Telegram: la propia imagen, si es de tamaño razonable
       if (file.kind === 'image' && !img.dataset.full && file.size <= MAX_FULL_FALLBACK) { img.dataset.full = '1'; img.src = contentUrl(file.id); }
     });

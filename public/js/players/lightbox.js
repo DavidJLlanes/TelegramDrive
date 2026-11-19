@@ -1,4 +1,4 @@
-import { leave } from '../core/motion.js';
+import { leave, morph } from '../core/motion.js';
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { contentUrl } from '../core/api.js';
@@ -7,6 +7,15 @@ import { saveAs } from '../ui/save-as.js';
 
 let box = null;
 const SWIPE = 60;
+const tileImage = (id) => document.querySelector(`:is(.tile, .ph-cell)[data-id="${CSS.escape(String(id))}"] .cover > img.ready`);
+const loaded = (img, ms) => Promise.race([img.decode().catch(() => {}), new Promise((r) => setTimeout(r, ms))]);
+/** Durante la morfosis la imagen ocupa exactamente su rectángulo visible (no todo el escenario con bandas). */
+function fit(img, stage) {
+  const { width: W, height: H } = stage.getBoundingClientRect();
+  const k = Math.min(W / img.naturalWidth, H / img.naturalHeight);
+  Object.assign(img.style, { width: `${img.naturalWidth * k}px`, height: `${img.naturalHeight * k}px` });
+}
+const unfit = (img) => Object.assign(img.style, { width: '', height: '' });
 
 export function openLightbox(file, list) {
   const queue = list.length ? list : [file];
@@ -30,7 +39,13 @@ export function openLightbox(file, list) {
   };
   const step = (d) => queue.length > 1 && show(index + d);
   const close = () => {
-    leave(box); box = null;
+    const el = box; box = null;
+    if (!el) return;
+    const target = tileImage(queue[index].id);
+    if (target && img.naturalWidth && !stage.classList.contains('zoomed')) {
+      fit(img, stage);
+      morph(img, (morphing) => (morphing ? el.remove() : leave(el)), () => target); // la foto vuelve a su miniatura
+    } else leave(el);
     document.removeEventListener('keydown', onKey);
     previous?.focus?.();
   };
@@ -55,14 +70,20 @@ export function openLightbox(file, list) {
   stage.addEventListener('click', (e) => e.target === stage && close());
 
   box?.remove();
-  box = h('div', { class: 'lightbox', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Visor de imágenes' },
+  const mine = h('div', { class: 'lightbox', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Visor de imágenes' },
     h('div', { class: 'viewer-bar' },
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar', onclick: close }, icon('close')), title,
       h('button', { class: 'btn btn-icon', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue[index]) }, icon('download'))),
     stage, foot,
     queue.length > 1 && h('button', { class: 'lb-nav lb-prev', 'aria-label': 'Anterior', onclick: () => step(-1) }, icon('chevronLeft')),
     queue.length > 1 && h('button', { class: 'lb-nav lb-next', 'aria-label': 'Siguiente', onclick: () => step(1) }, icon('chevronRight')));
+  box = mine;
   document.addEventListener('keydown', onKey);
-  document.body.append(box);
-  show(index);
+  // La miniatura pulsada «crece» hasta la foto (si el navegador lo permite y la imagen llega a tiempo).
+  const done = morph(tileImage(file.id), async (morphing) => {
+    document.body.append(mine);
+    show(index);
+    if (morphing) { await loaded(img, 650); if (img.naturalWidth) { stage.classList.remove('loading'); fit(img, stage); } }
+  }, () => (img.naturalWidth ? img : null));
+  done?.then(() => unfit(img));
 }

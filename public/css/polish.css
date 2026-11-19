@@ -20,20 +20,13 @@ body { background: radial-gradient(1100px 520px at 12% -8%, var(--halo), transpa
 .sleeves .sleeve {
   background: linear-gradient(155deg, var(--sleeve-a), var(--sleeve-b)); color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--sleeve-line), 0 1px 2px rgb(0 0 0 / 0.08);
-  transition: transform 0.18s, box-shadow 0.18s;
 }
 .sleeves .sleeve::before { background: var(--sleeve-a); box-shadow: inset 1px 1px 0 var(--sleeve-line), inset -1px 0 0 var(--sleeve-line); }
 .sleeves .sleeve > .icon { color: oklch(0.7 0.12 var(--h, 230)); opacity: 0.9; }
-.sleeves .sleeve:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px var(--sleeve-line), var(--shadow); }
-.sleeves .sleeve:active { transform: scale(0.985); }
+.sleeves .sleeve:hover { box-shadow: inset 0 0 0 1px var(--sleeve-line), var(--shadow); }
 .sleeve-name { font-weight: 600; font-size: 0.98rem; letter-spacing: -0.01em; hyphens: manual; overflow-wrap: break-word; }
 .sleeves .sleeve { padding-right: 44px; }
 
-/* Respuesta táctil */
-.tile .cover { transition: box-shadow 0.18s, transform 0.18s; }
-.tile:active .cover { transform: scale(0.98); }
-.btn { transition: background-color 0.15s, transform 0.12s, box-shadow 0.15s; }
-.btn:active { transform: scale(0.96); }
 
 /* Titulares algo menos gruesos */
 .page-title h1 { font-weight: 700; letter-spacing: -0.025em; }
@@ -49,57 +42,9 @@ body { background: radial-gradient(1100px 520px at 12% -8%, var(--halo), transpa
   .topbar .btn:not(.btn-primary):not(.btn-icon) { background: transparent; border-color: transparent; box-shadow: none; padding-inline: 10px; }
   .topbar .btn:not(.btn-primary):not(.btn-icon):active { background: var(--accent-soft); }
 
-  /* Secciones: texto plano con subrayado animado bajo la activa */
+  /* Secciones: texto plano; la activa lleva un indicador que se desliza (motion.css) */
   .mobile-nav { gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
   .mobile-nav .chip { position: relative; border: 0; border-radius: 0; background: transparent; padding: 10px 12px 12px; color: var(--muted); }
-  .mobile-nav .chip::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); transform: scaleX(0); transition: transform 0.22s cubic-bezier(0.3, 1.2, 0.5, 1); }
   .mobile-nav .chip[aria-current="page"] { background: transparent; color: var(--accent); }
-  .mobile-nav .chip[aria-current="page"]::after { transform: scaleX(1); }
 }
 
-/* ---------- Transiciones ---------- */
-:root { --ease: cubic-bezier(0.22, 0.8, 0.3, 1); --ease-in: cubic-bezier(0.5, 0, 0.8, 0.4); }
-
-/* Cambio de pantalla: la cabecera y el contenido se funden con un leve ascenso; el resto de la interfaz no se mueve */
-.page-head { view-transition-name: page-head; }
-.content { view-transition-name: content; }
-::view-transition-group(*) { animation-duration: 0.28s; animation-timing-function: var(--ease); }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-::view-transition-old(page-head), ::view-transition-old(content) { animation: vt-out 0.14s var(--ease-in) both; }
-::view-transition-new(page-head), ::view-transition-new(content) { animation: vt-in 0.3s var(--ease) 0.06s both; }
-@keyframes vt-out { to { opacity: 0; } }
-@keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
-/* Sin View Transitions: fundido de entrada del contenido */
-.content.enter { animation: vt-in 0.3s var(--ease) both; }
-
-/* Entradas */
-.overlay { animation: ov-in 0.2s ease-out; }
-.dialog { animation: dlg-in 0.28s var(--ease); }
-.menu { transform-origin: top right; animation: menu-in 0.16s var(--ease); }
-.toast { animation: toast-in2 0.3s var(--ease); }
-.upload-panel, .queue-panel, .ly-panel, .fx-panel { animation: panel-in 0.3s var(--ease); }
-.lightbox, .video-modal { animation: ov-in 0.22s ease-out; }
-.selection-bar:not([hidden]) { animation: panel-in 0.28s var(--ease); }
-@keyframes ov-in { from { opacity: 0; } }
-@keyframes dlg-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
-@keyframes menu-in { from { opacity: 0; transform: scale(0.94) translateY(-4px); } }
-@keyframes toast-in2 { from { opacity: 0; transform: translateY(12px) scale(0.97); } }
-@keyframes panel-in { from { opacity: 0; transform: translateY(16px); } }
-
-/* Salidas (las añade leave() antes de retirar el elemento) */
-.leaving { pointer-events: none; animation: leave-out 0.17s var(--ease-in) forwards !important; }
-.overlay.leaving > .dialog { animation: dlg-out 0.17s var(--ease-in) forwards !important; }
-.menu.leaving { animation-duration: 0.12s !important; }
-@keyframes leave-out { to { opacity: 0; } }
-@keyframes dlg-out { to { opacity: 0; transform: translateY(8px) scale(0.98); } }
-.toast.leaving { animation: toast-out 0.2s var(--ease-in) forwards !important; }
-@keyframes toast-out { to { opacity: 0; transform: translateY(8px) scale(0.97); } }
-.upload-panel.leaving, .queue-panel.leaving, .ly-panel.leaving, .fx-panel.leaving { animation: panel-out 0.2s var(--ease-in) forwards !important; }
-@keyframes panel-out { to { opacity: 0; transform: translateY(14px); } }
-
-/* Interacciones: respuesta suave en todo lo pulsable */
-button, .tile, .sleeve, .tree-item, .menu-item, .folder-option, .input { transition-timing-function: var(--ease); }
-.tree-item, .menu-item, .folder-option, .crumb { transition: background-color 0.18s, color 0.18s; }
-.input { transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s; }
-.check, .play-badge, .more { transition: opacity 0.18s, transform 0.2s var(--ease), background-color 0.18s; }
-.progress > i { transition: width 0.3s var(--ease); }

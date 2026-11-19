@@ -1,7 +1,7 @@
 import { h, fill } from '../core/dom.js';
-import { appState, watch } from '../core/store.js';
-import { swap } from '../core/motion.js';
-import { screenKey } from '../core/screen-key.js';
+import { appState } from '../core/store.js';
+import { watchScreen, transitioning } from '../core/motion.js';
+import { screenBusy } from '../core/screen-key.js';
 import { formatBytes } from '../core/format.js';
 import { renderTopbar } from './topbar.js';
 import { createSidebar, createMobileNav } from './sidebar.js';
@@ -43,12 +43,14 @@ export function renderShell(root, { onLogout }) {
     render(explorer);
     foot.textContent = s.stats ? `${s.stats.files} archivos en Telegram (${formatBytes(s.stats.bytes)})` : '';
   };
-  let last = screenKey(appState.get());
-  watch(appState, explorer, (s) => {
-    const key = screenKey(s);
-    if (key === last) { paint(s); return; }
-    last = key;
-    swap(() => paint(appState.get()), explorer); // otra pantalla: fundido suave
+  let busy = screenBusy(appState.get());
+  let staggerTimer = 0;
+  watchScreen(explorer, (s) => {
+    const was = busy; busy = screenBusy(s);
+    paint(s);
+    if (was && !busy && !transitioning()) { // los datos llegaron tras el esqueleto: entrada escalonada (solo esta vez)
+      explorer.classList.add('stagger');
+      clearTimeout(staggerTimer); staggerTimer = setTimeout(() => explorer.classList.remove('stagger'), 900);
+    }
   });
-  paint(appState.get());
 }

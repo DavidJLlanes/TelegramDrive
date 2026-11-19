@@ -11,7 +11,7 @@ export function photoGrid(photos, { menuExtra = () => [] } = {}) {
   const cell = (photo) => {
     const open = () => openFile(photo, photos);
     const menu = (anchor) => openMenu(anchor, [...fileMenu(photo, photos), ...menuExtra(photo)]);
-    return h('div', { class: 'ph-cell', tabindex: 0, role: 'button', 'aria-label': photo.name, onclick: open, onkeydown: (e) => e.key === 'Enter' && open(),
+    return h('div', { class: 'ph-cell', dataset: { id: photo.id }, tabindex: 0, role: 'button', 'aria-label': photo.name, onclick: open, onkeydown: (e) => e.key === 'Enter' && open(),
       oncontextmenu: (e) => { e.preventDefault(); menu(e.currentTarget); } },
     fileCover(photo),
     photo.lat !== null && photo.lon !== null ? h('a', {

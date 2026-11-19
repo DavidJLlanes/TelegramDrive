@@ -1,6 +1,7 @@
 import { h, fill } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { appState, watch } from '../core/store.js';
+import { appState } from '../core/store.js';
+import { watchScreen, indicator } from '../core/motion.js';
 import { formatBytes } from '../core/format.js';
 import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
@@ -64,9 +65,11 @@ export function createMobileNav() {
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
       ...[...menuViews('library'), ...menuViews('more')].map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
       chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
+    indicator(el, '.chip[aria-current="page"]', 'tab-ind');
+    const active = el.querySelector('.chip[aria-current="page"]');
+    if (active) el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
   };
-  watch(appState, el, paint);
-  paint(appState.get());
+  watchScreen(el, paint);
   return el;
 }
 
@@ -90,8 +93,8 @@ export function createSidebar() {
     fill(foot, 
       h('strong', {}, s.stats ? formatBytes(s.stats.bytes) : '—'),
       h('span', {}, sync?.running ? `Sincronizando: ${sync.scanned} mensajes` : s.stats ? `${s.stats.files} archivos en Telegram` : ''));
+    indicator(tree, '.tree-item[aria-current="page"]', 'side-ind');
   };
-  watch(appState, el, paint);
-  paint(appState.get());
+  watchScreen(el, paint);
   return el;
 }
