@@ -64,6 +64,16 @@ test('run() sube la copia al chat indicado y conserva solo las últimas N', asyn
   assert.ok(s.status().lastOk > 0);
 });
 
+test('la limpieza de copias antiguas no borra una nota tuya que empiece por la etiqueta', async () => {
+  let clock = 1_900_000_000_000;
+  const s = svc({ now: () => (clock += 60_000) });
+  const view = await h.tg.forChat('-100777');
+  const note = await view.sendText('#tgbackup nota mía, no es una copia');
+  for (let i = 0; i < 4; i += 1) await s.run();
+  assert.ok(view.messages.has(note.id), 'la nota sigue ahí');
+  assert.equal([...view.messages.values()].filter((m) => m.media).length, 2); // y solo se conservan las 2 últimas copias
+});
+
 test('sin frase o con una corta se rechaza con un mensaje claro y sin enviar nada', async () => {
   await assert.rejects(svc({ settings: { passphrase: '', chat: 'me', keep: 1, minPassphrase: 12, tag: '#tgbackup' } }).run(), /Falta BACKUP_PASSPHRASE/);
   await assert.rejects(svc({ settings: { passphrase: 'corta', chat: 'me', keep: 1, minPassphrase: 12, tag: '#tgbackup' } }).run(), /al menos 12/);

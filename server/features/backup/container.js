@@ -9,7 +9,7 @@ export function pack(files, meta = {}) {
 }
 
 export function unpack(buffer) {
-  const raw = gunzipSync(buffer);
+  const raw = gunzipSync(buffer, { maxOutputLength: 4 * 1024 ** 3 }); // tope contra bombas de descompresión
   const headerLen = raw.readUInt32BE(0);
   const header = JSON.parse(raw.subarray(4, 4 + headerLen).toString('utf8'));
   let offset = 4 + headerLen;

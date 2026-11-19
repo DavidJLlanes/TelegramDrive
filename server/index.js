@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { assertRuntimeConfig, config, ensureDirs } from './config/index.js';
 import { openDatabase } from './db/database.js';
 import { TelegramService } from './telegram/service.js';
@@ -8,6 +10,7 @@ import { bootFeatures } from './features/index.js';
 process.on('unhandledRejection', (err) => console.error('[error] promesa sin capturar:', err));
 assertRuntimeConfig();
 ensureDirs();
+for (const leftover of fs.readdirSync(config.tmpDir)) fs.rmSync(path.join(config.tmpDir, leftover), { recursive: true, force: true }); // restos de subidas cortadas por un reinicio
 
 const db = openDatabase(config.dbFile);
 console.log(`[db] ${config.dbFile} (${db.driver})`);

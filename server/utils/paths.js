@@ -3,6 +3,8 @@ import { badRequest } from './errors.js';
 const MAX_NAME = 120;
 const MAX_PATH = 400;
 const FORBIDDEN = /[\\/\u0000-\u001f]/;
+// Invisibles y marcas de dirección (U+202E invierte el texto: «foto\u202Egpj.exe» se vería «fotoexe.jpg»): se eliminan del nombre.
+const INVISIBLE = /[\u007f-\u009f\u00ad\u200b\u200e\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff]/g;
 
 /** Normaliza una ruta virtual: "/a/b". Rechaza "..", vacíos y caracteres de control. */
 export function normalizePath(input = '/') {
@@ -17,7 +19,7 @@ export function normalizePath(input = '/') {
 }
 
 export function validateName(name) {
-  const clean = String(name ?? '').trim();
+  const clean = String(name ?? '').normalize('NFC').replace(INVISIBLE, '').trim(); // NFC: «é» y «e + ´» son el mismo nombre
   if (!clean || clean === '.' || clean === '..') throw badRequest('Nombre no válido');
   if (FORBIDDEN.test(clean)) throw badRequest('El nombre contiene caracteres no permitidos');
   if (clean.length > MAX_NAME) throw badRequest('Nombre demasiado largo');

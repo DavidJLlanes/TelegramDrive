@@ -31,7 +31,7 @@ export function createService({ db, tg, settings, tmpDir, sources, now = Date.no
 
   async function prune(view) {
     const found = [];
-    for await (const m of view.iterTagged({ tag: settings.tag })) found.push(m.id);
+    for await (const m of view.iterTagged({ tag: settings.tag })) if (m.media && m.message?.startsWith(settings.tag)) found.push(m.id); // la búsqueda de Telegram es por contenido: solo se borran copias reales, no notas que mencionen la etiqueta
     const stale = found.sort((a, b) => b - a).slice(settings.keep);
     if (stale.length) await view.remove(stale);
     return stale.length;

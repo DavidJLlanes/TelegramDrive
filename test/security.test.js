@@ -54,3 +54,20 @@ test('/healthz no revela detalles y en HTTPS se envía HSTS', async () => {
   assert.match(https.headers.get('strict-transport-security') ?? '', /max-age/);
   assert.equal(https.headers.get('cross-origin-opener-policy'), 'same-origin');
 });
+
+test('los nombres no pueden falsearse con marcas de dirección ni invisibles, y se normalizan', async () => {
+  const mk = async (name) => (await call('POST', '/api/folders', { parent: '/', name })).json;
+  assert.equal((await mk('foto‮gpj.exe')).path, '/fotogpj.exe'); // sin U+202E
+  assert.equal((await mk('ha​la')).path, '/hala');
+  assert.equal((await call('POST', '/api/folders', { parent: '/', name: '​‮' })).res.status, 400); // solo invisibles
+  assert.equal((await mk('éx')).path, '/éx'); // NFC
+  assert.equal((await mk('familia 👨‍👩‍👧')).path, '/familia 👨‍👩‍👧'); // el unir de emojis (U+200D) se respeta
+  assert.equal((await mk('10 30')).path, '/10 30'); // espacio estrecho de las capturas de macOS
+});
+
+test('las respuestas de la API no se cachean y la política de seguridad limita los formularios', async () => {
+  const r = await h.raw('/api/stats');
+  assert.equal(r.headers.get('cache-control'), 'no-store');
+  assert.match(r.headers.get('content-security-policy'), /form-action 'self'/);
+  assert.match((await h.raw(`/api/files/${file.id}/content`)).headers.get('cache-control'), /private/); // los archivos mantienen su caché privada
+});

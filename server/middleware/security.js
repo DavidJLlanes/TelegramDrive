@@ -10,6 +10,7 @@ const CSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
+  "form-action 'self'",
 ].join('; ');
 
 export function securityHeaders(req, res, next) {

@@ -35,6 +35,7 @@ export function createApp({ tg, catalog, features = { routers: [], publicRouters
     const { ok } = catalog.health.state;
     res.status(ok ? 200 : 503).json({ ok, telegram: tg.connected }); // sin detalles: es público
   });
+  app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }); // datos privados: nada de cachés intermedias (los archivos y miniaturas fijan la suya)
   app.use('/api/auth', authRoutes({ tg }));
   app.use('/api', requireAuth, driveRoutes({ catalog, tg }), libraryRoutes({ catalog }), trashRoutes({ catalog }),
     playlistRoutes({ catalog }), sharingRoutes({ catalog }), ...features.routers);
