@@ -20,10 +20,12 @@ function goHome(e) {
   setTimeout(() => navigate('/'), 220);
 }
 
+const homeButton = (cls) => h('button', { class: cls, type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: goHome }, icon('home'));
+
 function crumbs(path) {
   const parts = path.split('/').filter(Boolean);
   if (!parts.length) return null;
-  const nodes = [h('button', { class: 'crumb crumb-home', type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: goHome }, icon('home'))];
+  const nodes = [homeButton('crumb crumb-home')];
   parts.slice(0, -1).forEach((part, i) => {
     nodes.push(h('span', { class: 'crumb-sep', 'aria-hidden': 'true' }, '/'));
     nodes.push(h('button', { class: 'crumb', onclick: () => navigate(`/${parts.slice(0, i + 1).join('/')}`) }, part));
@@ -61,7 +63,7 @@ function tools(s) {
 function folderHead(s) {
   return {
     crumbs: s.results !== null ? null : crumbs(s.path),
-    title: s.results !== null ? 'Resultados' : s.path === '/' ? 'Inicio' : s.path.split('/').pop(),
+    title: s.results !== null ? 'Resultados' : s.path === '/' ? homeButton('home-title') : s.path.split('/').pop(),
     sub: subtitle(s), tools: tools(s),
   };
 }
