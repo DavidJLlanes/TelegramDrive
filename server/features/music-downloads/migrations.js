@@ -17,4 +17,12 @@ export const migrations = [{
   up(db) {
     db.exec("ALTER TABLE music_download_jobs ADD COLUMN format TEXT NOT NULL DEFAULT 'mp3'");
   },
+}, {
+  id: '062-download-options',
+  up(db) {
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'");
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN channel TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN playlist TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN year TEXT NOT NULL DEFAULT ''");
+  },
 }];
