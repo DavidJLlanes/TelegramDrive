@@ -3,10 +3,12 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { badRequest, conflict, notFound } from '../../utils/errors.js';
 import { sourceUrl, classify } from './metadata.js';
-import { ensureDestination } from './folders.js';
+import { ensureDestination, ensureDirectDestination } from './folders.js';
 import { musicRunner } from './runner.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
+import { directSource, directCategory } from './direct-url.js';
+import { downloadDirect } from './direct-runner.js';
 
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
@@ -25,6 +27,22 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
       patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
+      if (job.format === 'direct') {
+        const source = directSource(job.url);
+        patch(job.id, { state: 'downloading', title: source.name });
+        const downloaded = await downloadDirect(job.url, dir, {
+          signal, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: p }); },
+        });
+        if (signal.aborted) throw new Error('Descarga cancelada');
+        const destination = await ensureDirectDestination(catalog, directCategory(source.ext));
+        patch(job.id, { state: 'uploading', progress: 80, destination });
+        const file = await catalog.fileOps.upload({
+          parent: destination, name: source.name, path: downloaded.path, size: downloaded.size,
+          onProgress: (fraction) => patch(job.id, { progress: 80 + Math.round(Number(fraction) * 19) }),
+        });
+        patch(job.id, { state: 'done', progress: 100, fileId: file.id });
+        return;
+      }
       const result = await runner.inspect(job.url);
       const info = result.items[0];
       if (!info || info.id !== job.sourceId) throw new Error('La fuente no coincide con la canción solicitada');
@@ -121,6 +139,23 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     return { queued: true };
   }
 
+  function enqueueDirect(input) {
+    const src = directSource(input);
+    const outstanding = repo.list().filter((j) => BUSY.has(j.state) || j.state === 'paused');
+    if (outstanding.length >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
+    if (outstanding.some((j) => j.sourceId === src.id)) throw conflict('Esta descarga ya está en cola');
+    let previous = repo.bySource(src.id, 'direct');
+    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
+    if (previous) return { accepted: [], skipped: [src.id] };
+    const created = Date.now();
+    const j = { id: randomUUID(), sourceId: src.id, url: src.url,
+      title: src.name, artist: '', album: '', format: 'direct', options: normalizeOptions(),
+      channel: '', playlist: '', year: '', created };
+    repo.insert(j);
+    queueMicrotask(drain);
+    return { accepted: [j.id], skipped: [] };
+  }
+
   function prioritize(id, priority) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
@@ -152,7 +187,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
-    enqueue, retry, cancel, prioritize, pause, resume,
+    enqueue, enqueueDirect, retry, cancel, prioritize, pause, resume,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },

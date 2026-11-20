@@ -21,6 +21,9 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 | `subtitles.js` | Identificación de subtítulos acompañantes |
 | `sources.js` | Allowlist de proveedores y URLs canónicas HTTPS |
 | `playlist-page.js` | Paginación acotada de listas de YouTube |
+| `direct-url.js` | Validación de URLs y clasificación por extensión |
+| `public-ip.js` | Resolución DNS con bloqueo de redes privadas y direcciones especiales |
+| `direct-runner.js` | Descarga HTTPS directa con DNS fijado, límite de tamaño y sin redirecciones |
 
 ## Cliente — `public/js/features/music-downloads/`
 
@@ -32,10 +35,14 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 - Las opciones se validan en servidor y se guardan por trabajo para que cambiar la interfaz no altere trabajos en cola.
 - Los archivos temporales se eliminan tras subir a TelegramDrive.
 - Los MP3/M4A/Opus se clasifican por artista y álbum; los MP4 pueden agruparse por canal, año o lista.
-- Se admiten vídeos individuales de Vimeo y Dailymotion, y pistas individuales de SoundCloud. Las URLs directas arbitrarias **no están activadas**. Requieren un módulo independiente con política de URLs, SSRF, redirects y cuotas.
+- Se admiten vídeos individuales de Vimeo y Dailymotion, y pistas individuales de SoundCloud. Las descargas directas HTTPS de extensiones permitidas están activadas en un módulo separado. Se bloquean direcciones IP literales, destinos DNS no públicos, puertos alternativos, credenciales y redirecciones. Requieren un módulo independiente con política de URLs, SSRF, redirects y cuotas.
 - El audio convertido a 320 kbps no gana calidad respecto a la fuente original.
 - No se sortea DRM ni se garantiza la disponibilidad de subtítulos o de resoluciones.
 
 ## Listas y cola
 
 Las listas de YouTube se exploran por páginas de 50 elementos, hasta 5000 por lista. Se pueden pausar y reanudar trabajos **pendientes**; las transferencias en curso solo permiten cancelar y reintentar, sin prometer reanudación parcial.
+
+## Archivos directos
+
+Los archivos directos se guardan en `Descargas de Internet/Archivos directos/{Audio, Vídeos, Imágenes, Documentos, Comprimidos}`. Límite de 1 GiB por archivo. La URL debe incluir extensión permitida. La descarga usa TLS con el hostname original y una dirección IPv4 pública validada y fijada para evitar cambios DNS entre comprobación y conexión. No sigue redirecciones. No se permite acceso a hosts privados ni redes de metadatos. La pausa de una descarga HTTP activa y su reanudación parcial aún no están implementadas.

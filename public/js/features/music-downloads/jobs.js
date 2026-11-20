@@ -31,7 +31,7 @@ export function renderJobs(el, list, refresh) {
       ? h('progress', { value: j.progress || 0, max: 100 }) : null;
     return h('div', { class: 'md-job' },
       h('div', { class: 'md-job-info' },
-        h('strong', { title: j.title, 'data-format': j.format }, j.format === 'video' ? 'Vídeo · ' + (j.title || 'Sin título') : j.title || 'Canción'),
+        h('strong', { title: j.title, 'data-format': j.format }, j.format === 'direct' ? 'Archivo · ' + (j.title || 'Sin título') : j.format === 'video' ? 'Vídeo · ' + (j.title || 'Sin título') : j.title || 'Canción'),
         h('span', {}, [j.artist, j.album].filter(Boolean).join(' · ') || 'Pendiente de clasificar'),
         h('span', { class: 'md-destination' }, j.destination || '/Descargas de Internet'),
         j.error ? h('span', { class: 'md-error' }, j.error) : null,
