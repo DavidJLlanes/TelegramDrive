@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { sourceUrl, classify } from '../server/features/music-downloads/metadata.js';
-import { createService } from '../server/features/music-downloads/service.js';
 import { createRepo } from '../server/features/music-downloads/repo.js';
 import { makeHarness } from './helpers/harness.js';
 import { mp3WithTags } from './helpers/id3.js';
@@ -44,6 +43,7 @@ before(async () => {
       return { path: file, size: bytes.length };
     },
   };
+  const { createService } = await import('../server/features/music-downloads/service.js');
   service = createService({ repo: createRepo(h.db), catalog: h.catalog, tmpDir: path.join(h.dataDir, 'tmp'), runner });
   service.start();
 });
