@@ -79,7 +79,8 @@ export const http = {
 
 export const contentUrl = (id, { download = false } = {}) =>
   url(`files/${id}/content`, download ? { download: 1 } : undefined).href;
-export const thumbUrl = (id) => url(`files/${id}/thumb`).href;
+export const thumbUrl = (id) => url(`files/${id}/thumb`, { v: 2 }).href;
+export const previewUrl = (id) => url(`files/${id}/preview`).href;
 /** ZIP de una carpeta (`path`) o de una selección (`ids`). Se descarga navegando a la URL (la cookie de sesión va sola). */
 export const zipUrl = ({ path, ids }) => url('zip', ids ? { ids: ids.join(',') } : { path }).href;
 export const shareUrl = (token) => new URL(`share/${token}`, document.baseURI).href;

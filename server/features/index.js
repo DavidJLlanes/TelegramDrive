@@ -15,6 +15,7 @@ import libraryAudit from './library-audit/index.js';
 import photos from './photos/index.js';
 import photoAlbums from './photo-albums/index.js';
 import usage from './usage/index.js';
+import imageCache from './image-cache/index.js';
 
 const FEATURES = [
   accessLog,
@@ -26,6 +27,7 @@ const FEATURES = [
   photos,
   photoAlbums,
   usage,
+  imageCache,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {

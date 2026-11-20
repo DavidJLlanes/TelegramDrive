@@ -2,6 +2,7 @@ import { encodeFile, encodeFolder } from '../telegram/codec.js';
 import { ROOT } from '../db/folder-tree.js';
 import { notFound } from '../utils/errors.js';
 import { normalizePath } from '../utils/paths.js';
+import { dropCacheFile, dropCacheFolder } from './image-cache/paths.js';
 
 export const TRASH_DAYS = 30;
 const DAY = 86_400_000;
@@ -21,6 +22,7 @@ export class TrashOps {
       const ts = Date.now();
       await this.tg.editText(row.id, encodeFile({ folder: row.folder, name: row.name, trashed: ts, ovr: this.files.overrideOf(row.id) }));
       this.files.setTrashed(row.id, ts);
+      await dropCacheFile(row.id, this.tree.pathOf(row.folder));
     });
   }
 
@@ -33,6 +35,7 @@ export class TrashOps {
       await this.tg.editText(f.msgId, encodeFolder({ id, parent: f.parent, name: f.name, trashed: ts }));
       this.tree.update(id, { parent: f.parent, name: f.name, trashed: ts });
       this.#hide();
+      await dropCacheFolder(this.tree.pathOf(id));
       return id;
     });
   }

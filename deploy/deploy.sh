@@ -22,11 +22,13 @@ cd "$APP_DIR"
 echo "==> Node $(node -v)"
 if node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=5)?0:1)'; then
   echo "==> Instalando dependencias (SQLite integrado de Node)"
-  npm ci --omit=dev --omit=optional
+  npm ci --omit=dev
 else
   echo "==> Node < 22.5: instalando también better-sqlite3"
   npm ci --omit=dev
 fi
+# El servidor necesita Sharp para generar miniaturas y vistas previas WebP.
+node -e "import('sharp').catch(() => process.exit(1))" || { echo 'ERROR: Sharp no está instalado; revisa las dependencias opcionales'; exit 1; }
 
 mkdir -p data
 chown -R "$RUN_USER:$RUN_USER" data
