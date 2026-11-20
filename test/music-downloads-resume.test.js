@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { inspectResponse } from '../server/features/music-downloads/direct-http.js';
+import { Readable } from 'node:stream';
+import { downloadResumable } from '../server/features/music-downloads/direct-resume.js';
 import { transferPaths, readTransfer, writeTransfer, clearTransfer } from '../server/features/music-downloads/direct-transfer-state.js';
 
 const response = (statusCode, headers = {}) => ({ statusCode, headers });
@@ -40,5 +42,33 @@ test('persistencia de parciales y limpieza controlada', async () => {
     assert.throws(() => transferPaths(root, '../unsafe'));
     await clearTransfer(paths);
     assert.equal(await readTransfer(paths), null);
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
+});
+
+test('reanuda los bytes descargados sin duplicarlos y valida el ETag', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tgd-range-'));
+  const id = 'b4dfe001-0000-4000-8000-000000000002';
+  const url = 'https://example.org/archivo.zip';
+  const paths = transferPaths(root, id);
+  const payload = Buffer.alloc(1024, 7);
+  const offsets = [];
+  try {
+    await fs.mkdir(paths.dir, { recursive: true });
+    await fs.writeFile(paths.partial, payload.subarray(0, 400));
+    await writeTransfer(paths, { url, etag: '"v1"', lastModified: '', total: 1024 });
+    const result = await downloadResumable(url, root, id, {
+      openResponse: async (_url, { offset, validator }) => {
+        offsets.push([offset, validator]);
+        const stream = Readable.from([payload.subarray(offset)]);
+        stream.statusCode = 206;
+        stream.headers = {
+          'content-range': 'bytes 400-1023/1024', 'content-length': '624', etag: '"v1"',
+        };
+        return stream;
+      },
+    });
+    assert.deepEqual(offsets, [[400, '"v1"']]);
+    assert.equal(result.size, 1024);
+    assert.deepEqual(await fs.readFile(result.path), payload);
   } finally { await fs.rm(root, { recursive: true, force: true }); }
 });
