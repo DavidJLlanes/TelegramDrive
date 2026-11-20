@@ -28,6 +28,8 @@ test('organización: artista / álbum, Singles y Por revisar; rutas limpiadas', 
   assert.equal(classify({ title: 'Tema', artist: 'Queen', album: 'Opera' }).parent, '/Descargas de Internet/Queen/Opera');
   assert.equal(classify({ title: 'Tema', artist: 'Queen' }).parent, '/Descargas de Internet/Queen/Singles');
   assert.equal(classify({ title: 'Tema' }).parent, '/Descargas de Internet/Por revisar');
+  assert.equal(classify({ title: 'Concierto', artist: 'Queen' }, {}, 'video').parent, '/Descargas de Internet/Vídeos');
+  assert.equal(classify({ title: 'Concierto', artist: 'Queen' }, {}, 'video').fileName, 'Concierto.mp4');
   assert.equal(classify({ title: '../tema', artist: 'Rock/Clásico' }).parent, '/Descargas de Internet/Rock Clásico/Singles');
 });
 
@@ -39,11 +41,11 @@ before(async () => {
     installed: async () => true,
     inspect: async (url) => ({ items: [{ id: sourceUrl(url).id,
       title: 'Canción de prueba', artist: url.includes('dQw4') ? 'Artista demo' : '', album: url.includes('dQw4') ? 'Álbum demo' : '' }] }),
-    download: async (url, dir, meta, { onProgress }) => {
+    download: async (url, dir, meta, { onProgress, format }) => {
       calls++;
       onProgress(50);
-      const file = path.join(dir, 'final.mp3');
-      const bytes = mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
+      const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.mp3');
+      const bytes = format === 'video' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
       await fs.writeFile(file, bytes);
       return { path: file, size: bytes.length };
     },
@@ -81,6 +83,19 @@ test('evita descargar el mismo ID mientras el archivo siga en Telegram', () => {
   assert.equal(repeat.accepted.length, 0);
   assert.deepEqual(repeat.skipped, ['dQw4w9WgXcQ']);
   assert.equal(calls, 1);
+});
+
+test('el mismo vídeo se puede descargar también como MP4, en carpeta independiente', async () => {
+  const result = service.enqueue([{ url: SRC, format: 'video' }]);
+  assert.equal(result.accepted.length, 1);
+  const job = await finished(result.accepted[0]);
+  assert.equal(job.state, 'done', job.error);
+  assert.equal(job.format, 'video');
+  assert.equal(job.destination, '/Descargas de Internet/Vídeos');
+  const files = (await h.call('GET', '/api/list?path=' + encodeURIComponent(job.destination))).json.files;
+  assert.equal(files.length, 1);
+  assert.equal(files[0].name, 'Canción de prueba.mp4');
+  assert.equal(service.enqueue([{ url: SRC, format: 'video' }]).skipped.length, 1);
 });
 
 test('sin artista, crea Por revisar en vez de inventar metadatos', async () => {
