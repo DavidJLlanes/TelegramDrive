@@ -144,6 +144,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
     if (job.state !== 'paused') throw conflict('Esta descarga no está pausada');
+    if (active?.id === id) throw conflict('La transferencia se está deteniendo; vuelve a intentarlo');
     patch(id, { state: 'queued' });
     queueMicrotask(drain);
     return { queued: true };
