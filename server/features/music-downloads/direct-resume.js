@@ -7,9 +7,12 @@ import { transferPaths, readTransfer, writeTransfer, clearTransfer } from './dir
 import { openDirectResponse, inspectResponse } from './direct-http.js';
 
 const MAX_BYTES = 1024 ** 3;
+const MAX_DURATION_MS = 3 * 60 * 60_000;
 
 export async function downloadResumable(input, root, id, { signal, onProgress, openResponse = openDirectResponse } = {}) {
   const source = directSource(input);
+  const deadline = AbortSignal.timeout(MAX_DURATION_MS);
+  const combinedSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
   const paths = transferPaths(root, id);
   await fsp.mkdir(paths.dir, { recursive: true, mode: 0o700 });
   let previous = await readTransfer(paths);
@@ -30,7 +33,7 @@ export async function downloadResumable(input, root, id, { signal, onProgress, o
   for (let attempt = 0; attempt < 2; attempt++) {
     const validator = previous?.etag && !previous.etag.startsWith('W/')
       ? previous.etag : previous?.lastModified;
-    const response = await openResponse(source.url, { offset, validator, signal });
+    const response = await openResponse(source.url, { offset, validator, signal: combinedSignal });
     let details;
     try { details = inspectResponse(response, offset, previous, MAX_BYTES); }
     catch (error) { response.destroy(); throw error; }
@@ -56,7 +59,7 @@ export async function downloadResumable(input, root, id, { signal, onProgress, o
       },
     });
     await pipeline(response, limit, fs.createWriteStream(paths.partial,
-      { flags: offset ? 'a' : 'w', mode: 0o600 }), { signal });
+      { flags: offset ? 'a' : 'w', mode: 0o600 }), { signal: combinedSignal });
     if (bytes < 128 || details.total !== null && bytes !== details.total) {
       throw new Error('Descarga incompleta');
     }

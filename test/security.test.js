@@ -71,3 +71,29 @@ test('las respuestas de la API no se cachean y la política de seguridad limita 
   assert.match(r.headers.get('content-security-policy'), /form-action 'self'/);
   assert.match((await h.raw(`/api/files/${file.id}/content`)).headers.get('cache-control'), /private/); // los archivos mantienen su caché privada
 });
+
+test('cada inicio de sesión emite un token aleatorio diferente', async () => {
+  const login = async () => (await call('POST', '/api/auth/login', { password: 'contraseña-de-prueba' })).res.headers.get('set-cookie').split(';')[0];
+  const a = await login();
+  const b = await login();
+  assert.notEqual(a, b);
+  assert.equal(a.split('=')[1].split('.').length, 3);
+});
+
+test('la profundidad y longitud de rutas se validan antes de crear o mover carpetas', async () => {
+  const { validateFolderChange } = await import('../server/services/folder-limits.js');
+  const tree = h.catalog.tree;
+  const parent = tree.resolve('/');
+  assert.equal(validateFolderChange(tree, parent, 'Seguro'), '/Seguro');
+  assert.throws(() => validateFolderChange(tree, parent, 'x'.repeat(401)));
+  const root = await call('POST', '/api/folders', { parent: '/', name: 'Auditoria' });
+  assert.equal(root.res.status, 201);
+  const tooLong = await call('POST', '/api/folders', { parent: '/Auditoria', name: 'x'.repeat(120) });
+  assert.equal(tooLong.res.status, 201);
+  const rejected = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120), name: 'y'.repeat(120) });
+  assert.equal(rejected.res.status, 201);
+  const third = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120), name: 'z'.repeat(120) });
+  assert.equal(third.res.status, 201);
+  const overflow = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120) + '/' + 'z'.repeat(120), name: 'w'.repeat(120) });
+  assert.equal(overflow.res.status, 400);
+});

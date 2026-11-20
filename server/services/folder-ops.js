@@ -2,6 +2,7 @@ import { encodeFolder, newFolderId } from '../telegram/codec.js';
 import { ROOT } from '../db/folder-tree.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
 import { normalizePath, validateName } from '../utils/paths.js';
+import { validateFolderChange } from './folder-limits.js';
 import { dropThumbnail } from './thumbnails.js';
 import { moveCacheFolder, dropCacheFolder } from './image-cache/paths.js';
 
@@ -26,6 +27,7 @@ export class FolderOps {
       const parent = this.#need(parentPath);
       const name = validateName(rawName);
       if (this.tree.child(parent, name)) throw conflict('Ya existe una carpeta con ese nombre');
+      validateFolderChange(this.tree, parent, name);
       const id = newFolderId();
       const message = await this.tg.sendText(encodeFolder({ id, parent, name }));
       this.tree.insert({ id, msgId: message.id, parent, name });
@@ -40,6 +42,7 @@ export class FolderOps {
       const name = validateName(rawName);
       const clash = this.tree.child(folder.parent, name);
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre');
+      validateFolderChange(this.tree, folder.parent, name, id);
       const oldPath = this.tree.pathOf(id);
       await this.tg.editText(folder.msgId, encodeFolder({ id, parent: folder.parent, name }));
       this.tree.update(id, { parent: folder.parent, name });
@@ -56,6 +59,7 @@ export class FolderOps {
       if (this.tree.isWithin(parent, id)) throw badRequest('No se puede mover una carpeta dentro de sí misma');
       const clash = this.tree.child(parent, folder.name);
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre en el destino');
+      validateFolderChange(this.tree, parent, folder.name, id);
       const oldPath = this.tree.pathOf(id);
       await this.tg.editText(folder.msgId, encodeFolder({ id, parent, name: folder.name }));
       this.tree.update(id, { parent, name: folder.name });

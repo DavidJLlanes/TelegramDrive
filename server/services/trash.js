@@ -1,7 +1,8 @@
 import { encodeFile, encodeFolder } from '../telegram/codec.js';
 import { ROOT } from '../db/folder-tree.js';
 import { notFound } from '../utils/errors.js';
-import { normalizePath } from '../utils/paths.js';
+import { normalizePath, validateName } from '../utils/paths.js';
+import { validateFolderChange } from './folder-limits.js';
 import { dropCacheFile, dropCacheFolder } from './image-cache/paths.js';
 
 export const TRASH_DAYS = 30;
@@ -58,7 +59,12 @@ export class TrashOps {
       const f = this.tree.get(folderId);
       if (!f || !f.trashed) throw notFound('La carpeta no está en la papelera');
       const parent = this.tree.exists(f.parent) ? f.parent : ROOT;
-      const name = this.tree.child(parent, f.name) ? `${f.name} (restaurada)` : f.name;
+      let name = f.name;
+      for (let n = 1; this.tree.child(parent, name); n++) {
+        const suffix = ` (${n})`;
+        name = validateName(f.name.slice(0, 120 - suffix.length) + suffix);
+      }
+      validateFolderChange(this.tree, parent, name, f.id);
       await this.tg.editText(f.msgId, encodeFolder({ id: f.id, parent, name }));
       this.tree.update(f.id, { parent, name, trashed: 0 });
       this.#hide();

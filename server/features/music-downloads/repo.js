@@ -4,6 +4,8 @@ export function createRepo(db) {
     list: () => db.stmt('SELECT ' + columns + ' FROM music_download_jobs ORDER BY created DESC LIMIT 150').all(),
     get: (id) => db.stmt('SELECT ' + columns + ' FROM music_download_jobs WHERE id = ?').get(id),
     bySource: (sourceId, format = 'mp3', audioFormat = 'mp3') => db.stmt("SELECT " + columns + " FROM music_download_jobs WHERE source_id = ? AND format = ? AND (format = 'video' OR COALESCE(json_extract(options_json, '$.audioFormat'), 'mp3') = ?) AND state = 'done' ORDER BY updated DESC LIMIT 1").get(sourceId, format, audioFormat),
+    pendingCount: () => db.stmt("SELECT COUNT(*) AS total FROM music_download_jobs WHERE state IN ('queued','analyzing','downloading','uploading','paused')").get().total,
+    activeSources: () => db.stmt("SELECT source_id AS sourceId, format, options_json AS optionsJson FROM music_download_jobs WHERE state IN ('queued','analyzing','downloading','uploading','paused')").all(),
     outstanding: () => db.stmt("SELECT " + columns + " FROM music_download_jobs WHERE state = 'queued' ORDER BY priority DESC, created ASC").all(),
     interrupt: () => db.stmt("UPDATE music_download_jobs SET state = 'interrupted', error = 'Interrumpida por reinicio' WHERE state IN ('downloading', 'uploading', 'analyzing')").run(),
     insert: (j) => db.stmt("INSERT INTO music_download_jobs (id, source_id, url, title, artist, album, format, options_json, channel, playlist, year, state, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?)").run(j.id, j.sourceId, j.url, j.title, j.artist, j.album, j.format, JSON.stringify(j.options), j.channel, j.playlist, j.year, j.created, j.created),

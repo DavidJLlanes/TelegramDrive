@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { config } from '../config/index.js';
 import { sign, safeEqual } from '../utils/crypto.js';
 import { unauthorized } from '../utils/errors.js';
@@ -7,7 +8,8 @@ const { cookieName, secret, ttlDays } = config.auth;
 
 export function issueSession(res, secure) {
   const exp = Date.now() + ttlDays * 86400_000;
-  const token = `${exp}.${sign(String(exp), secret)}`;
+  const payload = `${exp}.${randomBytes(24).toString('hex')}`;
+  const token = `${payload}.${sign(payload, secret)}`;
   res.cookie(cookieName, token, {
     httpOnly: true, sameSite: 'lax', secure, path: config.basePath, maxAge: ttlDays * 86400_000,
   });
@@ -25,14 +27,15 @@ function readCookie(req) {
 }
 
 export function isAuthenticated(req) {
-  const [exp, sig] = readCookie(req).split('.');
-  if (!exp || !sig || !(Number(exp) >= Date.now()) || isRevoked(sig)) return false; // «>=» rechaza también NaN
-  return safeEqual(sig, sign(exp, secret));
+  const [exp, nonce, sig, extra] = readCookie(req).split('.');
+  if (!exp || !/^[0-9a-f]{48}$/.test(nonce || '') || !sig || extra ||
+      !Number.isSafeInteger(Number(exp)) || Number(exp) < Date.now() || isRevoked(sig)) return false;
+  return safeEqual(sig, sign(`${exp}.${nonce}`, secret));
 }
 
 /** Cierra la sesión: borra la cookie y deja inservible la copia que ya existiera. */
 export function endSession(req, res) {
-  if (isAuthenticated(req)) { const [exp, sig] = readCookie(req).split('.'); revoke(sig, exp); }
+  if (isAuthenticated(req)) { const [exp, , sig] = readCookie(req).split('.'); revoke(sig, exp); }
   clearSession(res);
 }
 
