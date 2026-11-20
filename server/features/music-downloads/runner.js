@@ -7,7 +7,7 @@ import { sourceUrl, entryOf } from './metadata.js';
 
 const YTDLP = process.env.YTDLP_BIN || path.join(config.dataDir, 'tools', 'yt-dlp-venv', 'bin', 'yt-dlp');
 const JS = ['--js-runtimes', 'node'];
-const BASE = ['--ignore-config', '--no-warnings', '--no-call-home', ...JS];
+const BASE = ['--ignore-config', '--no-warnings', ...JS];
 const MAX_OUTPUT = 5 * 1024 * 1024;
 
 export function execute(bin, args, { signal, timeout = 60_000, onLine } = {}) {
