@@ -33,7 +33,7 @@ export function parseVideoTitle(value) {
 export function entryOf(info, original) {
   const source = original ? sourceUrl(original) : null;
   const id = source?.type === 'video' ? source.id : String(info.id || '');
-  if (!id || (!source && !/^[\\w-]{11}$/.test(id))) throw badRequest('No se encontró un identificador válido');
+  if (!id || (!source && !/^[\w-]{11}$/.test(id))) throw badRequest('No se encontró un identificador válido');
   const fallback = info.artist || info.track ? null : parseVideoTitle(info.title);
   return {
     id, url: source?.type === 'video' ? source.url : 'https://www.youtube.com/watch?v=' + id,
