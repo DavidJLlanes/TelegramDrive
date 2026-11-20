@@ -1,29 +1,10 @@
 import { badRequest } from '../../utils/errors.js';
 
-const VIDEO_ID = /^[\w-]{11}$/;
-const LIST_ID = /^[\w-]{12,80}$/;
-const HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be']);
+import { sourceUrl } from './sources.js';
+export { sourceUrl } from './sources.js';
+
 export const ROOT_FOLDER = '/Descargas de Internet';
 export const VIDEO_FOLDER = ROOT_FOLDER + '/Vídeos';
-
-/** Canonicalise URLs: yt-dlp only sees YouTube, never a user-provided host. */
-export function sourceUrl(input) {
-  let u;
-  try { u = new URL(String(input)); } catch { throw badRequest('Pega un enlace válido de YouTube'); }
-  if (u.protocol !== 'https:' || !HOSTS.has(u.hostname.toLowerCase()) || u.username || u.password || u.port) {
-    throw badRequest('Por seguridad, solo se admiten enlaces HTTPS de YouTube');
-  }
-  const pathname = u.pathname;
-  if (pathname === '/playlist') {
-    const id = u.searchParams.get('list');
-    if (!LIST_ID.test(id || '')) throw badRequest('Lista de YouTube no válida');
-    return { type: 'playlist', url: 'https://www.youtube.com/playlist?list=' + id, id };
-  }
-  let id = u.hostname === 'youtu.be' ? pathname.slice(1) : u.searchParams.get('v');
-  if (!id && /^\/(shorts|live)\/[\w-]{11}\/?$/.test(pathname)) id = pathname.split('/')[2];
-  if (!VIDEO_ID.test(id || '')) throw badRequest('Enlace de canción de YouTube no válido');
-  return { type: 'video', url: 'https://www.youtube.com/watch?v=' + id, id };
-}
 
 /** Remote names are never used directly as filesystem paths. */
 export function safePart(value, fallback = '') {
@@ -49,12 +30,13 @@ export function parseVideoTitle(value) {
   return { artist: m[1].trim(), title: title || m[2].trim() };
 }
 
-export function entryOf(info) {
-  const id = String(info.id || '');
-  if (!VIDEO_ID.test(id)) throw badRequest('YouTube no devolvió un identificador válido');
+export function entryOf(info, original) {
+  const source = original ? sourceUrl(original) : null;
+  const id = source?.type === 'video' ? source.id : String(info.id || '');
+  if (!id || (!source && !/^[\\w-]{11}$/.test(id))) throw badRequest('No se encontró un identificador válido');
   const fallback = info.artist || info.track ? null : parseVideoTitle(info.title);
   return {
-    id, url: 'https://www.youtube.com/watch?v=' + id,
+    id, url: source?.type === 'video' ? source.url : 'https://www.youtube.com/watch?v=' + id,
     title: String(info.track || fallback?.title || info.title || 'Sin título').slice(0, 180),
     artist: String(info.artist || (info.track ? info.creator : fallback?.artist) || '').slice(0, 180),
     album: String(info.album || '').slice(0, 180),
