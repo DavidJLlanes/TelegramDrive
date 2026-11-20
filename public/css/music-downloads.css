@@ -31,3 +31,7 @@
   .md-pick small { width: 100%; padding-left: 30px; }
   .md-job-actions { width: 100%; justify-content: flex-start; }
 }
+
+.md-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.md-toggle { display: flex; align-items: center; gap: 9px; font-size: 0.88rem; color: var(--muted); }
+.md-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
