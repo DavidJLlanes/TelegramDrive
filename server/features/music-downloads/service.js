@@ -102,6 +102,15 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     return { accepted, skipped };
   }
 
+  function prioritize(id, priority) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'queued') throw conflict('Solo se pueden priorizar descargas en cola');
+    if (!Number.isInteger(priority) || priority < -1 || priority > 1) throw badRequest('Prioridad inválida');
+    patch(id, { priority });
+    return { priority };
+  }
+
   function retry(id) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
@@ -124,7 +133,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url) => runner.inspect(sourceUrl(url).url),
-    enqueue, retry, cancel,
+    enqueue, retry, cancel, prioritize,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },
