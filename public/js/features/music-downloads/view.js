@@ -13,7 +13,7 @@ const field = (name, value = '') => {
 };
 
 export function renderDownloads(el, { data }) {
-  const url = h('input', { class: 'input md-url', type: 'url', placeholder: 'https://www.youtube.com/watch?v=...', autocomplete: 'off', required: true });
+  const url = h('input', { class: 'input md-url', type: 'url', placeholder: 'YouTube, Vimeo, Dailymotion o SoundCloud', autocomplete: 'off', required: true });
   const format = h('select', { class: 'input md-format', 'aria-label': 'Tipo de descarga' },
     h('option', { value: 'mp3' }, 'Solo audio (MP3)'),
     h('option', { value: 'video' }, 'Solo vídeo (MP4)'),
@@ -94,11 +94,11 @@ export function renderDownloads(el, { data }) {
     busy = true;
     inspect.disabled = true;
     inspect.textContent = 'Analizando…';
-    fill(preview, h('p', { class: 'pg-hint' }, 'Consultando los metadatos de YouTube…'));
+    fill(preview, h('p', { class: 'pg-hint' }, 'Consultando los metadatos de la fuente…'));
     try { inspectedUrl = url.value; showPreview(await musicApi.inspect(inspectedUrl, 0)); }
     catch (err) { fill(preview); toastError(err); }
     finally { busy = false; inspect.disabled = false; fill(inspect, icon('search'), 'Analizar enlace'); }
-  } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace de vídeo o lista de YouTube'), url),
+  } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace de YouTube, Vimeo, Dailymotion o SoundCloud'), url),
     h('label', { class: 'md-field' }, h('span', {}, 'Descargar como'), format), options.element, inspect, info, preview);
 
   fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga'),
