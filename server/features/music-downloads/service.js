@@ -101,8 +101,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     if (!Array.isArray(items) || !items.length || items.length > 50) throw badRequest('Indica entre 1 y 50 elementos');
     const expanded = items.flatMap((item) => item?.format === 'both'
       ? [{ ...item, format: 'mp3' }, { ...item, format: 'video' }] : [item]);
-    const outstanding = repo.list().filter((j) => BUSY.has(j.state) || j.state === 'paused');
-    if (outstanding.length + expanded.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
+    const outstanding = repo.activeSources();
+    if (repo.pendingCount() + expanded.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     const accepted = [], skipped = [];
     const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format + ':' +
       (j.format === 'video' ? 'mp4' : normalizeOptions(JSON.parse(j.optionsJson || '{}')).audioFormat)));
@@ -152,8 +152,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
 
   function enqueueDirect(input) {
     const src = directSource(input);
-    const outstanding = repo.list().filter((j) => BUSY.has(j.state) || j.state === 'paused');
-    if (outstanding.length >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
+    const outstanding = repo.activeSources();
+    if (repo.pendingCount() >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     if (outstanding.some((j) => j.sourceId === src.id)) throw conflict('Esta descarga ya está en cola');
     let previous = repo.bySource(src.id, 'direct');
     if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
