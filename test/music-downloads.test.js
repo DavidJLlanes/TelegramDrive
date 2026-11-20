@@ -45,7 +45,7 @@ before(async () => {
       calls++;
       onProgress(50);
       const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.' + (options?.audioFormat || 'mp3'));
-      const bytes = format === 'video' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
+      const bytes = format === 'video' || options?.audioFormat === 'm4a' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
       await fs.writeFile(file, bytes);
       return { path: file, size: bytes.length };
     },
