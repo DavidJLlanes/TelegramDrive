@@ -7,6 +7,7 @@ import { sourceUrl, entryOf } from './metadata.js';
 import { normalizeOptions } from './options.js';
 import { formatArgs, extrasArgs } from './format-args.js';
 import { progressLine } from './progress.js';
+import { playlistPage, PAGE_SIZE } from './playlist-page.js';
 
 const YTDLP = process.env.YTDLP_BIN || path.join(config.dataDir, 'tools', 'yt-dlp-venv', 'bin', 'yt-dlp');
 const JS = ['--js-runtimes', 'node'];
@@ -52,15 +53,20 @@ export const musicRunner = {
     try { await execute(YTDLP, ['--version'], { timeout: 8_000 }); return true; }
     catch { return false; }
   },
-  async inspect(input) {
+  async inspect(input, offset = 0) {
     const source = sourceUrl(input);
+    const page = playlistPage(offset);
+    if (source.type !== 'playlist' && page.offset) throw new Error('El enlace no es una lista');
     const args = [...BASE, '--dump-single-json', '--skip-download', '--no-progress',
-      ...(source.type === 'playlist' ? ['--flat-playlist', '--playlist-end', '50'] : ['--no-playlist']), source.url];
+      ...(source.type === 'playlist' ? ['--flat-playlist', '--playlist-start', String(page.start), '--playlist-end', String(page.end)] : ['--no-playlist']), source.url];
     const info = JSON.parse(await execute(YTDLP, args, { timeout: 90_000 }));
     const raw = source.type === 'playlist' ? info.entries || [] : [info];
-    const items = raw.filter(Boolean).map((item) => entryOf(item));
-    if (!items.length) throw new Error('No se encontraron canciones para descargar');
-    return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180), truncated: raw.length >= 50 };
+    const items = raw.filter(Boolean).map((item) => entryOf(item, source.type === 'video' ? source.url : undefined));
+    if (!items.length) throw new Error('No se encontraron elementos para descargar');
+    return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180),
+      offset: page.offset, nextOffset: source.type === 'playlist' && raw.length >= PAGE_SIZE ? page.nextOffset : null,
+      previousOffset: source.type === 'playlist' ? page.previousOffset : null,
+      truncated: source.type === 'playlist' && raw.length >= PAGE_SIZE };
   },
   async download(url, dir, meta, { signal, onProgress, onTelemetry, format = 'mp3', options: rawOptions } = {}) {
     const options = normalizeOptions(rawOptions);

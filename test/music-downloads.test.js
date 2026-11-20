@@ -41,11 +41,11 @@ before(async () => {
     installed: async () => true,
     inspect: async (url) => ({ items: [{ id: sourceUrl(url).id,
       title: 'Canción de prueba', artist: url.includes('dQw4') ? 'Artista demo' : '', album: url.includes('dQw4') ? 'Álbum demo' : '' }] }),
-    download: async (url, dir, meta, { onProgress, format }) => {
+    download: async (url, dir, meta, { onProgress, format, options }) => {
       calls++;
       onProgress(50);
-      const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.mp3');
-      const bytes = format === 'video' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
+      const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.' + (options?.audioFormat || 'mp3'));
+      const bytes = format === 'video' || options?.audioFormat === 'm4a' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
       await fs.writeFile(file, bytes);
       return { path: file, size: bytes.length };
     },
@@ -121,6 +121,26 @@ test('prioridad rechaza valores no válidos y trabajos terminados', () => {
   assert.throws(() => service.prioritize('inexistente', 1));
   const done = service.status();
   assert.ok(done);
+});
+
+test('permite otro códec de audio sin considerarlo duplicado del MP3', async () => {
+  const added = service.enqueue([{ url: SRC, options: { audioFormat: 'm4a' } }]);
+  assert.equal(added.accepted.length, 1);
+  const job = await finished(added.accepted[0]);
+  assert.equal(job.state, 'done', job.error);
+  assert.equal(service.enqueue([{ url: SRC, options: { audioFormat: 'm4a' } }]).skipped.length, 1);
+});
+
+test('pausa y reanudación de trabajos en cola', async () => {
+  const src = 'https://www.youtube.com/watch?v=9bZkp7q19f0';
+  const added = service.enqueue([{ url: src }]);
+  assert.equal(added.accepted.length, 1);
+  const id = added.accepted[0];
+  assert.deepEqual(service.pause(id), { paused: true });
+  assert.equal((await service.status()).jobs.find((j) => j.id === id).state, 'paused');
+  assert.equal(service.enqueue([{ url: src }]).skipped.length, 1);
+  assert.deepEqual(service.resume(id), { queued: true });
+  assert.equal((await finished(id)).state, 'done');
 });
 
 test('los trabajos y la raíz solo se consultan autenticado', async () => {

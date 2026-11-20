@@ -19,6 +19,8 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 | `runner.js` | Procesos externos con `spawn`, sin shell |
 | `progress.js` | Lectura de progreso y velocidad |
 | `subtitles.js` | Identificación de subtítulos acompañantes |
+| `sources.js` | Allowlist de proveedores y URLs canónicas HTTPS |
+| `playlist-page.js` | Paginación acotada de listas de YouTube |
 
 ## Cliente — `public/js/features/music-downloads/`
 
@@ -30,6 +32,10 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 - Las opciones se validan en servidor y se guardan por trabajo para que cambiar la interfaz no altere trabajos en cola.
 - Los archivos temporales se eliminan tras subir a TelegramDrive.
 - Los MP3/M4A/Opus se clasifican por artista y álbum; los MP4 pueden agruparse por canal, año o lista.
-- Las descargas de fuentes distintas de YouTube y de URLs directas **no están activadas**. Requieren un módulo independiente con política de URLs, SSRF, redirects y cuotas.
+- Se admiten vídeos individuales de Vimeo y Dailymotion, y pistas individuales de SoundCloud. Las URLs directas arbitrarias **no están activadas**. Requieren un módulo independiente con política de URLs, SSRF, redirects y cuotas.
 - El audio convertido a 320 kbps no gana calidad respecto a la fuente original.
 - No se sortea DRM ni se garantiza la disponibilidad de subtítulos o de resoluciones.
+
+## Listas y cola
+
+Las listas de YouTube se exploran por páginas de 50 elementos, hasta 5000 por lista. Se pueden pausar y reanudar trabajos **pendientes**; las transferencias en curso solo permiten cancelar y reintentar, sin prometer reanudación parcial.

@@ -76,20 +76,22 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     if (!Array.isArray(items) || !items.length || items.length > 50) throw badRequest('Indica entre 1 y 50 elementos');
     const expanded = items.flatMap((item) => item?.format === 'both'
       ? [{ ...item, format: 'mp3' }, { ...item, format: 'video' }] : [item]);
-    const outstanding = repo.list().filter((j) => BUSY.has(j.state));
+    const outstanding = repo.list().filter((j) => BUSY.has(j.state) || j.state === 'paused');
     if (outstanding.length + expanded.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     const accepted = [], skipped = [];
-    const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format));
+    const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format + ':' +
+      (j.format === 'video' ? 'mp4' : normalizeOptions(JSON.parse(j.optionsJson || '{}')).audioFormat)));
     for (const item of expanded) {
       const src = sourceUrl(item?.url);
       if (item?.format && !['mp3', 'video'].includes(item.format)) throw badRequest('Formato de descarga no válido');
       const format = item?.format || 'mp3';
       if (src.type !== 'video') throw badRequest('Primero analiza la lista de reproducción');
-      let previous = repo.bySource(src.id, format);
-      if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-      const key = src.id + ':' + format;
-      if (previous || queued.has(key)) { skipped.push(src.id); continue; }
       const options = normalizeOptions(item.options);
+      const codec = format === 'video' ? 'mp4' : options.audioFormat;
+      let previous = repo.bySource(src.id, format, codec);
+      if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
+      const key = src.id + ':' + format + ':' + codec;
+      if (previous || queued.has(key)) { skipped.push(src.id); continue; }
       const created = Date.now();
       const j = { id: randomUUID(), sourceId: src.id, url: src.url,
         title: String(item.title ?? '').slice(0, 180), artist: String(item.artist ?? '').slice(0, 180),
@@ -100,6 +102,23 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     }
     queueMicrotask(drain);
     return { accepted, skipped };
+  }
+
+  function pause(id) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'queued') throw conflict('Solo se pueden pausar descargas pendientes');
+    patch(id, { state: 'paused' });
+    return { paused: true };
+  }
+
+  function resume(id) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'paused') throw conflict('Esta descarga no está pausada');
+    patch(id, { state: 'queued' });
+    queueMicrotask(drain);
+    return { queued: true };
   }
 
   function prioritize(id, priority) {
@@ -132,8 +151,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
 
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
-    inspect: (url) => runner.inspect(sourceUrl(url).url),
-    enqueue, retry, cancel, prioritize,
+    inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
+    enqueue, retry, cancel, prioritize, pause, resume,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },
