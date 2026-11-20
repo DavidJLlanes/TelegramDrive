@@ -9,7 +9,9 @@ export function directSource(input) {
   if (String(input).length > MAX_URL || url.protocol !== 'https:' || url.port ||
       url.username || url.password || url.hash || !url.hostname.includes('.') ||
       /[^a-z0-9.-]/i.test(url.hostname)) throw badRequest('Solo se permiten enlaces HTTPS públicos sin credenciales');
-  const filename = decodeURIComponent(url.pathname.split('/').pop() || '');
+  let filename;
+  try { filename = decodeURIComponent(url.pathname.split('/').pop() || ''); }
+  catch { throw badRequest('El nombre del archivo contiene caracteres inválidos'); }
   const ext = filename.split('.').pop()?.toLowerCase();
   if (!EXTENSIONS.has(ext)) throw badRequest('Tipo de archivo no admitido; el enlace debe terminar en una extensión conocida');
   const clean = filename.replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
