@@ -121,12 +121,14 @@ Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor env
 
 ## Descargas de música en MP3
 
-La sección **Descargas** del menú incorpora una cola de trabajos para enlaces de vídeos o listas de YouTube (hasta 50 pistas por lista). El servidor utiliza `yt-dlp`, FFmpeg y un entorno Python aislado. **No se guardan vídeos**: únicamente MP3.
+La sección **Descargas** del menú permite elegir **Música MP3** o **Vídeo MP4** para enlaces de YouTube y listas (hasta 50 elementos por lista). El servidor utiliza `yt-dlp`, FFmpeg y un entorno Python aislado. No hay límite de duración; cada archivo final tiene un máximo de **1 GB**.
 
 **Organización dentro de TelegramDrive (en Telegram, no en el disco):**
 
 ```text
 Descargas de Internet/
+├── Vídeos/
+│   └── Concierto.mp4
 ├── Queen/
 │   ├── A Night at the Opera/
 │   │   └── Bohemian Rhapsody.mp3
@@ -134,7 +136,7 @@ Descargas de Internet/
 └── Por revisar/
 ```
 
-La ruta raíz **Descargas de Internet** es exclusiva de las descargas musicales. Artista y álbum proceden de los metadatos; si no hay álbum se crea `Singles`, y si falta un artista fiable, `Por revisar`. La pantalla permite corregir título, artista y álbum antes de añadir una pista. Se evita volver a descargar un mismo ID de YouTube cuando su archivo sigue en TelegramDrive. Las tareas se registran en SQLite, con barra de progreso, reintentos y cancelación; los archivos temporales se eliminan tras finalizar.
+La ruta raíz **Descargas de Internet** es exclusiva de las descargas desde YouTube. Los vídeos MP4 se guardan en **Vídeos/**, separados de la música MP3. Artista y álbum proceden de los metadatos; si no hay álbum se crea `Singles`, y si falta un artista fiable, `Por revisar`. La pantalla permite corregir título, artista y álbum antes de añadir una pista. Se evita volver a descargar un mismo ID de YouTube cuando su archivo sigue en TelegramDrive. Las tareas se registran en SQLite, con barra de progreso, reintentos y cancelación; los archivos temporales se eliminan tras finalizar.
 
 Las carpetas se crean mediante las operaciones normales de TelegramDrive, el archivo MP3 se sube a Telegram y aparece en la biblioteca musical. Descargar/convertir MP3 **no mejora la calidad del audio de origen**. Utiliza esta función únicamente con contenido que tengas permiso para descargar; no elude DRM ni restricciones de acceso.
 

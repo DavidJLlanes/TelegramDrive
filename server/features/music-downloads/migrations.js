@@ -12,4 +12,9 @@ export const migrations = [{
     db.exec('CREATE INDEX music_download_source ON music_download_jobs(source_id, state)');
     db.exec('CREATE INDEX music_download_recent ON music_download_jobs(created DESC)');
   },
+}, {
+  id: '061-music-download-formats',
+  up(db) {
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN format TEXT NOT NULL DEFAULT 'mp3'");
+  },
 }];

@@ -4,6 +4,7 @@ const VIDEO_ID = /^[\w-]{11}$/;
 const LIST_ID = /^[\w-]{12,80}$/;
 const HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be']);
 export const ROOT_FOLDER = '/Descargas de Internet';
+export const VIDEO_FOLDER = ROOT_FOLDER + '/Vídeos';
 
 /** Canonicalise URLs: yt-dlp only sees YouTube, never a user-provided host. */
 export function sourceUrl(input) {
@@ -32,12 +33,12 @@ export function safePart(value, fallback = '') {
   return (s.slice(0, 80).trim() || fallback);
 }
 
-export function classify(info, changes = {}) {
+export function classify(info, changes = {}, format = 'mp3') {
   const title = safePart(changes.title ?? info.track ?? info.title, 'Canción sin título');
   const artist = safePart(changes.artist ?? info.artist ?? (info.track ? info.creator : ''), '');
   const album = safePart(changes.album ?? info.album, '');
-  const parent = artist ? ROOT_FOLDER + '/' + artist + '/' + (album || 'Singles') : ROOT_FOLDER + '/Por revisar';
-  return { title, artist, album, parent, fileName: title + '.mp3', needsReview: !artist };
+  const parent = format === 'video' ? VIDEO_FOLDER : artist ? ROOT_FOLDER + '/' + artist + '/' + (album || 'Singles') : ROOT_FOLDER + '/Por revisar';
+  return { title, artist, album, parent, fileName: title + (format === 'video' ? '.mp4' : '.mp3'), needsReview: !artist };
 }
 
 /** When the uploader omitted music tags, use a clear "Artist - Song" title conservatively. */

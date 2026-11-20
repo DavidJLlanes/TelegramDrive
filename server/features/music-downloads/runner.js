@@ -59,28 +59,41 @@ export const musicRunner = {
     if (!items.length) throw new Error('No se encontraron canciones para descargar');
     return { items, playlist: source.type === 'playlist', truncated: raw.length >= 50 };
   },
-  async download(url, dir, meta, { signal, onProgress } = {}) {
-    sourceUrl(url); // validate again; the shell is never invoked
+  async download(url, dir, meta, { signal, onProgress, format = 'mp3' } = {}) {
+    sourceUrl(url);
+    const video = format === 'video';
     const template = path.join(dir, 'track.%(ext)s');
-    const args = [...BASE, '--no-playlist', '--no-overwrites', '-f', 'bestaudio/best',
-      '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '0',
-      '--embed-metadata', '--embed-thumbnail', '--convert-thumbnails', 'jpg',
-      '--max-filesize', '200M', '--match-filter', 'duration <= 1800',
-      '--socket-timeout', '20', '--retries', '2', '--fragment-retries', '2',
-      '--newline', '--progress-template', 'download:%(progress._percent_str)s',
-      '--output', template, url];
-    await execute(YTDLP, args, { signal, timeout: 15 * 60_000, onLine(line) {
+    const common = [...BASE, '--no-playlist', '--no-overwrites',
+      '--max-filesize', '1G', '--socket-timeout', '20',
+      '--retries', '2', '--fragment-retries', '2',
+      '--newline', '--progress-template', 'download:%(progress._percent_str)s'];
+    const args = video
+      ? [...common, '-f', 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b',
+        '--merge-output-format', 'mp4', '--remux-video', 'mp4',
+        '--output', template, url]
+      : [...common, '-f', 'bestaudio/best', '--extract-audio',
+        '--audio-format', 'mp3', '--audio-quality', '0',
+        '--embed-metadata', '--embed-thumbnail', '--convert-thumbnails', 'jpg',
+        '--output', template, url];
+    await execute(YTDLP, args, { signal, timeout: 3 * 60 * 60_000, onLine(line) {
       const m = /download:\s*(\d+(?:\.\d+)?)%/.exec(line);
       if (m) onProgress?.(Math.min(75, Math.round(Number(m[1]) * 0.75)));
     } });
-    const source = path.join(dir, 'track.mp3');
-    const result = path.join(dir, 'final.mp3');
-    const tags = ['-metadata', 'title=' + meta.title, '-metadata', 'artist=' + meta.artist,
-      '-metadata', 'album=' + meta.album];
-    await execute('ffmpeg', ['-nostdin', '-hide_banner', '-loglevel', 'error', '-y',
-      '-i', source, '-map', '0', '-c', 'copy', ...tags, '-id3v2_version', '3', result], { signal, timeout: 60_000 });
+    const source = path.join(dir, video ? 'track.mp4' : 'track.mp3');
+    const result = path.join(dir, video ? 'final.mp4' : 'final.mp3');
+    if (video) {
+      await fs.rename(source, result);
+    } else {
+      const tags = ['-metadata', 'title=' + meta.title, '-metadata', 'artist=' + meta.artist,
+        '-metadata', 'album=' + meta.album];
+      await execute('ffmpeg', ['-nostdin', '-hide_banner', '-loglevel', 'error', '-y',
+        '-i', source, '-map', '0', '-c', 'copy', ...tags, '-id3v2_version', '3', result],
+      { signal, timeout: 90_000 });
+    }
     const stat = await fs.stat(result);
-    if (stat.size < 128 || stat.size > 200 * 1024 * 1024) throw new Error('Archivo MP3 inválido o demasiado grande');
+    if (stat.size < 128 || stat.size > 1024 ** 3) {
+      throw new Error('Archivo inválido o superior a 1 GB');
+    }
     return { path: result, size: stat.size };
-  },
+  }
 };
