@@ -1,0 +1,33 @@
+import { Router } from 'express';
+import { wrap } from '../../utils/async-handler.js';
+import { notFound } from '../../utils/errors.js';
+import { getCachedImage } from '../../services/image-cache/images.js';
+import { pruneCache } from '../../services/image-cache/prune.js';
+
+export default {
+  name: 'image-cache',
+  create({ catalog, tg }) {
+    const router = Router();
+    const serve = (kind) => wrap(async (req, res) => {
+      const entry = catalog.getFile(req.params.id);
+      if (entry.kind !== 'image') throw notFound('No es una fotografía');
+      const result = await getCachedImage(tg, entry, kind);
+      if (!result) throw notFound('Vista previa no disponible');
+      res.set({ 'Content-Type': result.type, 'Cache-Control': 'private, max-age=604800' });
+      if (result.path) res.sendFile(result.path);
+      else res.end(result.bytes);
+    });
+    router.get('/files/:id/thumb', serve('thumb'));
+    router.get('/files/:id/preview', serve('preview'));
+    let first; let timer;
+    const sweep = () => pruneCache().catch((err) => console.warn('[caché]', err.message));
+    return {
+      router,
+      start() {
+        first = setTimeout(sweep, 20_000); first.unref?.();
+        timer = setInterval(sweep, 30 * 60_000); timer.unref?.();
+      },
+      stop() { clearTimeout(first); clearInterval(timer); },
+    };
+  },
+};
