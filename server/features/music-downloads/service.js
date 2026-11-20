@@ -76,7 +76,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     if (!Array.isArray(items) || !items.length || items.length > 50) throw badRequest('Indica entre 1 y 50 elementos');
     const expanded = items.flatMap((item) => item?.format === 'both'
       ? [{ ...item, format: 'mp3' }, { ...item, format: 'video' }] : [item]);
-    const outstanding = repo.list().filter((j) => BUSY.has(j.state));
+    const outstanding = repo.list().filter((j) => BUSY.has(j.state) || j.state === 'paused');
     if (outstanding.length + expanded.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     const accepted = [], skipped = [];
     const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format));
