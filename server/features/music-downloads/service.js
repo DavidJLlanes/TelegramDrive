@@ -64,14 +64,17 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   }
 
   function enqueue(items) {
-    if (!Array.isArray(items) || !items.length || items.length > 50) throw badRequest('Indica entre 1 y 50 canciones');
+    if (!Array.isArray(items) || !items.length || items.length > 50) throw badRequest('Indica entre 1 y 50 elementos');
+    const expanded = items.flatMap((item) => item?.format === 'both'
+      ? [{ ...item, format: 'mp3' }, { ...item, format: 'video' }] : [item]);
     const outstanding = repo.list().filter((j) => BUSY.has(j.state));
-    if (outstanding.length + items.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
+    if (outstanding.length + expanded.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     const accepted = [], skipped = [];
     const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format));
-    for (const item of items) {
+    for (const item of expanded) {
       const src = sourceUrl(item?.url);
-      const format = item?.format === 'video' ? 'video' : 'mp3';
+      if (item?.format && !['mp3', 'video'].includes(item.format)) throw badRequest('Formato de descarga no válido');
+      const format = item?.format || 'mp3';
       if (src.type !== 'video') throw badRequest('Primero analiza la lista de reproducción');
       let previous = repo.bySource(src.id, format);
       if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
