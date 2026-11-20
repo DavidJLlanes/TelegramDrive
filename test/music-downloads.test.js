@@ -2,7 +2,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { sourceUrl, classify } from '../server/features/music-downloads/metadata.js';
+import { sourceUrl, classify, entryOf } from '../server/features/music-downloads/metadata.js';
 import { createRepo } from '../server/features/music-downloads/repo.js';
 import { makeHarness } from './helpers/harness.js';
 import { mp3WithTags } from './helpers/id3.js';
@@ -17,6 +17,11 @@ test('solo URLs HTTPS de YouTube, sin acceso a hosts internos', () => {
   for (const url of ['http://www.youtube.com/watch?v=dQw4w9WgXcQ',
     'https://127.0.0.1/test', 'https://www.youtube.com.evil.org/watch?v=dQw4w9WgXcQ',
     'https://example.com/watch?v=dQw4w9WgXcQ']) assert.throws(() => sourceUrl(url));
+});
+
+test('extrae artista y nombre de títulos musicales sin etiquetas', () => {
+  const music = entryOf({ id: 'dQw4w9WgXcQ', title: 'Queen - Bohemian Rhapsody (Official Video)' });
+  assert.deepEqual([music.artist, music.title], ['Queen', 'Bohemian Rhapsody']);
 });
 
 test('organización: artista / álbum, Singles y Por revisar; rutas limpiadas', () => {
