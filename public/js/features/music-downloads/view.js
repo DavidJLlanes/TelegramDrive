@@ -12,11 +12,14 @@ const field = (name, value = '') => {
 
 export function renderDownloads(el, { data }) {
   const url = h('input', { class: 'input md-url', type: 'url', placeholder: 'https://www.youtube.com/watch?v=...', autocomplete: 'off', required: true });
+  const format = h('select', { class: 'input md-format', 'aria-label': 'Tipo de descarga' },
+    h('option', { value: 'mp3' }, 'Música MP3'),
+    h('option', { value: 'video' }, 'Vídeo MP4'));
   const inspect = h('button', { class: 'btn btn-primary', type: 'submit' }, icon('search'), 'Analizar enlace');
   const preview = h('div', { class: 'md-preview' });
   const list = h('div', { class: 'md-jobs' });
   const info = h('p', { class: 'pg-hint' }, data?.available
-    ? 'Solo audio MP3. Descarga contenidos para los que tengas autorización.'
+    ? 'MP3 o vídeo MP4, hasta 1 GB por archivo y sin límite de duración. Descarga solo contenido autorizado.'
     : 'yt-dlp aún no está instalado en este servidor. Consulta las instrucciones de despliegue.');
   let selected = [];
   let edited = null;
@@ -30,14 +33,14 @@ export function renderDownloads(el, { data }) {
     if (!selected.length || busy) return;
     busy = true;
     try {
-      const items = selected.map((item) => ({ ...item }));
+      const items = selected.map((item) => ({ ...item, format: format.value }));
       if (edited && items.length === 1) {
         items[0].title = edited.title.input.value;
         items[0].artist = edited.artist.input.value;
         items[0].album = edited.album.input.value;
       }
       const result = await musicApi.add(items);
-      toast(result.accepted.length + ' canción(es) añadidas a la cola' +
+      toast(result.accepted.length + ' archivo(s) añadidos a la cola' +
         (result.skipped.length ? '; ' + result.skipped.length + ' ya presentes' : ''), { type: 'ok' });
       selected = [];
       fill(preview);
@@ -54,7 +57,7 @@ export function renderDownloads(el, { data }) {
       const item = result.items[0];
       edited = { title: field('Título', item.title), artist: field('Artista', item.artist), album: field('Álbum', item.album) };
       fill(picker, edited.title.el, edited.artist.el, edited.album.el,
-        h('p', { class: 'pg-hint' }, 'Sin artista: Por revisar. Sin álbum: Singles.'));
+        h('p', { class: 'pg-hint' }, 'MP3: sin artista, Por revisar; sin álbum, Singles. Vídeos: carpeta Vídeos.'));
     } else {
       fill(picker, ...result.items.map((item) => {
         const check = h('input', { type: 'checkbox', checked: true, onchange: (e) => {
@@ -66,7 +69,7 @@ export function renderDownloads(el, { data }) {
       }));
     }
     fill(preview, h('div', { class: 'md-preview-title' },
-      h('strong', {}, result.playlist ? 'Canciones de la lista' : 'Revisa los datos de la canción'),
+      h('strong', {}, result.playlist ? 'Elementos de la lista' : 'Revisa los datos del archivo'),
       result.truncated ? h('small', {}, 'Máximo de 50 canciones por lista') : null),
       picker, h('button', { class: 'btn btn-primary', type: 'button', onclick: add },
         icon('download'), 'Añadir a descargas'));
@@ -83,10 +86,10 @@ export function renderDownloads(el, { data }) {
     catch (err) { fill(preview); toastError(err); }
     finally { busy = false; inspect.disabled = false; fill(inspect, icon('search'), 'Analizar enlace'); }
   } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace de vídeo o lista de YouTube'), url),
-    inspect, info, preview);
+    h('label', { class: 'md-field' }, h('span', {}, 'Descargar como'), format), inspect, info, preview);
 
-  fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga MP3'),
-    h('p', { class: 'pg-hint' }, 'Destino: Descargas de Internet / Artista / Álbum / Canción.mp3'),
+  fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga'),
+    h('p', { class: 'pg-hint' }, 'MP3: Descargas de Internet / Artista / Álbum · Vídeo: Descargas de Internet / Vídeos'),
     form), h('section', { class: 'pg-panel md-panel' },
     h('div', { class: 'md-heading' }, h('h2', {}, 'Historial y cola'),
       h('button', { class: 'btn btn-ghost', onclick: () => navigate('/Descargas de Internet') },
