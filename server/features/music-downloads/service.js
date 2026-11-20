@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { badRequest, conflict, notFound } from '../../utils/errors.js';
-import { sourceUrl, entryOf, classify } from './metadata.js';
+import { sourceUrl, classify } from './metadata.js';
 import { ensureDestination } from './folders.js';
 import { musicRunner } from './runner.js';
 
@@ -26,24 +26,23 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
       const result = await runner.inspect(job.url);
       const info = result.items[0];
       if (!info || info.id !== job.sourceId) throw new Error('La fuente no coincide con la canción solicitada');
-      if (info.duration > 1800) throw new Error('Solo se admiten pistas de hasta 30 minutos');
       const chosen = classify({ track: info.title, artist: info.artist, album: info.album }, {
         title: job.title || undefined, artist: job.artist || undefined, album: job.album || undefined,
-      });
+      }, job.format);
       if (signal.aborted) throw new Error('Descarga cancelada');
       patch(job.id, { state: 'downloading', title: chosen.title, artist: chosen.artist, album: chosen.album });
-      const mp3 = await runner.download(job.url, dir, chosen, {
-        signal, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
+      const downloaded = await runner.download(job.url, dir, chosen, {
+        signal, format: job.format, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
       });
       if (signal.aborted) throw new Error('Descarga cancelada');
       const destination = await ensureDestination(catalog, chosen);
       patch(job.id, { state: 'uploading', progress: 80, destination });
       const file = await catalog.fileOps.upload({
-        parent: destination, name: chosen.fileName, path: mp3.path, size: mp3.size,
+        parent: destination, name: chosen.fileName, path: downloaded.path, size: downloaded.size,
         onProgress: (fraction) => patch(job.id, { progress: 80 + Math.round(Number(fraction) * 19) }),
       });
       patch(job.id, { state: 'done', progress: 100, fileId: file.id });
-      catalog.tagger.kick();
+      if (job.format !== 'video') catalog.tagger.kick();
     } finally {
       await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
     }
@@ -69,18 +68,20 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const outstanding = repo.list().filter((j) => BUSY.has(j.state));
     if (outstanding.length + items.length > MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
     const accepted = [], skipped = [];
-    const queued = new Set(outstanding.map((j) => j.sourceId));
+    const queued = new Set(outstanding.map((j) => j.sourceId + ':' + j.format));
     for (const item of items) {
       const src = sourceUrl(item?.url);
+      const format = item?.format === 'video' ? 'video' : 'mp3';
       if (src.type !== 'video') throw badRequest('Primero analiza la lista de reproducción');
-      let previous = repo.bySource(src.id);
+      let previous = repo.bySource(src.id, format);
       if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-      if (previous || queued.has(src.id)) { skipped.push(src.id); continue; }
+      const key = src.id + ':' + format;
+      if (previous || queued.has(key)) { skipped.push(src.id); continue; }
       const created = Date.now();
       const j = { id: randomUUID(), sourceId: src.id, url: src.url,
         title: String(item.title ?? '').slice(0, 180), artist: String(item.artist ?? '').slice(0, 180),
-        album: String(item.album ?? '').slice(0, 180), created };
-      repo.insert(j); queued.add(src.id); accepted.push(j.id);
+        album: String(item.album ?? '').slice(0, 180), format, created };
+      repo.insert(j); queued.add(key); accepted.push(j.id);
     }
     queueMicrotask(drain);
     return { accepted, skipped };
