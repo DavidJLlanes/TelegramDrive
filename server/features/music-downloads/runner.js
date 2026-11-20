@@ -62,7 +62,7 @@ export const musicRunner = {
     if (!items.length) throw new Error('No se encontraron canciones para descargar');
     return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180), truncated: raw.length >= 50 };
   },
-  async download(url, dir, meta, { signal, onProgress, format = 'mp3', options: rawOptions } = {}) {
+  async download(url, dir, meta, { signal, onProgress, onTelemetry, format = 'mp3', options: rawOptions } = {}) {
     const options = normalizeOptions(rawOptions);
     sourceUrl(url);
     const video = format === 'video';
@@ -75,6 +75,7 @@ export const musicRunner = {
     await execute(YTDLP, args, { signal, timeout: 3 * 60 * 60_000, onLine(line) {
       const progress = progressLine(line);
       if (progress.progress !== undefined) onProgress?.(progress.progress);
+      if (progress.speed || progress.eta) onTelemetry?.(progress);
     } });
     const ext = video ? 'mp4' : options.audioFormat;
     const source = path.join(dir, 'track.' + ext);
