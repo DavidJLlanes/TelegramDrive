@@ -53,16 +53,16 @@ export function renderDownloads(el, { data }) {
     finally { busy = false; }
   };
   const showPreview = (result) => {
-    selected = [...result.items];
+    selected = result.items.map((item) => ({ ...item, playlist: result.playlist ? result.playlistTitle : '' }));
     edited = null;
     const picker = h('div', { class: 'md-preview-list' });
     if (result.items.length === 1) {
-      const item = result.items[0];
+      const item = selected[0];
       edited = { title: field('Título', item.title), artist: field('Artista', item.artist), album: field('Álbum', item.album) };
       fill(picker, edited.title.el, edited.artist.el, edited.album.el,
         h('p', { class: 'pg-hint' }, 'MP3: sin artista, Por revisar; sin álbum, Singles. Vídeos: carpeta Vídeos.'));
     } else {
-      fill(picker, ...result.items.map((item) => {
+      fill(picker, ...selected.map((item) => {
         const check = h('input', { type: 'checkbox', checked: true, onchange: (e) => {
           if (e.target.checked) selected.push(item);
           else selected = selected.filter((x) => x.id !== item.id);
