@@ -98,6 +98,18 @@ test('el mismo vídeo se puede descargar también como MP4, en carpeta independi
   assert.equal(service.enqueue([{ url: SRC, format: 'video' }]).skipped.length, 1);
 });
 
+test('ambos formatos crea dos trabajos y los guarda en carpetas independientes', async () => {
+  const other = 'https://www.youtube.com/watch?v=J---aiyznGQ';
+  const added = service.enqueue([{ url: other, format: 'both' }]);
+  assert.equal(added.accepted.length, 2);
+  const jobs = await Promise.all(added.accepted.map(finished));
+  assert.deepEqual(jobs.map((j) => j.format), ['mp3', 'video']);
+  assert.ok(jobs.every((j) => j.state === 'done'), jobs.map((j) => j.error).join('; '));
+  assert.equal(jobs[0].destination, '/Descargas de Internet/Por revisar');
+  assert.equal(jobs[1].destination, '/Descargas de Internet/Vídeos');
+  assert.equal(service.enqueue([{ url: other, format: 'both' }]).skipped.length, 2);
+});
+
 test('sin artista, crea Por revisar en vez de inventar metadatos', async () => {
   const second = service.enqueue([{ url: OTHER }]);
   const job = await finished(second.accepted[0]);
