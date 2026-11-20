@@ -16,6 +16,12 @@ export async function downloadResumable(input, root, id, { signal, onProgress, o
   if (previous && previous.url !== source.url) throw new Error('La URL de reanudación no coincide');
   let offset = previous?.bytes || 0;
   if (offset > MAX_BYTES) throw new Error('Archivo parcial superior a 1 GB');
+  if (offset && !((previous?.etag && !previous.etag.startsWith('W/')) || previous?.lastModified)) {
+    await clearTransfer(paths);
+    await fsp.mkdir(paths.dir, { recursive: true, mode: 0o700 });
+    previous = null;
+    offset = 0;
+  }
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const validator = previous?.etag && !previous.etag.startsWith('W/')
