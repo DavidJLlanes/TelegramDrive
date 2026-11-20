@@ -38,7 +38,8 @@ export function renderJobs(el, list, refresh) {
         (j.speed || j.eta) && ACTIVE.has(j.state) ? h('span', {}, [j.speed, j.eta ? 'Tiempo restante: ' + j.eta : ''].filter(Boolean).join(' · ')) : null, progress),
       h('div', { class: 'md-job-actions' }, badge,
         j.state === 'paused' ? makeAction(j, 'Reanudar', 'play', musicApi.resume) : null,
-        j.state === 'queued' ? makeAction(j, 'Pausar', 'pause', musicApi.pause) : null,
+        (j.state === 'queued' || (j.format === 'direct' && j.state === 'downloading'))
+          ? makeAction(j, 'Pausar', 'pause', musicApi.pause) : null,
         j.state === 'queued' ? action(j.priority > 0 ? 'Prioritaria' : 'Priorizar', 'arrow-up', async () => {
           try { await musicApi.priority(j.id, j.priority > 0 ? 0 : 1); refresh(); } catch (e) { toastError(e); }
         }) : null,
