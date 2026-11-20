@@ -92,6 +92,8 @@ test('la profundidad y longitud de rutas se validan antes de crear o mover carpe
   assert.equal(tooLong.res.status, 201);
   const rejected = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120), name: 'y'.repeat(120) });
   assert.equal(rejected.res.status, 201);
-  const overflow = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120), name: 'z'.repeat(120) });
+  const third = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120), name: 'z'.repeat(120) });
+  assert.equal(third.res.status, 201);
+  const overflow = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120) + '/' + 'z'.repeat(120), name: 'w'.repeat(120) });
   assert.equal(overflow.res.status, 400);
 });
