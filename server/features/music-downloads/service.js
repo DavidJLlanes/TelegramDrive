@@ -102,6 +102,23 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     return { accepted, skipped };
   }
 
+  function pause(id) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'queued') throw conflict('Solo se pueden pausar descargas pendientes');
+    patch(id, { state: 'paused' });
+    return { paused: true };
+  }
+
+  function resume(id) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'paused') throw conflict('Esta descarga no está pausada');
+    patch(id, { state: 'queued' });
+    queueMicrotask(drain);
+    return { queued: true };
+  }
+
   function prioritize(id, priority) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
@@ -133,7 +150,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
-    enqueue, retry, cancel, prioritize,
+    enqueue, retry, cancel, prioritize, pause, resume,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },
