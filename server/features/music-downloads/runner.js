@@ -70,7 +70,7 @@ export const musicRunner = {
     const common = [...BASE, '--no-playlist', '--no-overwrites',
       '--max-filesize', '1G', '--socket-timeout', '20',
       '--retries', '2', '--fragment-retries', '2',
-      '--newline', '--progress-template', 'download:%(progress._percent_str)s'];
+      '--newline', '--progress-template', 'download:%(progress._percent_str)s speed:%(progress._speed_str)s eta:%(progress._eta_str)s'];
     const args = [...common, ...formatArgs(format, options), ...extrasArgs(options, format), '--output', template, url];
     await execute(YTDLP, args, { signal, timeout: 3 * 60 * 60_000, onLine(line) {
       const progress = progressLine(line);
