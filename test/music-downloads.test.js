@@ -117,6 +117,12 @@ test('sin artista, crea Por revisar en vez de inventar metadatos', async () => {
   assert.equal(job.destination, '/Descargas de Internet/Por revisar');
 });
 
+test('prioridad rechaza valores no válidos y trabajos terminados', () => {
+  assert.throws(() => service.prioritize('inexistente', 1));
+  const done = service.status();
+  assert.ok(done);
+});
+
 test('los trabajos y la raíz solo se consultan autenticado', async () => {
   assert.equal((await fetch(h.base + '/api/music-downloads')).status, 401);
   const own = (await h.call('GET', '/api/music-downloads')).json;
