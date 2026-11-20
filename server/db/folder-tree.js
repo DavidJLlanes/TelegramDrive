@@ -73,7 +73,10 @@ export class FolderTree {
   /** Carpeta y todo lo que cuelga de ella, incluidas las subcarpetas en la papelera. */
   subtree(id) {
     const out = [id];
-    for (let i = 0; i < out.length; i += 1) (this.allKids.get(out[i]) ?? []).forEach((c) => out.push(c.id));
+    const seen = new Set(out);
+    for (let i = 0; i < out.length; i += 1) for (const child of this.allKids.get(out[i]) ?? []) {
+      if (!seen.has(child.id)) { seen.add(child.id); out.push(child.id); }
+    }
     return out;
   }
 
@@ -84,7 +87,10 @@ export class FolderTree {
 
   descendants(id) {
     const out = [id];
-    for (let i = 0; i < out.length; i += 1) this.childrenOf(out[i]).forEach((c) => out.push(c.id));
+    const seen = new Set(out);
+    for (let i = 0; i < out.length; i += 1) for (const child of this.childrenOf(out[i])) {
+      if (!seen.has(child.id)) { seen.add(child.id); out.push(child.id); }
+    }
     return out;
   }
 
