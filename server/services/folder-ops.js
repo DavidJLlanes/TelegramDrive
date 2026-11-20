@@ -3,6 +3,7 @@ import { ROOT } from '../db/folder-tree.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
 import { normalizePath, validateName } from '../utils/paths.js';
 import { dropThumbnail } from './thumbnails.js';
+import { moveCacheFolder, dropCacheFolder } from './image-cache/paths.js';
 
 /** Operaciones sobre carpetas. Renombrar o mover = editar UN solo mensaje, sin importar cuántos archivos contenga. */
 export class FolderOps {
@@ -39,8 +40,10 @@ export class FolderOps {
       const name = validateName(rawName);
       const clash = this.tree.child(folder.parent, name);
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre');
+      const oldPath = this.tree.pathOf(id);
       await this.tg.editText(folder.msgId, encodeFolder({ id, parent: folder.parent, name }));
       this.tree.update(id, { parent: folder.parent, name });
+      await moveCacheFolder(oldPath, this.tree.pathOf(id));
       return { path: this.tree.pathOf(id) };
     });
   }
@@ -53,8 +56,10 @@ export class FolderOps {
       if (this.tree.isWithin(parent, id)) throw badRequest('No se puede mover una carpeta dentro de sí misma');
       const clash = this.tree.child(parent, folder.name);
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre en el destino');
+      const oldPath = this.tree.pathOf(id);
       await this.tg.editText(folder.msgId, encodeFolder({ id, parent, name: folder.name }));
       this.tree.update(id, { parent, name: folder.name });
+      await moveCacheFolder(oldPath, this.tree.pathOf(id));
       return { path: this.tree.pathOf(id) };
     });
   }
@@ -65,6 +70,7 @@ export class FolderOps {
   destroy(id) {
     return this.lock.run(async () => {
       if (!this.tree.byId.has(id)) return { deleted: 0 };
+      const oldPath = this.tree.pathOf(id);
       const folderIds = this.tree.subtree(id);
       const fileIds = this.files.idsInFolders(folderIds);
       const folderMsgIds = folderIds.map((f) => this.tree.get(f).msgId);
@@ -72,6 +78,7 @@ export class FolderOps {
       this.files.remove(fileIds);
       this.tree.remove(folderIds);
       fileIds.forEach((fid) => dropThumbnail(fid));
+      await dropCacheFolder(oldPath);
       return { deleted: fileIds.length + folderIds.length };
     });
   }
