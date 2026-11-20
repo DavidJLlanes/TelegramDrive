@@ -5,6 +5,8 @@ import { badRequest, conflict, notFound } from '../../utils/errors.js';
 import { sourceUrl, classify } from './metadata.js';
 import { ensureDestination } from './folders.js';
 import { musicRunner } from './runner.js';
+import { normalizeOptions } from './options.js';
+import { sidecars } from './subtitles.js';
 
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
@@ -22,25 +24,32 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   async function run(job, signal) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
-      patch(job.id, { state: 'analyzing', progress: 0, error: '' });
+      patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
       const result = await runner.inspect(job.url);
       const info = result.items[0];
       if (!info || info.id !== job.sourceId) throw new Error('La fuente no coincide con la canción solicitada');
+      const options = normalizeOptions(JSON.parse(job.optionsJson || '{}'));
       const chosen = classify({ track: info.title, artist: info.artist, album: info.album }, {
         title: job.title || undefined, artist: job.artist || undefined, album: job.album || undefined,
-      }, job.format);
+      }, job.format, options);
       if (signal.aborted) throw new Error('Descarga cancelada');
       patch(job.id, { state: 'downloading', title: chosen.title, artist: chosen.artist, album: chosen.album });
       const downloaded = await runner.download(job.url, dir, chosen, {
-        signal, format: job.format, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
+        signal, format: job.format, options,
+        onTelemetry: (p) => { if (!signal.aborted) patch(job.id, { speed: p.speed, eta: p.eta }); }, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
       });
       if (signal.aborted) throw new Error('Descarga cancelada');
-      const destination = await ensureDestination(catalog, { ...chosen, format: job.format });
+      const destination = await ensureDestination(catalog, { ...chosen, format: job.format, options, channel: job.channel || info.channel, playlist: job.playlist, year: job.year || info.year });
       patch(job.id, { state: 'uploading', progress: 80, destination });
       const file = await catalog.fileOps.upload({
         parent: destination, name: chosen.fileName, path: downloaded.path, size: downloaded.size,
         onProgress: (fraction) => patch(job.id, { progress: 80 + Math.round(Number(fraction) * 19) }),
       });
+      if (job.format === 'video' && options.subtitles) {
+        for (const subtitle of await sidecars(dir, chosen.fileName)) {
+          await catalog.fileOps.upload({ parent: destination, name: subtitle.name, path: subtitle.path, size: subtitle.size });
+        }
+      }
       patch(job.id, { state: 'done', progress: 100, fileId: file.id });
       if (job.format !== 'video') catalog.tagger.kick();
     } finally {
@@ -80,14 +89,26 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
       if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
       const key = src.id + ':' + format;
       if (previous || queued.has(key)) { skipped.push(src.id); continue; }
+      const options = normalizeOptions(item.options);
       const created = Date.now();
       const j = { id: randomUUID(), sourceId: src.id, url: src.url,
         title: String(item.title ?? '').slice(0, 180), artist: String(item.artist ?? '').slice(0, 180),
-        album: String(item.album ?? '').slice(0, 180), format, created };
+        album: String(item.album ?? '').slice(0, 180), format, options,
+        channel: String(item.channel ?? '').slice(0, 180), playlist: String(item.playlist ?? '').slice(0, 180),
+        year: String(item.year ?? '').slice(0, 4), created };
       repo.insert(j); queued.add(key); accepted.push(j.id);
     }
     queueMicrotask(drain);
     return { accepted, skipped };
+  }
+
+  function prioritize(id, priority) {
+    const job = repo.get(id);
+    if (!job) throw notFound('Descarga no encontrada');
+    if (job.state !== 'queued') throw conflict('Solo se pueden priorizar descargas en cola');
+    if (!Number.isInteger(priority) || priority < -1 || priority > 1) throw badRequest('Prioridad inválida');
+    patch(id, { priority });
+    return { priority };
   }
 
   function retry(id) {
@@ -112,7 +133,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url) => runner.inspect(sourceUrl(url).url),
-    enqueue, retry, cancel,
+    enqueue, retry, cancel, prioritize,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },

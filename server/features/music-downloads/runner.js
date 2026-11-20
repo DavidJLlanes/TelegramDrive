@@ -4,6 +4,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from '../../config/index.js';
 import { sourceUrl, entryOf } from './metadata.js';
+import { normalizeOptions } from './options.js';
+import { formatArgs, extrasArgs } from './format-args.js';
+import { progressLine } from './progress.js';
 
 const YTDLP = process.env.YTDLP_BIN || path.join(config.dataDir, 'tools', 'yt-dlp-venv', 'bin', 'yt-dlp');
 const JS = ['--js-runtimes', 'node'];
@@ -57,31 +60,27 @@ export const musicRunner = {
     const raw = source.type === 'playlist' ? info.entries || [] : [info];
     const items = raw.filter(Boolean).map((item) => entryOf(item));
     if (!items.length) throw new Error('No se encontraron canciones para descargar');
-    return { items, playlist: source.type === 'playlist', truncated: raw.length >= 50 };
+    return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180), truncated: raw.length >= 50 };
   },
-  async download(url, dir, meta, { signal, onProgress, format = 'mp3' } = {}) {
+  async download(url, dir, meta, { signal, onProgress, onTelemetry, format = 'mp3', options: rawOptions } = {}) {
+    const options = normalizeOptions(rawOptions);
     sourceUrl(url);
     const video = format === 'video';
     const template = path.join(dir, 'track.%(ext)s');
     const common = [...BASE, '--no-playlist', '--no-overwrites',
       '--max-filesize', '1G', '--socket-timeout', '20',
       '--retries', '2', '--fragment-retries', '2',
-      '--newline', '--progress-template', 'download:%(progress._percent_str)s'];
-    const args = video
-      ? [...common, '-f', 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b',
-        '--merge-output-format', 'mp4', '--remux-video', 'mp4',
-        '--output', template, url]
-      : [...common, '-f', 'bestaudio/best', '--extract-audio',
-        '--audio-format', 'mp3', '--audio-quality', '0',
-        '--embed-metadata', '--embed-thumbnail', '--convert-thumbnails', 'jpg',
-        '--output', template, url];
+      '--newline', '--progress-template', 'download:%(progress._percent_str)s speed:%(progress._speed_str)s eta:%(progress._eta_str)s'];
+    const args = [...common, ...formatArgs(format, options), ...extrasArgs(options, format), '--output', template, url];
     await execute(YTDLP, args, { signal, timeout: 3 * 60 * 60_000, onLine(line) {
-      const m = /download:\s*(\d+(?:\.\d+)?)%/.exec(line);
-      if (m) onProgress?.(Math.min(75, Math.round(Number(m[1]) * 0.75)));
+      const progress = progressLine(line);
+      if (progress.progress !== undefined) onProgress?.(progress.progress);
+      if (progress.speed || progress.eta) onTelemetry?.(progress);
     } });
-    const source = path.join(dir, video ? 'track.mp4' : 'track.mp3');
-    const result = path.join(dir, video ? 'final.mp4' : 'final.mp3');
-    if (video) {
+    const ext = video ? 'mp4' : options.audioFormat;
+    const source = path.join(dir, 'track.' + ext);
+    const result = path.join(dir, 'final.' + ext);
+    if (video || options.audioFormat !== 'mp3') {
       await fs.rename(source, result);
     } else {
       const tags = ['-metadata', 'title=' + meta.title, '-metadata', 'artist=' + meta.artist,

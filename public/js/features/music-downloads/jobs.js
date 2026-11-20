@@ -34,8 +34,12 @@ export function renderJobs(el, list, refresh) {
         h('strong', { title: j.title, 'data-format': j.format }, j.format === 'video' ? 'Vídeo · ' + (j.title || 'Sin título') : j.title || 'Canción'),
         h('span', {}, [j.artist, j.album].filter(Boolean).join(' · ') || 'Pendiente de clasificar'),
         h('span', { class: 'md-destination' }, j.destination || '/Descargas de Internet'),
-        j.error ? h('span', { class: 'md-error' }, j.error) : null, progress),
+        j.error ? h('span', { class: 'md-error' }, j.error) : null,
+        (j.speed || j.eta) && ACTIVE.has(j.state) ? h('span', {}, [j.speed, j.eta ? 'Tiempo restante: ' + j.eta : ''].filter(Boolean).join(' · ')) : null, progress),
       h('div', { class: 'md-job-actions' }, badge,
+        j.state === 'queued' ? action(j.priority > 0 ? 'Prioritaria' : 'Priorizar', 'arrow-up', async () => {
+          try { await musicApi.priority(j.id, j.priority > 0 ? 0 : 1); refresh(); } catch (e) { toastError(e); }
+        }) : null,
         j.state === 'done' ? action('Abrir', 'folder', () => navigate(j.destination)) : null,
         ['failed', 'cancelled', 'interrupted'].includes(j.state)
           ? makeAction(j, 'Reintentar', 'refresh', musicApi.retry) : null,

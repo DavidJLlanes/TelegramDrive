@@ -4,6 +4,7 @@ import { toast, toastError } from '../../ui/toast.js';
 import { navigate } from '../../core/router.js';
 import { musicApi } from './api.js';
 import { renderJobs } from './jobs.js';
+import { downloadOptions } from './options.js';
 
 const field = (name, value = '') => {
   const input = h('input', { class: 'input', value, maxlength: 180, placeholder: name });
@@ -16,6 +17,7 @@ export function renderDownloads(el, { data }) {
     h('option', { value: 'mp3' }, 'Solo audio (MP3)'),
     h('option', { value: 'video' }, 'Solo vídeo (MP4)'),
     h('option', { value: 'both' }, 'Audio MP3 y vídeo MP4'));
+  const options = downloadOptions();
   const inspect = h('button', { class: 'btn btn-primary', type: 'submit' }, icon('search'), 'Analizar enlace');
   const preview = h('div', { class: 'md-preview' });
   const list = h('div', { class: 'md-jobs' });
@@ -34,7 +36,7 @@ export function renderDownloads(el, { data }) {
     if (!selected.length || busy) return;
     busy = true;
     try {
-      const items = selected.map((item) => ({ ...item, format: format.value }));
+      const items = selected.map((item) => ({ ...item, format: format.value, options: options.values() }));
       if (edited && items.length === 1) {
         items[0].title = edited.title.input.value;
         items[0].artist = edited.artist.input.value;
@@ -51,16 +53,16 @@ export function renderDownloads(el, { data }) {
     finally { busy = false; }
   };
   const showPreview = (result) => {
-    selected = [...result.items];
+    selected = result.items.map((item) => ({ ...item, playlist: result.playlist ? result.playlistTitle : '' }));
     edited = null;
     const picker = h('div', { class: 'md-preview-list' });
     if (result.items.length === 1) {
-      const item = result.items[0];
+      const item = selected[0];
       edited = { title: field('Título', item.title), artist: field('Artista', item.artist), album: field('Álbum', item.album) };
       fill(picker, edited.title.el, edited.artist.el, edited.album.el,
         h('p', { class: 'pg-hint' }, 'MP3: sin artista, Por revisar; sin álbum, Singles. Vídeos: carpeta Vídeos.'));
     } else {
-      fill(picker, ...result.items.map((item) => {
+      fill(picker, ...selected.map((item) => {
         const check = h('input', { type: 'checkbox', checked: true, onchange: (e) => {
           if (e.target.checked) selected.push(item);
           else selected = selected.filter((x) => x.id !== item.id);
@@ -87,7 +89,7 @@ export function renderDownloads(el, { data }) {
     catch (err) { fill(preview); toastError(err); }
     finally { busy = false; inspect.disabled = false; fill(inspect, icon('search'), 'Analizar enlace'); }
   } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace de vídeo o lista de YouTube'), url),
-    h('label', { class: 'md-field' }, h('span', {}, 'Descargar como'), format), inspect, info, preview);
+    h('label', { class: 'md-field' }, h('span', {}, 'Descargar como'), format), options.element, inspect, info, preview);
 
   fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga'),
     h('p', { class: 'pg-hint' }, 'MP3: Descargas de Internet / Artista / Álbum · Vídeo: Descargas de Internet / Vídeos'),
