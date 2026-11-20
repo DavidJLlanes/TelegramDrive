@@ -2,8 +2,7 @@ import { Router } from 'express';
 import { wrap } from '../utils/async-handler.js';
 import { receiveUpload } from '../services/uploads.js';
 import { streamEntry } from '../services/streamer.js';
-import { getThumbnail } from '../services/thumbnails.js';
-import { badRequest, notFound } from '../utils/errors.js';
+import { badRequest } from '../utils/errors.js';
 
 export function driveRoutes({ catalog, tg }) {
   const router = Router();
@@ -83,12 +82,6 @@ export function driveRoutes({ catalog, tg }) {
   router.get('/files/:id/content', wrap(async (req, res) => {
     const entry = catalog.getFile(req.params.id);
     await streamEntry({ req, res, tg, entry, download: req.query.download === '1' });
-  }));
-  router.get('/files/:id/thumb', wrap(async (req, res) => {
-    const entry = catalog.getFile(req.params.id);
-    const data = await getThumbnail(tg, entry.id);
-    if (!data) throw notFound('Sin miniatura');
-    res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=604800' }).end(data);
   }));
 
   return router;
