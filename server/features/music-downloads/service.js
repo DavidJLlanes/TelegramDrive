@@ -24,7 +24,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   async function run(job, signal) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
-      patch(job.id, { state: 'analyzing', progress: 0, error: '' });
+      patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
       const result = await runner.inspect(job.url);
       const info = result.items[0];
       if (!info || info.id !== job.sourceId) throw new Error('La fuente no coincide con la canción solicitada');
@@ -35,7 +35,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
       if (signal.aborted) throw new Error('Descarga cancelada');
       patch(job.id, { state: 'downloading', title: chosen.title, artist: chosen.artist, album: chosen.album });
       const downloaded = await runner.download(job.url, dir, chosen, {
-        signal, format: job.format, options, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
+        signal, format: job.format, options,
+        onTelemetry: (p) => { if (!signal.aborted) patch(job.id, { speed: p.speed, eta: p.eta }); }, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
       });
       if (signal.aborted) throw new Error('Descarga cancelada');
       const destination = await ensureDestination(catalog, { ...chosen, format: job.format, options, channel: job.channel || info.channel, playlist: job.playlist, year: job.year || info.year });
