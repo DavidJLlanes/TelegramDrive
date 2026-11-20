@@ -1,4 +1,5 @@
 import { badRequest } from '../../utils/errors.js';
+import net from 'node:net';
 
 const EXTENSIONS = new Set(['mp3', 'm4a', 'opus', 'mp4', 'mkv', 'webm', 'pdf', 'zip', 'txt', 'jpg', 'jpeg', 'png', 'webp', 'epub']);
 const MAX_URL = 1800;
@@ -7,7 +8,7 @@ export function directSource(input) {
   let url;
   try { url = new URL(String(input)); } catch { throw badRequest('Enlace de descarga directa inválido'); }
   if (String(input).length > MAX_URL || url.protocol !== 'https:' || url.port ||
-      url.username || url.password || url.hash || !url.hostname.includes('.') ||
+      url.username || url.password || url.hash || !url.hostname.includes('.') || net.isIP(url.hostname) !== 0 ||
       /[^a-z0-9.-]/i.test(url.hostname)) throw badRequest('Solo se permiten enlaces HTTPS públicos sin credenciales');
   let filename;
   try { filename = decodeURIComponent(url.pathname.split('/').pop() || ''); }
