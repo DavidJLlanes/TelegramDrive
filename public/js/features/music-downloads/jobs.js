@@ -48,6 +48,7 @@ export function renderJobs(el, list, refresh) {
           ? makeAction(j, 'Reintentar', 'refresh', musicApi.retry) : null,
         ACTIVE.has(j.state) && j.state !== 'uploading'
           ? makeAction(j, 'Cancelar', 'close', musicApi.cancel) : null,
+        j.state === 'paused' ? makeAction(j, 'Cancelar', 'close', musicApi.cancel) : null,
         !ACTIVE.has(j.state) ? makeAction(j, 'Quitar', 'trash', musicApi.remove) : null));
   }));
 }

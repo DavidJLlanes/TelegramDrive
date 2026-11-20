@@ -143,6 +143,16 @@ test('pausa y reanudación de trabajos en cola', async () => {
   assert.equal((await finished(id)).state, 'done');
 });
 
+test('un trabajo pausado se puede cancelar y retirar sin reanudar', () => {
+  const src = 'https://www.youtube.com/watch?v=M7lc1UVf-VE';
+  const added = service.enqueue([{ url: src }]);
+  assert.equal(added.accepted.length, 1);
+  const id = added.accepted[0];
+  assert.deepEqual(service.pause(id), { paused: true });
+  assert.deepEqual(service.cancel(id), { cancelled: true });
+  assert.equal(service.remove(id).removed, true);
+});
+
 test('los trabajos y la raíz solo se consultan autenticado', async () => {
   assert.equal((await fetch(h.base + '/api/music-downloads')).status, 401);
   const own = (await h.call('GET', '/api/music-downloads')).json;

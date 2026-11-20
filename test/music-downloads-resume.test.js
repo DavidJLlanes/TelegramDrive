@@ -72,3 +72,25 @@ test('reanuda los bytes descargados sin duplicarlos y valida el ETag', async () 
     assert.deepEqual(await fs.readFile(result.path), payload);
   } finally { await fs.rm(root, { recursive: true, force: true }); }
 });
+
+test('un parcial huérfano sin metadatos nunca se reutiliza', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'tgd-orphan-'));
+  const id = 'b4dfe001-0000-4000-8000-000000000003';
+  const url = 'https://example.org/archivo.zip';
+  const paths = transferPaths(root, id);
+  const payload = Buffer.alloc(1024, 5);
+  try {
+    await fs.mkdir(paths.dir, { recursive: true });
+    await fs.writeFile(paths.partial, Buffer.alloc(400, 9));
+    const result = await downloadResumable(url, root, id, {
+      openResponse: async (_url, { offset }) => {
+        assert.equal(offset, 0);
+        const stream = Readable.from([payload]);
+        stream.statusCode = 200;
+        stream.headers = { 'content-length': '1024', etag: '"fresh"' };
+        return stream;
+      },
+    });
+    assert.deepEqual(await fs.readFile(result.path), payload);
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
+});
