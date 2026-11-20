@@ -63,9 +63,10 @@ async function build(tg, entry, kind) {
   const hit = await cached(target);
   if (hit) return hit;
   const sharp = await converter;
+  const legacy = kind === 'thumb' ? cachePath('thumb', entry.parent, entry.id, 'jpg') : null;
   if (!sharp) {
     if (kind === 'preview') return null;
-    const bytes = await getThumbnail(tg, entry.id);
+    const bytes = await fs.readFile(legacy).catch(() => null) ?? await getThumbnail(tg, entry.id);
     return bytes ? { bytes, type: 'image/jpeg' } : null;
   }
   return slot(async () => {
@@ -74,14 +75,17 @@ async function build(tg, entry, kind) {
     let source = null;
     let fromThumbnail = false;
     if (kind === 'thumb') {
-      source = await getThumbnail(tg, entry.id);
+      source = await fs.readFile(legacy).catch(() => null) ?? await getThumbnail(tg, entry.id);
       fromThumbnail = Boolean(source);
     }
     if (!source) source = await original(tg, entry.id);
     if (!source) return null;
     try {
       await persist(target, await transform(source, kind, sharp));
-      if (kind === 'thumb') await fs.rm(path.join(config.thumbsDir, String(entry.id) + '.jpg'), { force: true });
+      if (kind === 'thumb') await Promise.all([
+        fs.rm(path.join(config.thumbsDir, String(entry.id) + '.jpg'), { force: true }),
+        fs.rm(legacy, { force: true }),
+      ]);
       return { path: target, type: 'image/webp' };
     } catch (err) {
       console.warn('[caché] ' + kind + ' ' + entry.id + ': ' + err.message);
