@@ -7,7 +7,7 @@ import { toastError, toast } from '../../ui/toast.js';
 const LABELS = {
   queued: 'En cola', analyzing: 'Analizando', downloading: 'Descargando archivo',
   uploading: 'Subiendo a Telegram', done: 'Guardado', failed: 'Error',
-  cancelled: 'Cancelada', interrupted: 'Interrumpida',
+  cancelled: 'Cancelada', interrupted: 'Interrumpida', paused: 'Pausada',
 };
 const ACTIVE = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 
@@ -37,6 +37,8 @@ export function renderJobs(el, list, refresh) {
         j.error ? h('span', { class: 'md-error' }, j.error) : null,
         (j.speed || j.eta) && ACTIVE.has(j.state) ? h('span', {}, [j.speed, j.eta ? 'Tiempo restante: ' + j.eta : ''].filter(Boolean).join(' · ')) : null, progress),
       h('div', { class: 'md-job-actions' }, badge,
+        j.state === 'paused' ? makeAction(j, 'Reanudar', 'play', musicApi.resume) : null,
+        j.state === 'queued' ? makeAction(j, 'Pausar', 'pause', musicApi.pause) : null,
         j.state === 'queued' ? action(j.priority > 0 ? 'Prioritaria' : 'Priorizar', 'arrow-up', async () => {
           try { await musicApi.priority(j.id, j.priority > 0 ? 0 : 1); refresh(); } catch (e) { toastError(e); }
         }) : null,
