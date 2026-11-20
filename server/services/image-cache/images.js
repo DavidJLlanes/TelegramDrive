@@ -41,7 +41,7 @@ const settings = {
 
 async function transform(bytes, kind, sharp) {
   return sharp(bytes, { limitInputPixels: 90_000_000, failOn: 'error' })
-    .rotate().resize({ width: settings[kind].width, withoutEnlargement: true })
+    .rotate().resize({ width: settings[kind].width, height: settings[kind].width, fit: 'inside', withoutEnlargement: true })
     .webp({ quality: settings[kind].quality, effort: 4 }).toBuffer();
 }
 
