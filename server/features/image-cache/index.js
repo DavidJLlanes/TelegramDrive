@@ -3,6 +3,7 @@ import { wrap } from '../../utils/async-handler.js';
 import { notFound } from '../../utils/errors.js';
 import { getCachedImage } from '../../services/image-cache/images.js';
 import { pruneCache } from '../../services/image-cache/prune.js';
+import { migrateLegacyThumbs } from '../../services/image-cache/legacy.js';
 
 export default {
   name: 'image-cache',
@@ -20,7 +21,8 @@ export default {
     router.get('/files/:id/thumb', serve('thumb'));
     router.get('/files/:id/preview', serve('preview'));
     let first; let timer;
-    const sweep = () => pruneCache().catch((err) => console.warn('[caché]', err.message));
+    const sweep = () => migrateLegacyThumbs(catalog).then(() => pruneCache())
+      .catch((err) => console.warn('[caché]', err.message));
     return {
       router,
       start() {
