@@ -25,4 +25,10 @@ export const migrations = [{
     db.exec("ALTER TABLE music_download_jobs ADD COLUMN playlist TEXT NOT NULL DEFAULT ''");
     db.exec("ALTER TABLE music_download_jobs ADD COLUMN year TEXT NOT NULL DEFAULT ''");
   },
+}, {
+  id: '063-download-telemetry',
+  up(db) {
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN speed TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE music_download_jobs ADD COLUMN eta TEXT NOT NULL DEFAULT ''");
+  },
 }];
