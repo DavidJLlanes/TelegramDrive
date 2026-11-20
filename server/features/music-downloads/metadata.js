@@ -33,12 +33,12 @@ export function safePart(value, fallback = '') {
   return (s.slice(0, 80).trim() || fallback);
 }
 
-export function classify(info, changes = {}, format = 'mp3') {
+export function classify(info, changes = {}, format = 'mp3', options = {}) {
   const title = safePart(changes.title ?? info.track ?? info.title, 'Canción sin título');
   const artist = safePart(changes.artist ?? info.artist ?? (info.track ? info.creator : ''), '');
   const album = safePart(changes.album ?? info.album, '');
   const parent = format === 'video' ? VIDEO_FOLDER : artist ? ROOT_FOLDER + '/' + artist + '/' + (album || 'Singles') : ROOT_FOLDER + '/Por revisar';
-  return { title, artist, album, parent, fileName: title + (format === 'video' ? '.mp4' : '.mp3'), needsReview: !artist };
+  return { title, artist, album, parent, fileName: title + (format === 'video' ? '.mp4' : '.' + (options.audioFormat || 'mp3')), needsReview: !artist };
 }
 
 /** When the uploader omitted music tags, use a clear "Artist - Song" title conservatively. */
@@ -59,5 +59,7 @@ export function entryOf(info) {
     artist: String(info.artist || (info.track ? info.creator : fallback?.artist) || '').slice(0, 180),
     album: String(info.album || '').slice(0, 180),
     duration: Number(info.duration) || 0,
+    channel: String(info.channel || info.uploader || '').slice(0, 180),
+    year: String(info.release_year || info.upload_date || '').slice(0, 4),
   };
 }
