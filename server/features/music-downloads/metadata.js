@@ -40,13 +40,22 @@ export function classify(info, changes = {}) {
   return { title, artist, album, parent, fileName: title + '.mp3', needsReview: !artist };
 }
 
+/** When the uploader omitted music tags, use a clear "Artist - Song" title conservatively. */
+export function parseVideoTitle(value) {
+  const m = /^(.{2,70}?)\s+[-–—]\s+(.{2,160})$/.exec(String(value ?? ''));
+  if (!m || /^(official|audio|lyrics|music|video)$/i.test(m[1].trim())) return null;
+  const title = m[2].replace(/\s*[[(](?:official\s+(?:music\s+)?video|official\s+audio|lyric(?:s)?\s+video|hd|4k)[)\]]\s*$/i, '').trim();
+  return { artist: m[1].trim(), title: title || m[2].trim() };
+}
+
 export function entryOf(info) {
   const id = String(info.id || '');
   if (!VIDEO_ID.test(id)) throw badRequest('YouTube no devolvió un identificador válido');
+  const fallback = info.artist || info.track ? null : parseVideoTitle(info.title);
   return {
     id, url: 'https://www.youtube.com/watch?v=' + id,
-    title: String(info.track || info.title || 'Sin título').slice(0, 180),
-    artist: String(info.artist || (info.track ? info.creator : '') || '').slice(0, 180),
+    title: String(info.track || fallback?.title || info.title || 'Sin título').slice(0, 180),
+    artist: String(info.artist || (info.track ? info.creator : fallback?.artist) || '').slice(0, 180),
     album: String(info.album || '').slice(0, 180),
     duration: Number(info.duration) || 0,
   };
