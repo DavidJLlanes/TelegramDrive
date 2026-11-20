@@ -4,8 +4,8 @@ import { renderDownloads } from './view.js';
 
 registerView({
   id: 'descargas', label: 'Descargas', icon: 'download', group: 'more',
-  title: () => 'Descargas de música',
-  sub: () => 'Audio MP3 y vídeos MP4 de YouTube, en carpetas independientes',
+  title: () => 'Centro de descargas',
+  sub: () => 'Audio y vídeo desde YouTube, Vimeo, Dailymotion y SoundCloud',
   load: musicApi.status,
   render: renderDownloads,
 });
