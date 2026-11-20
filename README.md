@@ -121,7 +121,7 @@ Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor env
 
 ## Descargas de música en MP3
 
-La sección **Descargas** del menú permite elegir **Música MP3** o **Vídeo MP4** para enlaces de YouTube y listas (hasta 50 elementos por lista). El servidor utiliza `yt-dlp`, FFmpeg y un entorno Python aislado. No hay límite de duración; cada archivo final tiene un máximo de **1 GB**.
+La sección **Descargas** del menú permite elegir **Solo audio MP3**, **Solo vídeo MP4** o **Ambos** para enlaces de YouTube y listas (hasta 50 elementos por lista). El servidor utiliza `yt-dlp`, FFmpeg y un entorno Python aislado. No hay límite de duración; cada archivo final tiene un máximo de **1 GB**.
 
 **Organización dentro de TelegramDrive (en Telegram, no en el disco):**
 

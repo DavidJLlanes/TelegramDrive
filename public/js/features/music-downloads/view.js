@@ -13,13 +13,14 @@ const field = (name, value = '') => {
 export function renderDownloads(el, { data }) {
   const url = h('input', { class: 'input md-url', type: 'url', placeholder: 'https://www.youtube.com/watch?v=...', autocomplete: 'off', required: true });
   const format = h('select', { class: 'input md-format', 'aria-label': 'Tipo de descarga' },
-    h('option', { value: 'mp3' }, 'Música MP3'),
-    h('option', { value: 'video' }, 'Vídeo MP4'));
+    h('option', { value: 'mp3' }, 'Solo audio (MP3)'),
+    h('option', { value: 'video' }, 'Solo vídeo (MP4)'),
+    h('option', { value: 'both' }, 'Audio MP3 y vídeo MP4'));
   const inspect = h('button', { class: 'btn btn-primary', type: 'submit' }, icon('search'), 'Analizar enlace');
   const preview = h('div', { class: 'md-preview' });
   const list = h('div', { class: 'md-jobs' });
   const info = h('p', { class: 'pg-hint' }, data?.available
-    ? 'MP3 o vídeo MP4, hasta 1 GB por archivo y sin límite de duración. Descarga solo contenido autorizado.'
+    ? 'Audio MP3, vídeo MP4 o ambos, hasta 1 GB por archivo y sin límite de duración. Descarga solo contenido autorizado.'
     : 'yt-dlp aún no está instalado en este servidor. Consulta las instrucciones de despliegue.');
   let selected = [];
   let edited = null;
