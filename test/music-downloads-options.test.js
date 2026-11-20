@@ -24,4 +24,5 @@ test('vídeos se organizan por canal, año o lista sin traversal', () => {
 test('progreso se interpreta sin ejecutar código externo', () => {
   assert.equal(progressLine('download:55.5%').progress, 42);
   assert.equal(progressLine('other').progress, undefined);
+  assert.deepEqual(progressLine('download:55.5% speed:1.2MiB/s eta:01:22'), { progress: 42, speed: '1.2MiB/s', eta: '01:22' });
 });
