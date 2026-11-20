@@ -35,7 +35,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
         signal, format: job.format, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: Math.max(0, Math.min(75, p)) }); },
       });
       if (signal.aborted) throw new Error('Descarga cancelada');
-      const destination = await ensureDestination(catalog, chosen);
+      const destination = await ensureDestination(catalog, { ...chosen, format: job.format });
       patch(job.id, { state: 'uploading', progress: 80, destination });
       const file = await catalog.fileOps.upload({
         parent: destination, name: chosen.fileName, path: downloaded.path, size: downloaded.size,
