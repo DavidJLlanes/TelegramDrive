@@ -61,8 +61,8 @@ export const musicRunner = {
       ...(source.type === 'playlist' ? ['--flat-playlist', '--playlist-start', String(page.start), '--playlist-end', String(page.end)] : ['--no-playlist']), source.url];
     const info = JSON.parse(await execute(YTDLP, args, { timeout: 90_000 }));
     const raw = source.type === 'playlist' ? info.entries || [] : [info];
-    const items = raw.filter(Boolean).map((item) => entryOf(item));
-    if (!items.length) throw new Error('No se encontraron canciones para descargar');
+    const items = raw.filter(Boolean).map((item) => entryOf(item, source.type === 'video' ? source.url : undefined));
+    if (!items.length) throw new Error('No se encontraron elementos para descargar');
     return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180),
       offset: page.offset, nextOffset: source.type === 'playlist' && raw.length >= PAGE_SIZE ? page.nextOffset : null,
       previousOffset: source.type === 'playlist' ? page.previousOffset : null,
