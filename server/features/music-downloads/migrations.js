@@ -31,4 +31,9 @@ export const migrations = [{
     db.exec("ALTER TABLE music_download_jobs ADD COLUMN speed TEXT NOT NULL DEFAULT ''");
     db.exec("ALTER TABLE music_download_jobs ADD COLUMN eta TEXT NOT NULL DEFAULT ''");
   },
+}, {
+  id: '064-download-priority',
+  up(db) {
+    db.exec('ALTER TABLE music_download_jobs ADD COLUMN priority INTEGER NOT NULL DEFAULT 0');
+  },
 }];
