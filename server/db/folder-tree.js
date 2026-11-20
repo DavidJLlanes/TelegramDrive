@@ -21,8 +21,13 @@ export class FolderTree {
     }
     this.allKids = all;
     this.hiddenIds = new Set();
-    const hide = (f) => { this.hiddenIds.add(f.id); (all.get(f.id) ?? []).forEach(hide); };
-    rows.filter((f) => f.trashed).forEach((f) => !this.hiddenIds.has(f.id) && hide(f));
+    const pending = rows.filter((f) => f.trashed);
+    while (pending.length) {
+      const f = pending.pop();
+      if (this.hiddenIds.has(f.id)) continue;
+      this.hiddenIds.add(f.id);
+      pending.push(...(all.get(f.id) ?? []));
+    }
     this.kids = new Map();
     for (const f of this.byId.values()) {
       if (this.hiddenIds.has(f.id)) continue;
@@ -52,7 +57,10 @@ export class FolderTree {
 
   pathOf(id) {
     const parts = [];
-    for (let cur = this.byId.get(id), guard = 0; cur && guard < 100; cur = this.byId.get(cur.parent), guard += 1) {
+    const seen = new Set();
+    for (let cur = this.byId.get(id); cur; cur = this.byId.get(cur.parent)) {
+      if (seen.has(cur.id)) throw new Error('Jerarquía de carpetas circular');
+      seen.add(cur.id);
       parts.push(cur.name);
     }
     return `/${parts.reverse().join('/')}`;
@@ -82,8 +90,11 @@ export class FolderTree {
 
   /** ¿`id` es `ancestor` o cuelga de él? */
   isWithin(id, ancestor) {
-    for (let cur = id, guard = 0; cur && cur !== ROOT && guard < 100; cur = this.byId.get(cur)?.parent, guard += 1) {
+    const seen = new Set();
+    for (let cur = id; cur && cur !== ROOT; cur = this.byId.get(cur)?.parent) {
       if (cur === ancestor) return true;
+      if (seen.has(cur)) throw new Error('Jerarquía de carpetas circular');
+      seen.add(cur);
     }
     return false;
   }
