@@ -60,7 +60,7 @@ export const musicRunner = {
     const raw = source.type === 'playlist' ? info.entries || [] : [info];
     const items = raw.filter(Boolean).map((item) => entryOf(item));
     if (!items.length) throw new Error('No se encontraron canciones para descargar');
-    return { items, playlist: source.type === 'playlist', truncated: raw.length >= 50 };
+    return { items, playlist: source.type === 'playlist', playlistTitle: String(info.title || '').slice(0, 180), truncated: raw.length >= 50 };
   },
   async download(url, dir, meta, { signal, onProgress, format = 'mp3', options: rawOptions } = {}) {
     const options = normalizeOptions(rawOptions);
