@@ -41,10 +41,10 @@ before(async () => {
     installed: async () => true,
     inspect: async (url) => ({ items: [{ id: sourceUrl(url).id,
       title: 'Canción de prueba', artist: url.includes('dQw4') ? 'Artista demo' : '', album: url.includes('dQw4') ? 'Álbum demo' : '' }] }),
-    download: async (url, dir, meta, { onProgress, format }) => {
+    download: async (url, dir, meta, { onProgress, format, options }) => {
       calls++;
       onProgress(50);
-      const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.mp3');
+      const file = path.join(dir, format === 'video' ? 'final.mp4' : 'final.' + (options?.audioFormat || 'mp3'));
       const bytes = format === 'video' ? Buffer.alloc(512, 1) : mp3WithTags({ title: meta.title, artist: meta.artist, album: meta.album });
       await fs.writeFile(file, bytes);
       return { path: file, size: bytes.length };
