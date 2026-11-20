@@ -97,7 +97,7 @@ export function openLightbox(file, list = []) {
     if (Math.abs(dx) > SWIPE) { swipedAt = Date.now(); step(dx < 0 ? 1 : -1); }
     startX = null;
   }, { passive: true });
-  stage.addEventListener('click', (e) => { if (e.target === stage) close(); });
+  stage.addEventListener('click', (e) => { if (e.target === stage && Date.now() - swipedAt >= 400) close(); });
 
   const closeBtn = h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar', type: 'button', onclick: () => close() }, icon('close'));
   const box = h('div', { class: 'lightbox', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Visor de imágenes' },
