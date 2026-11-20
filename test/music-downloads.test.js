@@ -123,6 +123,18 @@ test('prioridad rechaza valores no válidos y trabajos terminados', () => {
   assert.ok(done);
 });
 
+test('pausa y reanudación de trabajos en cola', async () => {
+  const src = 'https://www.youtube.com/watch?v=9bZkp7q19f0';
+  const added = service.enqueue([{ url: src }]);
+  assert.equal(added.accepted.length, 1);
+  const id = added.accepted[0];
+  assert.deepEqual(service.pause(id), { paused: true });
+  assert.equal((await service.status()).jobs.find((j) => j.id === id).state, 'paused');
+  assert.equal(service.enqueue([{ url: src }]).skipped.length, 1);
+  assert.deepEqual(service.resume(id), { queued: true });
+  assert.equal((await finished(id)).state, 'done');
+});
+
 test('los trabajos y la raíz solo se consultan autenticado', async () => {
   assert.equal((await fetch(h.base + '/api/music-downloads')).status, 401);
   const own = (await h.call('GET', '/api/music-downloads')).json;
