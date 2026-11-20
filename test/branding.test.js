@@ -25,7 +25,7 @@ test('la portada sirve las metaetiquetas Open Graph con URL absoluta y el prefij
   const html = await r.text();
   assert.equal(r.status, 200);
   assert.ok(!html.includes('__ORIGIN__'));
-  assert.match(html, /property="og:image" content="https?:\/\/[^"]+\/og-image\.png"/);
+  assert.match(html, /property="og:image" content="https?:\/\/[^"]+\/readme-cover\.png"/);
 });
 
 test('el service worker no precachea la imagen social ni los iconos grandes', async () => {
