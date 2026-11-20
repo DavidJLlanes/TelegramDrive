@@ -1,0 +1,33 @@
+/* Descargas MP3: sección independiente, usable en móvil, tablet y escritorio. */
+.md-panel { max-width: 940px; }
+.md-form { display: grid; gap: 14px; }
+.md-field { display: grid; gap: 7px; font-weight: 600; font-size: 0.9rem; }
+.md-field > span { color: var(--muted); }
+.md-field .input { width: 100%; min-width: 0; box-sizing: border-box; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--raised); color: var(--ink); font: inherit; }
+.md-url { font-size: 1rem; }
+.md-preview { display: grid; gap: 14px; }
+.md-preview:empty { display: none; }
+.md-preview-title { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.md-preview-title small { color: var(--muted); }
+.md-preview-list { display: grid; gap: 10px; max-height: 420px; overflow-y: auto; }
+.md-pick { display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); background: var(--raised); border-radius: var(--r-sm); }
+.md-pick input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.md-pick span { flex: 1; overflow-wrap: anywhere; }
+.md-pick small { color: var(--muted); }
+.md-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.md-jobs { display: grid; gap: 9px; }
+.md-job { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.md-job:last-child { border: 0; }
+.md-job-info { display: grid; gap: 4px; flex: 1 1 230px; min-width: 0; }
+.md-job-info strong { overflow-wrap: anywhere; }
+.md-job-info span { font-size: 0.85rem; color: var(--muted); }
+.md-job-info .md-error { color: var(--danger); }
+.md-job-info progress { width: min(100%, 400px); height: 8px; accent-color: var(--accent); }
+.md-destination { overflow-wrap: anywhere; }
+.md-job-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; align-self: center; }
+.md-job-actions .btn { padding: 7px 9px; font-size: 0.85rem; }
+@media (max-width: 560px) {
+  .md-pick { flex-wrap: wrap; }
+  .md-pick small { width: 100%; padding-left: 30px; }
+  .md-job-actions { width: 100%; justify-content: flex-start; }
+}

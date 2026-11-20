@@ -16,6 +16,7 @@ import photos from './photos/index.js';
 import photoAlbums from './photo-albums/index.js';
 import usage from './usage/index.js';
 import imageCache from './image-cache/index.js';
+import musicDownloads from './music-downloads/index.js';
 
 const FEATURES = [
   accessLog,
@@ -28,6 +29,7 @@ const FEATURES = [
   photoAlbums,
   usage,
   imageCache,
+  musicDownloads,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {

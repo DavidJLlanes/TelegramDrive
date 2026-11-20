@@ -119,6 +119,27 @@ Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor env
 - El límite de 10 GB es **compartido**; la limpieza automática elimina primero los archivos auxiliares menos utilizados, nunca los originales. Con Sharp ausente, el servidor puede recurrir a la miniatura de Telegram, pero para el despliegue se exige Sharp.
 - El lightbox muestra la miniatura mientras obtiene la vista previa; al ampliar solicita el original. Así el primer acceso puede depender de Telegram, pero las siguientes visualizaciones usan el disco local.
 
+## Descargas de música en MP3
+
+La sección **Descargas** del menú incorpora una cola de trabajos para enlaces de vídeos o listas de YouTube (hasta 50 pistas por lista). El servidor utiliza `yt-dlp`, FFmpeg y un entorno Python aislado. **No se guardan vídeos**: únicamente MP3.
+
+**Organización dentro de TelegramDrive (en Telegram, no en el disco):**
+
+```text
+Descargas de Internet/
+├── Queen/
+│   ├── A Night at the Opera/
+│   │   └── Bohemian Rhapsody.mp3
+│   └── Singles/
+└── Por revisar/
+```
+
+La ruta raíz **Descargas de Internet** es exclusiva de las descargas musicales. Artista y álbum proceden de los metadatos; si no hay álbum se crea `Singles`, y si falta un artista fiable, `Por revisar`. La pantalla permite corregir título, artista y álbum antes de añadir una pista. Se evita volver a descargar un mismo ID de YouTube cuando su archivo sigue en TelegramDrive. Las tareas se registran en SQLite, con barra de progreso, reintentos y cancelación; los archivos temporales se eliminan tras finalizar.
+
+Las carpetas se crean mediante las operaciones normales de TelegramDrive, el archivo MP3 se sube a Telegram y aparece en la biblioteca musical. Descargar/convertir MP3 **no mejora la calidad del audio de origen**. Utiliza esta función únicamente con contenido que tengas permiso para descargar; no elude DRM ni restricciones de acceso.
+
+**Instalación:** `bash deploy/deploy.sh` ejecuta `deploy/install-music-tools.sh` en el VPS Ubuntu, creando `data/tools/yt-dlp-venv` e instalando `yt-dlp[default]` y FFmpeg. Para actualizar manualmente el motor: `UPDATE_MUSIC_TOOLS=1 bash deploy/install-music-tools.sh`. Para el soporte EJS de YouTube se recomienda Node >= 22.6. Los binarios se instalan fuera del repositorio, nunca en GitHub.
+
 ## Despliegue
 
 Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` de Nginx (`deploy/nginx-telegram.conf`).
