@@ -8,7 +8,7 @@ import { openDirectResponse, inspectResponse } from './direct-http.js';
 
 const MAX_BYTES = 1024 ** 3;
 
-export async function downloadResumable(input, root, id, { signal, onProgress } = {}) {
+export async function downloadResumable(input, root, id, { signal, onProgress, openResponse = openDirectResponse } = {}) {
   const source = directSource(input);
   const paths = transferPaths(root, id);
   await fsp.mkdir(paths.dir, { recursive: true, mode: 0o700 });
@@ -20,7 +20,7 @@ export async function downloadResumable(input, root, id, { signal, onProgress } 
   for (let attempt = 0; attempt < 2; attempt++) {
     const validator = previous?.etag && !previous.etag.startsWith('W/')
       ? previous.etag : previous?.lastModified;
-    const response = await openDirectResponse(source.url, { offset, validator, signal });
+    const response = await openResponse(source.url, { offset, validator, signal });
     let details;
     try { details = inspectResponse(response, offset, previous, MAX_BYTES); }
     catch (error) { response.destroy(); throw error; }
