@@ -189,6 +189,11 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
     if (job.state === 'uploading') throw conflict('La subida a Telegram está terminando; no se puede cancelar');
+    if (job.state === 'paused') {
+      patch(id, { state: 'cancelled', error: 'Cancelada por el usuario' });
+      if (job.format === 'direct') clearTransfer(transferPaths(tmpDir, id)).catch(() => {});
+      return { cancelled: true };
+    }
     if (!BUSY.has(job.state)) throw conflict('Esta descarga ya ha finalizado');
     if (active?.id === id) active.ctrl.abort();
     else patch(id, { state: 'cancelled', error: 'Cancelada por el usuario' });
