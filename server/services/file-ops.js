@@ -3,7 +3,7 @@ import { isUniqueViolation } from '../db/database.js';
 import { conflict, notFound } from '../utils/errors.js';
 import { kindOf } from '../utils/media-kind.js';
 import { normalizePath, suffixed, validateName } from '../utils/paths.js';
-import { dropThumbnail } from './thumbnails.js';
+import { moveCacheFile, dropCacheFile } from './image-cache/paths.js';
 
 /** Operaciones sobre archivos (subida, renombrar, mover, borrar). */
 export class FileOps {
@@ -72,8 +72,10 @@ export class FileOps {
       const row = this.#need(id);
       const folder = this.#folder(targetPath);
       const name = this.freeName(folder, row.name, row.id);
+      const oldParent = this.tree.pathOf(row.folder);
       await this.tg.editText(row.id, encodeFile({ folder, name, ovr: this.files.overrideOf(row.id) }));
       this.files.move(row.id, folder, name);
+      await moveCacheFile(row.id, oldParent, this.tree.pathOf(folder));
       return this.toDto(this.files.get(row.id));
     });
   }
@@ -83,9 +85,10 @@ export class FileOps {
     return this.lock.run(async () => {
       const list = ids.filter((id) => this.files.get(id));
       if (!list.length) return 0;
+      const copies = list.map((id) => ({ id, parent: this.tree.pathOf(this.files.get(id).folder) }));
       await this.tg.remove(list);
       this.files.remove(list);
-      list.forEach((id) => dropThumbnail(id));
+      await Promise.all(copies.map(({ id, parent }) => dropCacheFile(id, parent)));
       return list.length;
     });
   }
