@@ -115,7 +115,7 @@ Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor env
 
 - Los originales se conservan **únicamente en Telegram**. Descargar o «Guardar como» siempre entrega el archivo original, incluidos los metadatos.
 - Las miniaturas (`data/thumbs/`) y vistas previas (`data/previews/`) se generan en **WebP** con Sharp, calidad 70/85 y tamaño máximo 360/2560 píxeles. Se crean bajo demanda, no se duplican en Telegram.
-- Ambas carpetas reproducen la jerarquía de la app, por ejemplo `data/thumbs/Suki/Vacaciones/123.webp`. Se usa el ID de Telegram para evitar colisiones. Renombrar o mover carpetas/archivos mueve también su caché; la papelera invalida sus derivados.
+- Ambas carpetas reproducen la jerarquía de la app, por ejemplo `data/thumbs/Suki/Vacaciones/123.webp`. Se usa el ID de Telegram para evitar colisiones. Las miniaturas JPEG antiguas se migran automáticamente. Renombrar o mover carpetas/archivos mueve también su caché; la papelera invalida sus derivados.
 - El límite de 10 GB es **compartido**; la limpieza automática elimina primero los archivos auxiliares menos utilizados, nunca los originales. Con Sharp ausente, el servidor puede recurrir a la miniatura de Telegram, pero para el despliegue se exige Sharp.
 - El lightbox muestra la miniatura mientras obtiene la vista previa; al ampliar solicita el original. Así el primer acceso puede depender de Telegram, pero las siguientes visualizaciones usan el disco local.
 
