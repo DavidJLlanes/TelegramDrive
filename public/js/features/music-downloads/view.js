@@ -5,6 +5,7 @@ import { navigate } from '../../core/router.js';
 import { musicApi } from './api.js';
 import { renderJobs } from './jobs.js';
 import { downloadOptions } from './options.js';
+import { playlistControls } from './playlist-controls.js';
 
 const field = (name, value = '') => {
   const input = h('input', { class: 'input', value, maxlength: 180, placeholder: name });
@@ -27,6 +28,7 @@ export function renderDownloads(el, { data }) {
   let selected = [];
   let edited = null;
   let busy = false;
+  let inspectedUrl = '';
 
   const refresh = async () => {
     try { const status = await musicApi.status(); if (el.isConnected) renderJobs(list, status.jobs, refresh); }
@@ -52,6 +54,14 @@ export function renderDownloads(el, { data }) {
     } catch (e) { toastError(e); }
     finally { busy = false; }
   };
+  const loadPage = async (offset = 0) => {
+    if (busy || !inspectedUrl) return;
+    busy = true;
+    fill(preview, h('p', { class: 'pg-hint' }, 'Cargando elementos de la lista…'));
+    try { showPreview(await musicApi.inspect(inspectedUrl, offset)); }
+    catch (err) { fill(preview); toastError(err); }
+    finally { busy = false; }
+  };
   const showPreview = (result) => {
     selected = result.items.map((item) => ({ ...item, playlist: result.playlist ? result.playlistTitle : '' }));
     edited = null;
@@ -73,8 +83,8 @@ export function renderDownloads(el, { data }) {
     }
     fill(preview, h('div', { class: 'md-preview-title' },
       h('strong', {}, result.playlist ? 'Elementos de la lista' : 'Revisa los datos del archivo'),
-      result.truncated ? h('small', {}, 'Máximo de 50 canciones por lista') : null),
-      picker, h('button', { class: 'btn btn-primary', type: 'button', onclick: add },
+      result.truncated ? h('small', {}, '50 elementos por página') : null),
+      playlistControls(result, loadPage), picker, h('button', { class: 'btn btn-primary', type: 'button', onclick: add },
         icon('download'), 'Añadir a descargas'));
   };
 
@@ -85,7 +95,7 @@ export function renderDownloads(el, { data }) {
     inspect.disabled = true;
     inspect.textContent = 'Analizando…';
     fill(preview, h('p', { class: 'pg-hint' }, 'Consultando los metadatos de YouTube…'));
-    try { showPreview(await musicApi.inspect(url.value)); }
+    try { inspectedUrl = url.value; showPreview(await musicApi.inspect(inspectedUrl, 0)); }
     catch (err) { fill(preview); toastError(err); }
     finally { busy = false; inspect.disabled = false; fill(inspect, icon('search'), 'Analizar enlace'); }
   } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace de vídeo o lista de YouTube'), url),
