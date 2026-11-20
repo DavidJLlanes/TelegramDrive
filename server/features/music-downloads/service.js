@@ -132,7 +132,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
 
   return {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
-    inspect: (url) => runner.inspect(sourceUrl(url).url),
+    inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
     enqueue, retry, cancel, prioritize,
     remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
