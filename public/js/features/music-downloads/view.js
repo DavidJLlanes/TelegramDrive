@@ -6,6 +6,7 @@ import { musicApi } from './api.js';
 import { renderJobs } from './jobs.js';
 import { downloadOptions } from './options.js';
 import { playlistControls } from './playlist-controls.js';
+import { directDownloadForm } from './direct-form.js';
 
 const field = (name, value = '') => {
   const input = h('input', { class: 'input', value, maxlength: 180, placeholder: name });
@@ -103,7 +104,7 @@ export function renderDownloads(el, { data }) {
 
   fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga'),
     h('p', { class: 'pg-hint' }, 'MP3: Descargas de Internet / Artista / Álbum · Vídeo: Descargas de Internet / Vídeos'),
-    form), h('section', { class: 'pg-panel md-panel' },
+    form), directDownloadForm(refresh), h('section', { class: 'pg-panel md-panel' },
     h('div', { class: 'md-heading' }, h('h2', {}, 'Historial y cola'),
       h('button', { class: 'btn btn-ghost', onclick: () => navigate('/Descargas de Internet') },
         icon('folder'), 'Abrir carpeta')), list));
