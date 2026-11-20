@@ -8,7 +8,8 @@ import { musicRunner } from './runner.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
 import { directSource, directCategory } from './direct-url.js';
-import { downloadDirect } from './direct-runner.js';
+import { downloadResumable } from './direct-resume.js';
+import { transferPaths, clearTransfer } from './direct-transfer-state.js';
 
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
@@ -30,7 +31,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
       if (job.format === 'direct') {
         const source = directSource(job.url);
         patch(job.id, { state: 'downloading', title: source.name });
-        const downloaded = await downloadDirect(job.url, dir, {
+        const downloaded = await downloadResumable(job.url, tmpDir, job.id, {
           signal, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: p }); },
         });
         if (signal.aborted) throw new Error('Descarga cancelada');
@@ -41,6 +42,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
           onProgress: (fraction) => patch(job.id, { progress: 80 + Math.round(Number(fraction) * 19) }),
         });
         patch(job.id, { state: 'done', progress: 100, fileId: file.id });
+        await clearTransfer(transferPaths(tmpDir, job.id));
         return;
       }
       const result = await runner.inspect(job.url);
@@ -83,7 +85,12 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     active = { id: job.id, ctrl };
     try { await run(job, ctrl.signal); }
     catch (e) {
-      patch(job.id, { state: ctrl.signal.aborted ? 'cancelled' : 'failed', error: String(e.message).slice(0, 300) });
+      if (repo.get(job.id)?.state !== 'paused') {
+        patch(job.id, { state: ctrl.signal.aborted ? 'cancelled' : 'failed', error: String(e.message).slice(0, 300) });
+        if (ctrl.signal.aborted && job.format === 'direct' && !stopped) {
+          await clearTransfer(transferPaths(tmpDir, job.id)).catch(() => {});
+        }
+      }
     } finally {
       active = null;
       if (!stopped) queueMicrotask(drain);
@@ -125,8 +132,11 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   function pause(id) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
-    if (job.state !== 'queued') throw conflict('Solo se pueden pausar descargas pendientes');
+    if (job.state !== 'queued' && !(job.format === 'direct' && job.state === 'downloading')) {
+      throw conflict('Solo se pueden pausar trabajos en cola o descargas directas activas');
+    }
     patch(id, { state: 'paused' });
+    if (active?.id === id) active.ctrl.abort();
     return { paused: true };
   }
 
@@ -134,6 +144,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
     if (job.state !== 'paused') throw conflict('Esta descarga no está pausada');
+    if (active?.id === id) throw conflict('La transferencia se está deteniendo; vuelve a intentarlo');
     patch(id, { state: 'queued' });
     queueMicrotask(drain);
     return { queued: true };
@@ -181,6 +192,9 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     if (!BUSY.has(job.state)) throw conflict('Esta descarga ya ha finalizado');
     if (active?.id === id) active.ctrl.abort();
     else patch(id, { state: 'cancelled', error: 'Cancelada por el usuario' });
+    if (job.format === 'direct' && active?.id !== id) {
+      clearTransfer(transferPaths(tmpDir, id)).catch(() => {});
+    }
     return { cancelled: true };
   }
 
@@ -188,7 +202,12 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
     enqueue, enqueueDirect, retry, cancel, prioritize, pause, resume,
-    remove(id) { if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso'); return { removed: true }; },
+    remove(id) {
+      const job = repo.get(id);
+      if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso');
+      if (job?.format === 'direct') clearTransfer(transferPaths(tmpDir, id)).catch(() => {});
+      return { removed: true };
+    },
     start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },
   };

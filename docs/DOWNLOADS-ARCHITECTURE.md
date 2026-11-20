@@ -23,7 +23,10 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 | `playlist-page.js` | Paginación acotada de listas de YouTube |
 | `direct-url.js` | Validación de URLs y clasificación por extensión |
 | `public-ip.js` | Resolución DNS con bloqueo de redes privadas y direcciones especiales |
-| `direct-runner.js` | Descarga HTTPS directa con DNS fijado, límite de tamaño y sin redirecciones |
+| `direct-runner.js` | Descargador directo original (compatibilidad) |
+| `direct-http.js` | Conexiones HTTPS con IP pública fijada y validación de rangos HTTP |
+| `direct-transfer-state.js` | Metadatos de reanudación y archivos parciales persistentes |
+| `direct-resume.js` | Transferencias reanudables con ETag/Last-Modified y límite de 1 GiB |
 
 ## Cliente — `public/js/features/music-downloads/`
 
@@ -45,4 +48,4 @@ Las listas de YouTube se exploran por páginas de 50 elementos, hasta 5000 por l
 
 ## Archivos directos
 
-Los archivos directos se guardan en `Descargas de Internet/Archivos directos/{Audio, Vídeos, Imágenes, Documentos, Comprimidos}`. Límite de 1 GiB por archivo. La URL debe incluir extensión permitida. La descarga usa TLS con el hostname original y una dirección IPv4 pública validada y fijada para evitar cambios DNS entre comprobación y conexión. No sigue redirecciones. No se permite acceso a hosts privados ni redes de metadatos. La pausa de una descarga HTTP activa y su reanudación parcial aún no están implementadas.
+Los archivos directos se guardan en `Descargas de Internet/Archivos directos/{Audio, Vídeos, Imágenes, Documentos, Comprimidos}`. Límite de 1 GiB por archivo. La URL debe incluir extensión permitida. La descarga usa TLS con el hostname original y una dirección IPv4 pública validada y fijada para evitar cambios DNS entre comprobación y conexión. No sigue redirecciones. No se permite acceso a hosts privados ni redes de metadatos. La pausa de una descarga HTTP activa conserva los bytes ya descargados y permite reanudar por HTTP Range cuando el servidor remoto admite rangos y validadores ETag o Last-Modified. Si el servidor ignora Range o no ofrece un validador fiable, la descarga se reinicia para evitar mezclar versiones. Las transferencias de yt-dlp siguen admitiendo pausa únicamente antes de iniciarse. Los archivos parciales se conservan en `data/tmp/direct-transfers/<id>` y se eliminan al completar, cancelar o quitar un trabajo.
