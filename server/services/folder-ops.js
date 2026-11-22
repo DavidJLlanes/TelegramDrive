@@ -44,7 +44,8 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre');
       validateFolderChange(this.tree, folder.parent, name, id);
       const oldPath = this.tree.pathOf(id);
-      await this.tg.editText(folder.msgId, encodeFolder({ id, parent: folder.parent, name }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name }));
+      if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent: folder.parent, name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));
       return { path: this.tree.pathOf(id) };
@@ -61,7 +62,8 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre en el destino');
       validateFolderChange(this.tree, parent, folder.name, id);
       const oldPath = this.tree.pathOf(id);
-      await this.tg.editText(folder.msgId, encodeFolder({ id, parent, name: folder.name }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent, name: folder.name }));
+      if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent, name: folder.name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));
       return { path: this.tree.pathOf(id) };

@@ -33,7 +33,8 @@ export class TrashOps {
       if (id === null || id === ROOT) throw notFound('La carpeta no existe');
       const f = this.tree.get(id);
       const ts = Date.now();
-      await this.tg.editText(f.msgId, encodeFolder({ id, parent: f.parent, name: f.name, trashed: ts }));
+      const msgId = await this.tg.rewriteText(f.msgId, encodeFolder({ id, parent: f.parent, name: f.name, trashed: ts }));
+      if (msgId !== f.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent: f.parent, name: f.name, trashed: ts });
       this.#hide();
       await dropCacheFolder(this.tree.pathOf(id));
@@ -65,7 +66,8 @@ export class TrashOps {
         name = validateName(f.name.slice(0, 120 - suffix.length) + suffix);
       }
       validateFolderChange(this.tree, parent, name, f.id);
-      await this.tg.editText(f.msgId, encodeFolder({ id: f.id, parent, name }));
+      const msgId = await this.tg.rewriteText(f.msgId, encodeFolder({ id: f.id, parent, name }));
+      if (msgId !== f.msgId) this.tree.setMsgId(f.id, msgId);
       this.tree.update(f.id, { parent, name, trashed: 0 });
       this.#hide();
     });

@@ -107,8 +107,28 @@ export class TelegramService {
   }
 
   async editText(id, text) {
-    await this.client.editMessage(this.chat, { message: id, text });
+    try {
+      await this.client.editMessage(this.chat, { message: id, text });
+    } catch (err) {
+      if (!/MESSAGE_EDIT_TIME_EXPIRED/.test(String(err?.errorMessage || err?.message || ''))) throw err;
+      const expired = new HttpError(409, 'Telegram no permite modificar este elemento: lleva más de 48 horas en el chat de almacenamiento');
+      expired.editExpired = true;
+      throw expired;
+    }
     this.messageCache.delete(id);
+  }
+
+  /** Como editText, pero si Telegram ya no deja editar (48 h) publica un mensaje nuevo y borra el antiguo. Devuelve el id vigente. */
+  async rewriteText(id, text) {
+    try {
+      await this.editText(id, text);
+      return id;
+    } catch (err) {
+      if (!err.editExpired) throw err;
+      const sent = await this.sendText(text);
+      await this.remove([id]);
+      return sent.id;
+    }
   }
 
   async remove(ids) {

@@ -1,6 +1,7 @@
 // Telegram simulado en memoria con la misma interfaz que TelegramService.
 import fs from 'node:fs';
 import { TAG, encodeFile } from '../../server/telegram/codec.js';
+import { HttpError } from '../../server/utils/errors.js';
 
 export class FakeTelegram {
   /** `chats`: almacén compartido por chat (cada chat tiene sus mensajes e ids, como en Telegram). */
@@ -10,6 +11,7 @@ export class FakeTelegram {
     this.connected = true;
     this.edits = 0;
     this.removeCalls = 0;
+    this.expired = new Set(); // ids de mensajes que Telegram ya no deja editar (más de 48 h)
   }
 
   get #box() {
@@ -64,7 +66,20 @@ export class FakeTelegram {
     return this.#store({ message: caption, media: FakeTelegram.media(name, size, bytes), bytes });
   }
 
-  async editText(id, text) { this.edits += 1; this.messages.get(id).message = text; }
+  async editText(id, text) {
+    if (this.expired.has(id)) throw Object.assign(new HttpError(409, 'lleva más de 48 horas'), { editExpired: true });
+    this.edits += 1;
+    this.messages.get(id).message = text;
+  }
+
+  async rewriteText(id, text) {
+    try { await this.editText(id, text); return id; } catch (err) {
+      if (!err.editExpired) throw err;
+      const sent = await this.sendText(text);
+      await this.remove([id]);
+      return sent.id;
+    }
+  }
   async remove(ids) { this.removeCalls += 1; ids.forEach((id) => this.messages.delete(id)); }
   async getMessage(id, _opts) { return this.messages.get(id); }
   async *readRange(message, start, end) { yield message.media.document.bytes.subarray(start, end + 1); }

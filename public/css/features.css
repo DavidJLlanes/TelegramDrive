@@ -58,11 +58,16 @@
 
 @media (max-width: 640px) {
   .selection-bar { gap: 4px; padding: 6px; }
+  /* En móvil los seis controles deben caber en el ancho: botones cuadrados y contador que cede espacio */
+  .selection-bar .btn { flex: 0 0 auto; width: 38px; min-height: 38px; padding: 0; }
+  .selection-bar strong { flex: 0 1 auto; min-width: 0; padding: 0 2px; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
+  .selection-bar .toolbar-spacer { flex: 1 1 0; min-width: 0; }
   .trash-row { flex-wrap: wrap; }
   .trash-main { flex-basis: calc(100% - 60px); }
 }
 .check .icon, .sleeve .check .icon { position: static; inset: auto; width: 16px; height: 16px; margin: 0; opacity: 1; color: inherit; }
 .selection-bar .btn { white-space: nowrap; }
+@media (max-width: 340px) { .selection-bar { flex-wrap: wrap; justify-content: center; } }
 
 /* Guardar como (móvil): acciones en columna y botones anchos para el pulgar */
 .save-actions { flex-wrap: wrap; }

@@ -115,6 +115,12 @@ export class FolderTree {
     this.reload();
   }
 
+  /** La carpeta se republicó en Telegram con otro mensaje. */
+  setMsgId(id, msgId) {
+    this.db.stmt('UPDATE folders SET msg_id = ? WHERE id = ?').run(msgId, id);
+    this.reload();
+  }
+
   remove(ids) {
     ids.forEach((id) => this.db.stmt('DELETE FROM folders WHERE id = ?').run(id));
     this.reload();
