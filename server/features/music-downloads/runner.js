@@ -16,7 +16,9 @@ const MAX_OUTPUT = 5 * 1024 * 1024;
 
 export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {}) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, ...(env ? { env } : {}) });
+    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: true, ...(env ? { env } : {}) });
+    // detached = grupo de procesos propio: al cancelar o agotar el plazo se termina también lo que lance (ffmpeg, yt-dlp…)
+    const terminate = () => { try { process.kill(-proc.pid, 'SIGTERM'); } catch { proc.kill('SIGTERM'); } };
     let output = '', err = '', buffer = '', done = false, timedOut = false;
     const finish = (error) => {
       if (done) return;
@@ -25,8 +27,8 @@ export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {
       signal?.removeEventListener('abort', abort);
       if (error) reject(error); else resolve(output);
     };
-    const abort = () => proc.kill('SIGTERM');
-    const timer = setTimeout(() => { timedOut = true; proc.kill('SIGTERM'); }, timeout);
+    const abort = terminate;
+    const timer = setTimeout(() => { timedOut = true; terminate(); }, timeout);
     timer.unref?.();
     if (signal?.aborted) abort();
     else signal?.addEventListener('abort', abort, { once: true });
@@ -39,7 +41,7 @@ export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {
         onLine?.(buffer.slice(0, at).trim());
         buffer = buffer.slice(at + 1);
       }
-      if (output.length > MAX_OUTPUT) proc.kill('SIGTERM');
+      if (output.length > MAX_OUTPUT) terminate();
     });
     proc.stderr.on('data', (chunk) => { err = (err + chunk.toString()).slice(-1500); });
     proc.on('error', (e) => finish(new Error(e.code === 'ENOENT' ? 'Falta instalar ' + path.basename(bin) : e.message)));

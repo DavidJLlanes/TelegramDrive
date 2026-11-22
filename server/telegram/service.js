@@ -126,7 +126,8 @@ export class TelegramService {
     } catch (err) {
       if (!err.editExpired) throw err;
       const sent = await this.sendText(text);
-      await this.remove([id]);
+      // El nuevo ya existe: si falla el borrado del antiguo, se conserva el nuevo igualmente (quedaría un mensaje huérfano, no un estado inconsistente).
+      await this.remove([id]).catch((e) => console.warn(`[telegram] no se pudo borrar el mensaje antiguo ${id}: ${e.message}`));
       return sent.id;
     }
   }

@@ -73,3 +73,17 @@ test('execute: un plazo agotado es un error aunque el proceso salga con código 
   const script = "process.on('SIGTERM', () => process.exit(0)); setInterval(() => {}, 1000);";
   await assert.rejects(execute(process.execPath, ['-e', script], { timeout: 300 }), /Tiempo de espera agotado/);
 });
+
+test('execute: al agotar el plazo también termina los procesos hijos del proceso lanzado', async () => {
+  const { execute } = await import('../server/features/music-downloads/runner.js');
+  const script = "const { spawn } = require('node:child_process');"
+    + "const c = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { stdio: 'ignore' });"
+    + "console.log(c.pid); setInterval(() => {}, 1000);";
+  let childPid = 0;
+  await assert.rejects(execute(process.execPath, ['-e', script], { timeout: 600, onLine: (l) => { childPid ||= Number(l); } }), /Tiempo de espera/);
+  await new Promise((r) => setTimeout(r, 200));
+  assert.ok(childPid > 0);
+  // un proceso terminado pero aún no recogido por init aparece como zombi ("Z"): cuenta como terminado
+  const state = await fs.readFile('/proc/' + childPid + '/stat', 'utf8').then((t) => t.split(') ')[1][0], () => 'gone');
+  assert.ok(state === 'gone' || state === 'Z', 'el proceso hijo sigue vivo (estado ' + state + ')');
+});
