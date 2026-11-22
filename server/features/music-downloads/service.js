@@ -202,7 +202,13 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
   }
 
   return {
-    async status() { return { available: await checkSetup(), spotdlAvailable: await spotdlSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
+    async status() {
+      const spotdlAvailable = await spotdlSetup();
+      return { available: await checkSetup(), spotdlAvailable,
+        spotdlError: !spotdlAvailable && typeof spotify.diagnose === 'function'
+          ? await spotify.diagnose() : '',
+        jobs: repo.list(), root: '/Descargas de Internet' };
+    },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
     enqueue, enqueueDirect, enqueueSpotify, retry, cancel, prioritize, pause, resume,
     remove(id) {
