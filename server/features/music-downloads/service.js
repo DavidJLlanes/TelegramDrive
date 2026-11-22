@@ -5,6 +5,8 @@ import { badRequest, conflict, notFound } from '../../utils/errors.js';
 import { sourceUrl, classify } from './metadata.js';
 import { ensureDestination, ensureDirectDestination } from './folders.js';
 import { musicRunner } from './runner.js';
+import { spotdlRunner } from './spotdl-runner.js';
+import { spotifySource } from './spotify-source.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
 import { directSource, directCategory } from './direct-url.js';
@@ -14,10 +16,17 @@ import { transferPaths, clearTransfer } from './direct-transfer-state.js';
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
 
-export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
+export function createService({ repo, catalog, tmpDir, runner = musicRunner, spotify = spotdlRunner }) {
   let active = null;
   let stopped = true;
   let checking = null;
+  let spotdlChecking = null;
+  const spotdlSetup = () => {
+    spotdlChecking ??= spotify.installed().finally(() => {
+      setTimeout(() => { spotdlChecking = null; }, 60_000).unref?.();
+    });
+    return spotdlChecking;
+  };
   const checkSetup = () => {
     checking ??= runner.installed().finally(() => { setTimeout(() => { checking = null; }, 60_000).unref?.(); });
     return checking;
@@ -28,6 +37,29 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
       patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
+      if (job.format === 'spotdl') {
+        spotifySource(job.url);
+        patch(job.id, { state: 'downloading', title: 'Spotify · ' + job.title });
+        const files = await spotify.download(job.url, dir, {
+          signal, onProgress: (progress) => { if (!signal.aborted) patch(job.id, { progress }); },
+        });
+        if (signal.aborted) throw new Error('Descarga cancelada');
+        let lastFile = null;
+        for (let i = 0; i < files.length; i += 1) {
+          const song = files[i];
+          const destination = await ensureDestination(catalog, {
+            artist: song.artist, album: song.album, format: 'mp3', options: {},
+          });
+          patch(job.id, { state: 'uploading', destination,
+            progress: 75 + Math.floor(i / files.length * 24) });
+          lastFile = await catalog.fileOps.upload({
+            parent: destination, name: song.name, path: song.path, size: song.size,
+          });
+        }
+        patch(job.id, { state: 'done', progress: 100, fileId: lastFile.id });
+        catalog.tagger.kick();
+        return;
+      }
       if (job.format === 'direct') {
         const source = directSource(job.url);
         patch(job.id, { state: 'downloading', title: source.name });
@@ -167,6 +199,25 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     return { accepted: [j.id], skipped: [] };
   }
 
+  function enqueueSpotify(input) {
+    const source = spotifySource(input);
+    if (repo.pendingCount() >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
+    if (repo.activeSources().some((job) => job.sourceId === source.id)) {
+      throw conflict('Este enlace de Spotify ya está en cola');
+    }
+    let previous = repo.bySource(source.id, 'spotdl');
+    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
+    if (previous) return { accepted: [], skipped: [source.id] };
+    const created = Date.now();
+    const job = { id: randomUUID(), sourceId: source.id, url: source.url,
+      title: source.type + ' · ' + source.url.split('/').at(-1),
+      artist: '', album: '', format: 'spotdl', options: normalizeOptions(),
+      channel: '', playlist: '', year: '', created };
+    repo.insert(job);
+    queueMicrotask(drain);
+    return { accepted: [job.id], skipped: [] };
+  }
+
   function prioritize(id, priority) {
     const job = repo.get(id);
     if (!job) throw notFound('Descarga no encontrada');
@@ -204,9 +255,9 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   }
 
   return {
-    async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
+    async status() { return { available: await checkSetup(), spotdlAvailable: await spotdlSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
-    enqueue, enqueueDirect, retry, cancel, prioritize, pause, resume,
+    enqueue, enqueueDirect, enqueueSpotify, retry, cancel, prioritize, pause, resume,
     remove(id) {
       const job = repo.get(id);
       if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso');
