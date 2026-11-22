@@ -20,9 +20,17 @@ export const spotdlRunner = {
   async download(input, dir, { signal, onProgress } = {}) {
     const source = spotifySource(input);
     const manifest = path.join(dir, 'songs.spotdl');
-    await execute(BIN, ['save', source.url, '--save-file', manifest,
-      '--log-level', 'ERROR', '--threads', '1'], { signal, timeout: 120_000 });
-    const songs = manifestCount(await fs.readFile(manifest, 'utf8'));
+    const saveOutput = await execute(BIN, ['save', source.url, '--save-file', manifest,
+      '--log-level', 'INFO', '--threads', '1'], { signal, timeout: 120_000 });
+    let saved;
+    try {
+      saved = await fs.readFile(manifest, 'utf8');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      throw new Error('SpotDL no generó los metadatos de Spotify. Comprueba que la lista sea pública y accesible: '
+        + String(saveOutput).trim().slice(-400));
+    }
+    const songs = manifestCount(saved);
     onProgress?.(5);
     const output = path.join(dir, '{artist}', '{album}', '{title}.{output-ext}');
     await execute(BIN, ['download', source.url, '--format', 'mp3', '--bitrate', '128k',
