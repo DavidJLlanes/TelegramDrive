@@ -3,7 +3,7 @@ import { icon } from '../../core/icons.js';
 import { toast, toastError } from '../../ui/toast.js';
 import { musicApi } from './api.js';
 
-export function spotifyDownloadForm(refresh, available) {
+export function spotifyDownloadForm(refresh, available, error = '') {
   const input = h('input', { class: 'input md-url', type: 'url', required: true,
     autocomplete: 'off', placeholder: 'https://open.spotify.com/playlist/…' });
   const submit = h('button', { class: 'btn btn-primary', type: 'submit' },
@@ -13,7 +13,9 @@ export function spotifyDownloadForm(refresh, available) {
     h('p', { class: 'pg-hint' }, 'Canciones, álbumes y listas públicas (máximo 150 pistas por trabajo). ' +
       'SpotDL utiliza metadatos de Spotify y obtiene audio coincidente de YouTube Music; no descarga los archivos de Spotify. ' +
       'Se guardan como MP3 en Descargas de Internet / Artista / Álbum. ' +
-      (available ? '' : 'SpotDL no está disponible todavía en este servidor.')),
+      (available ? '' : 'SpotDL no está disponible en el servidor. ' +
+        (error ? 'Diagnóstico: ' + error + '. ' : '') +
+        'Ejecuta bash deploy/deploy.sh desde el VPS.')),
     h('form', { class: 'md-form', onsubmit: async (event) => {
       event.preventDefault();
       submit.disabled = true;
