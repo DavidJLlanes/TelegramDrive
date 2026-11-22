@@ -11,6 +11,7 @@ import { enqueueSpotifyJob } from './spotdl-queue.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
 import { directSource, directCategory } from './direct-url.js';
+import { enqueueDirectJob } from './direct-queue.js';
 import { downloadResumable } from './direct-resume.js';
 import { transferPaths, clearTransfer } from './direct-transfer-state.js';
 
@@ -164,22 +165,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     return { queued: true };
   }
 
-  function enqueueDirect(input) {
-    const src = directSource(input);
-    const outstanding = repo.activeSources();
-    if (repo.pendingCount() >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
-    if (outstanding.some((j) => j.sourceId === src.id)) throw conflict('Esta descarga ya está en cola');
-    let previous = repo.bySource(src.id, 'direct');
-    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-    if (previous) return { accepted: [], skipped: [src.id] };
-    const created = Date.now();
-    const j = { id: randomUUID(), sourceId: src.id, url: src.url,
-      title: src.name, artist: '', album: '', format: 'direct', options: normalizeOptions(),
-      channel: '', playlist: '', year: '', created };
-    repo.insert(j);
-    queueMicrotask(drain);
-    return { accepted: [j.id], skipped: [] };
-  }
+  const enqueueDirect = (input) => enqueueDirectJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
 
   const enqueueSpotify = (input) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
 
