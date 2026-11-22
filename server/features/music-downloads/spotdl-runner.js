@@ -4,7 +4,7 @@ import { config } from '../../config/index.js';
 import { execute } from './runner.js';
 import { spotifySource } from './spotify-source.js';
 import { spotdlEnv } from './spotdl-env.js';
-import { manifestCount, spotdlFiles } from './spotdl-files.js';
+import { manifestCount, manifestListName, spotdlFiles } from './spotdl-files.js';
 
 const BIN = process.env.SPOTDL_BIN || path.join(config.dataDir, 'tools', 'spotdl-venv', 'bin', 'spotdl');
 const TIMEOUT = 3 * 60 * 60_000;
@@ -45,6 +45,7 @@ export const spotdlRunner = {
     const files = await spotdlFiles(dir);
     if (files.length > songs) throw new Error('SpotDL produjo más canciones de las previstas');
     onProgress?.(75);
-    return files;
+    const playlist = source.type === 'playlist' ? manifestListName(saved) : '';
+    return files.map((file) => ({ ...file, playlist }));
   },
 };

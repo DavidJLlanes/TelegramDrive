@@ -12,16 +12,18 @@ export function downloadOptions() {
     ['2160', '4K'], ['1440', '1440p'], ['1080', '1080p'], ['720', '720p'], ['480', '480p'], ['360', '360p']]);
   const videoGroup = select('Organizar vídeos por', [['flat', 'Todos en Vídeos'], ['channel', 'Canal'],
     ['year', 'Año'], ['playlist', 'Lista de reproducción']]);
+  const audioGroup = select('Organizar audio por', [['playlist', 'Carpeta de la lista (si es lista)'],
+    ['artist', 'Artista / Álbum']]);
   const subtitles = h('input', { type: 'checkbox' });
   const thumbnail = h('input', { type: 'checkbox', checked: true });
   const element = h('div', { class: 'md-options' },
-    audioFormat.element, audioBitrate.element, videoQuality.element, videoGroup.element,
+    audioFormat.element, audioBitrate.element, audioGroup.element, videoQuality.element, videoGroup.element,
     h('label', { class: 'md-toggle' }, subtitles, 'Descargar subtítulos disponibles (ES/EN)'),
     h('label', { class: 'md-toggle' }, thumbnail, 'Incluir carátula en MP3'));
   return {
     element,
     values: () => ({
-      audioFormat: audioFormat.control.value, audioBitrate: audioBitrate.control.value,
+      audioFormat: audioFormat.control.value, audioBitrate: audioBitrate.control.value, audioGroup: audioGroup.control.value,
       videoQuality: videoQuality.control.value, videoGroup: videoGroup.control.value,
       subtitles: subtitles.checked, thumbnail: thumbnail.checked,
     }),

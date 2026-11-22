@@ -20,7 +20,8 @@ export async function ensureDirectDestination(catalog, category) {
 export async function ensureDestination(catalog, info, overrides = {}) {
   const artist = safePart(overrides.artist ?? info.artist);
   const album = safePart(overrides.album ?? info.album);
-  const path = info.format === 'video' ? videoDestination(info, info.options?.videoGroup) : artist ? ROOT_FOLDER + '/' + artist + '/' + (album || 'Singles') : ROOT_FOLDER + '/Por revisar';
+  const list = info.format === 'video' || info.options?.audioGroup === 'artist' ? '' : safePart(info.playlist);
+  const path = info.format === 'video' ? videoDestination(info, info.options?.videoGroup) : list ? ROOT_FOLDER + '/Listas/' + list : artist ? ROOT_FOLDER + '/' + artist + '/' + (album || 'Singles') : ROOT_FOLDER + '/Por revisar';
   let current = '/';
   for (const segment of path.split('/').filter(Boolean)) {
     const next = current === '/' ? '/' + segment : current + '/' + segment;

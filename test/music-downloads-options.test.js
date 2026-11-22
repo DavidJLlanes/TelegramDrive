@@ -26,3 +26,17 @@ test('progreso se interpreta sin ejecutar código externo', () => {
   assert.equal(progressLine('other').progress, undefined);
   assert.deepEqual(progressLine('download:55.5% speed:1.2MiB/s eta:01:22'), { progress: 42, speed: '1.2MiB/s', eta: '01:22' });
 });
+
+test('audioGroup: lista por defecto, artista permitido y valores raros rechazados', async () => {
+  const { normalizeOptions } = await import('../server/features/music-downloads/options.js');
+  const { ensureDestination } = await import('../server/features/music-downloads/folders.js');
+  assert.equal(normalizeOptions().audioGroup, 'playlist');
+  assert.equal(normalizeOptions({ audioGroup: 'artist' }).audioGroup, 'artist');
+  assert.throws(() => normalizeOptions({ audioGroup: '../' }));
+  const made = [];
+  const catalog = { tree: { resolve: () => 1 }, folderOps: { create: async (...a) => made.push(a) } };
+  const base = { artist: 'Queen', album: 'News', playlist: 'Rock/Clásico', format: 'mp3' };
+  assert.equal(await ensureDestination(catalog, { ...base, options: normalizeOptions() }), '/Descargas de Internet/Listas/Rock Clásico');
+  assert.equal(await ensureDestination(catalog, { ...base, options: normalizeOptions({ audioGroup: 'artist' }) }), '/Descargas de Internet/Queen/News');
+  assert.equal(await ensureDestination(catalog, { ...base, playlist: '', options: normalizeOptions() }), '/Descargas de Internet/Queen/News');
+});

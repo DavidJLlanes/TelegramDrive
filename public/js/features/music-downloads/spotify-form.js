@@ -12,7 +12,8 @@ export function spotifyDownloadForm(refresh, available, error = '') {
     h('h2', {}, 'Spotify · SpotDL'),
     h('p', { class: 'pg-hint' }, 'Canciones, álbumes y listas públicas (máximo 150 pistas por trabajo). ' +
       'SpotDL utiliza metadatos de Spotify y obtiene audio coincidente de YouTube Music; no descarga los archivos de Spotify. ' +
-      'Se guardan como MP3 en Descargas de Internet / Artista / Álbum. ' +
+      'Las listas se guardan como MP3 en Descargas de Internet / Listas / Nombre de la lista; ' +
+      'los álbumes y las canciones sueltas, en Descargas de Internet / Artista / Álbum. ' +
       (available ? '' : 'SpotDL no está disponible en el servidor. ' +
         (error ? 'Diagnóstico: ' + error + '. ' : '') +
         'Ejecuta bash deploy/deploy.sh desde el VPS.')),

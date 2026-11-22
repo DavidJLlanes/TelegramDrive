@@ -45,3 +45,12 @@ export function manifestCount(content) {
   if (songs.length > MAX_SPOTDL_SONGS) throw new Error('Máximo de 150 canciones por lista o álbum');
   return songs.length;
 }
+
+/** SpotDL guarda el nombre de la lista o álbum de origen en cada pista del manifiesto (list_name). */
+export function manifestListName(content) {
+  try {
+    const data = JSON.parse(content);
+    const songs = Array.isArray(data) ? data : data?.songs;
+    return safePart(songs?.find((song) => song?.list_name)?.list_name);
+  } catch { return ''; }
+}
