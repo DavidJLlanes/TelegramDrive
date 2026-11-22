@@ -160,9 +160,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     queueMicrotask(drain);
     return { queued: true };
   }
-
   const enqueueDirect = (input) => enqueueDirectJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
-
   const enqueueSpotify = (input) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
 
   function prioritize(id, priority) {
@@ -202,13 +200,10 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
   }
 
   return {
-    async status() {
-      const spotdlAvailable = await spotdlSetup();
+    async status() { const spotdlAvailable = await spotdlSetup();
       return { available: await checkSetup(), spotdlAvailable,
-        spotdlError: !spotdlAvailable && typeof spotify.diagnose === 'function'
-          ? await spotify.diagnose() : '',
-        jobs: repo.list(), root: '/Descargas de Internet' };
-    },
+        spotdlError: !spotdlAvailable && spotify.diagnose ? await spotify.diagnose() : '',
+        jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
     enqueue, enqueueDirect, enqueueSpotify, retry, cancel, prioritize, pause, resume,
     remove(id) {
