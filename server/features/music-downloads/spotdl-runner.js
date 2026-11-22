@@ -10,8 +10,12 @@ const TIMEOUT = 3 * 60 * 60_000;
 
 export const spotdlRunner = {
   async installed() {
-    try { await execute(BIN, ['--version'], { timeout: 10_000 }); return true; }
+    try { await execute(BIN, ['--version'], { timeout: 20_000 }); return true; }
     catch { return false; }
+  },
+  async diagnose() {
+    try { await execute(BIN, ['--version'], { timeout: 20_000 }); return ''; }
+    catch (error) { return String(error.message || error).slice(0, 300); }
   },
   async download(input, dir, { signal, onProgress } = {}) {
     const source = spotifySource(input);

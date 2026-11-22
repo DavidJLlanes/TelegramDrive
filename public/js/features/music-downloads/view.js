@@ -105,7 +105,7 @@ export function renderDownloads(el, { data }) {
 
   fill(el, h('section', { class: 'pg-panel md-panel' }, h('h2', {}, 'Nueva descarga'),
     h('p', { class: 'pg-hint' }, 'MP3: Descargas de Internet / Artista / Álbum · Vídeo: Descargas de Internet / Vídeos'),
-    form), spotifyDownloadForm(refresh, data?.spotdlAvailable), directDownloadForm(refresh), h('section', { class: 'pg-panel md-panel' },
+    form), spotifyDownloadForm(refresh, data?.spotdlAvailable, data?.spotdlError), directDownloadForm(refresh), h('section', { class: 'pg-panel md-panel' },
     h('div', { class: 'md-heading' }, h('h2', {}, 'Historial y cola'),
       h('button', { class: 'btn btn-ghost', onclick: () => navigate('/Descargas de Internet') },
         icon('folder'), 'Abrir carpeta')), list));
