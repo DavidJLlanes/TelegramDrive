@@ -80,7 +80,7 @@ export function renderExplorer(container) {
   const both = folders.length > 0 && files.length > 0;
   if (folders.length) {
     if (both) container.append(h('h2', { class: 'section-title' }, 'Carpetas'));
-    container.append(h('div', { class: 'sleeves' }, folders.map(sleeve)));
+    container.append(h('div', { class: `sleeves view-${s.view}` }, folders.map(sleeve)));
   }
   if (files.length) {
     if (both) container.append(h('h2', { class: 'section-title' }, 'Archivos'));

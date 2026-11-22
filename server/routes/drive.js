@@ -28,7 +28,7 @@ export function driveRoutes({ catalog, tg }) {
   // --- acciones múltiples y descargas en ZIP ---
   router.post('/bulk', wrap(async (req, res) => {
     const { action, files, folders, parent } = req.body ?? {};
-    if (!['trash', 'move'].includes(action)) throw badRequest('Acción no válida');
+    if (!['trash', 'move', 'delete'].includes(action)) throw badRequest('Acción no válida');
     res.json(await catalog.bulk.run({ action, files: Array.isArray(files) ? files : [], folders: Array.isArray(folders) ? folders : [], parent }));
   }));
   router.get('/zip', wrap(async (req, res) => {

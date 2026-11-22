@@ -8,6 +8,16 @@ export class Bulk {
     const attempt = async (label, fn) => {
       try { await fn(); done += 1; } catch (err) { failed.push({ item: label, error: err.message }); }
     };
+    if (action === 'delete') {
+      // Definitivo: los archivos van en una sola petición y las carpetas de dentro hacia fuera, para no borrar dos veces lo mismo.
+      const ids = files.map(Number).filter(Number.isInteger);
+      if (ids.length) {
+        try { done += await this.fileOps.destroy(ids); } catch (err) { failed.push({ item: 'archivos', error: err.message }); }
+      }
+      const depth = (path) => String(path).split('/').filter(Boolean).length;
+      for (const path of [...folders].sort((a, b) => depth(b) - depth(a))) await attempt(path, () => this.folderOps.delete(path));
+      return { done, failed };
+    }
     for (const id of files) {
       if (action === 'trash') await attempt(id, () => this.trash.trashFile(id));
       else if (action === 'move') await attempt(id, () => this.fileOps.move(id, parent));

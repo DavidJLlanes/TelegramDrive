@@ -137,3 +137,13 @@
 }
 
 @media (max-width: 380px) { .sleeve-name { font-size: 0.95rem; } } /* nombres largos de carpeta en pantallas muy estrechas */
+
+/* Carpetas en vista de lista: filas compactas en lugar de fundas */
+.sleeves.view-list { grid-template-columns: 1fr; gap: 6px; }
+.sleeves.view-list .sleeve { min-height: 56px; padding: 8px 100px 8px 52px; align-items: center; border-radius: 12px; }
+.sleeves.view-list .sleeve::before { display: none; }
+.sleeves.view-list .sleeve > .icon { top: 15px; left: 14px; }
+.sleeves.view-list .sleeve .check { top: 15px; left: 12px; }
+.sleeves.view-list .sleeve-name { -webkit-line-clamp: 1; }
+.sleeves.view-list .sleeve-play { top: 8px; right: 50px; width: 40px; height: 40px; }
+.sleeves.view-list .sleeve .more { top: 10px; bottom: auto; right: 6px; }

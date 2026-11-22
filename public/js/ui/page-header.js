@@ -9,6 +9,7 @@ import { openMenu } from './menu.js';
 import { playButtons } from './play-buttons.js';
 import { libraryHead } from './library-head.js';
 import { emptyTrash } from './trash-view.js';
+import { selectAll } from './selection.js';
 import { pageHead } from './page-view.js';
 
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
@@ -57,8 +58,11 @@ function tools(s) {
     class: 'btn btn-icon', 'aria-label': s.view === 'grid' ? 'Ver como lista' : 'Ver como cuadrícula',
     onclick: () => { const view = appState.get().view === 'grid' ? 'list' : 'grid'; prefs.save('view', view); appState.set({ view }); },
   }, icon(s.view === 'grid' ? 'list' : 'grid'));
+  const selectBtn = (s.results === null ? s.folders.length || s.files.length : s.results.length)
+    ? h('button', { class: 'btn', type: 'button', title: 'Seleccionar todo', 'aria-label': 'Seleccionar todo', onclick: selectAll },
+      icon('check'), h('span', { class: 'hide-mobile' }, 'Seleccionar todo')) : null;
   const mayHaveMusic = s.results === null && (s.folders.some((f) => f.music !== false) || s.files.some((f) => f.kind === 'audio'));
-  return h('div', { class: 'page-tools' }, mayHaveMusic ? playButtons((o) => playFolder(s.path, o)) : null, sortBtn, viewBtn);
+  return h('div', { class: 'page-tools' }, mayHaveMusic ? playButtons((o) => playFolder(s.path, o)) : null, sortBtn, viewBtn, selectBtn);
 }
 
 function folderHead(s) {
