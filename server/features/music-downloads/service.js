@@ -5,29 +5,41 @@ import { badRequest, conflict, notFound } from '../../utils/errors.js';
 import { sourceUrl, classify } from './metadata.js';
 import { ensureDestination, ensureDirectDestination } from './folders.js';
 import { musicRunner } from './runner.js';
+import { spotdlRunner } from './spotdl-runner.js';
+import { runSpotdlJob } from './spotdl-upload.js';
+import { enqueueSpotifyJob } from './spotdl-queue.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
 import { directSource, directCategory } from './direct-url.js';
+import { enqueueDirectJob } from './direct-queue.js';
 import { downloadResumable } from './direct-resume.js';
 import { transferPaths, clearTransfer } from './direct-transfer-state.js';
-
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
-
-export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
+export function createService({ repo, catalog, tmpDir, runner = musicRunner, spotify = spotdlRunner }) {
   let active = null;
   let stopped = true;
   let checking = null;
+  let spotdlChecking = null;
+  const spotdlSetup = () => {
+    spotdlChecking ??= spotify.installed().finally(() => {
+      setTimeout(() => { spotdlChecking = null; }, 60_000).unref?.();
+    });
+    return spotdlChecking;
+  };
   const checkSetup = () => {
     checking ??= runner.installed().finally(() => { setTimeout(() => { checking = null; }, 60_000).unref?.(); });
     return checking;
   };
   const patch = (id, fields) => repo.patch(id, fields);
-
   async function run(job, signal) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
       patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
+      if (job.format === 'spotdl') {
+        await runSpotdlJob({ job, spotify, dir, signal, patch, catalog });
+        return;
+      }
       if (job.format === 'direct') {
         const source = directSource(job.url);
         patch(job.id, { state: 'downloading', title: source.name });
@@ -76,7 +88,6 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
       await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
     }
   }
-
   async function drain() {
     if (stopped || active) return;
     const job = repo.outstanding()[0];
@@ -150,22 +161,9 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
     return { queued: true };
   }
 
-  function enqueueDirect(input) {
-    const src = directSource(input);
-    const outstanding = repo.activeSources();
-    if (repo.pendingCount() >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
-    if (outstanding.some((j) => j.sourceId === src.id)) throw conflict('Esta descarga ya está en cola');
-    let previous = repo.bySource(src.id, 'direct');
-    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-    if (previous) return { accepted: [], skipped: [src.id] };
-    const created = Date.now();
-    const j = { id: randomUUID(), sourceId: src.id, url: src.url,
-      title: src.name, artist: '', album: '', format: 'direct', options: normalizeOptions(),
-      channel: '', playlist: '', year: '', created };
-    repo.insert(j);
-    queueMicrotask(drain);
-    return { accepted: [j.id], skipped: [] };
-  }
+  const enqueueDirect = (input) => enqueueDirectJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
+
+  const enqueueSpotify = (input) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
 
   function prioritize(id, priority) {
     const job = repo.get(id);
@@ -204,9 +202,9 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner }) {
   }
 
   return {
-    async status() { return { available: await checkSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
+    async status() { return { available: await checkSetup(), spotdlAvailable: await spotdlSetup(), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
-    enqueue, enqueueDirect, retry, cancel, prioritize, pause, resume,
+    enqueue, enqueueDirect, enqueueSpotify, retry, cancel, prioritize, pause, resume,
     remove(id) {
       const job = repo.get(id);
       if (!repo.delete(id)) throw conflict('No se puede eliminar una descarga en curso');

@@ -36,6 +36,7 @@ chmod 700 data
 
 # MP3 de YouTube: yt-dlp[default] (incluye EJS) + FFmpeg, dentro de data/tools.
 bash deploy/install-music-tools.sh
+bash deploy/install-spotdl.sh
 # .env propiedad del usuario del servicio: así "setup" puede escribirlo sin tocar los permisos de la carpeta
 [ -f .env ] || cp .env.example .env
 chown "$RUN_USER:$RUN_USER" .env

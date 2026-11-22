@@ -27,6 +27,9 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 | `direct-http.js` | Conexiones HTTPS con IP pública fijada y validación de rangos HTTP |
 | `direct-transfer-state.js` | Metadatos de reanudación y archivos parciales persistentes |
 | `direct-resume.js` | Transferencias reanudables con ETag/Last-Modified y límite de 1 GiB |
+| `spotify-source.js` | Enlaces canónicos de canciones, álbumes y listas públicas de Spotify |
+| `spotdl-runner.js` | Aislamiento de procesos SpotDL, inspección previa y descarga MP3 |
+| `spotdl-files.js` | Verificación de ficheros, tamaños y estructura artista/álbum |
 
 ## Cliente — `public/js/features/music-downloads/`
 
@@ -45,6 +48,12 @@ El centro de descargas se implementa como una función aislada, sin mezclar lóg
 ## Listas y cola
 
 Las listas de YouTube se exploran por páginas de 50 elementos, hasta 5000 por lista. Se pueden pausar y reanudar trabajos **pendientes**; las transferencias en curso solo permiten cancelar y reintentar, sin prometer reanudación parcial.
+
+## Spotify mediante SpotDL
+
+SpotDL se instala en `data/tools/spotdl-venv`, separado del entorno de yt-dlp, con `deploy/install-spotdl.sh`. El formulario de Spotify acepta URLs públicas de canciones, álbumes y listas de `open.spotify.com`; elimina parámetros de seguimiento y no admite credenciales, IP literales ni enlaces arbitrarios. Se comprueba una previsualización de metadatos antes de descargar, con límite de 150 pistas por trabajo; se ejecuta un único proceso por cola con plazo máximo de tres horas. La salida se limita a MP3 (128 kbps de conversión, no implica que el origen tenga esa calidad) y se organiza con los metadatos recuperados en `Descargas de Internet/Artista/Álbum`. Cada archivo se incorpora al catálogo de TelegramDrive y la carpeta temporal se elimina al terminar. Las descargas Spotify no admiten pausa de un proceso activo ni reanudación parcial; sí pausar y reanudar trabajos pendientes.
+
+SpotDL **no extrae el audio de Spotify**: utiliza los datos de Spotify y busca audio coincidente en YouTube Music. No evade DRM. Spotify puede cambiar el acceso a metadatos y la coincidencia de canciones no está garantizada. Las listas privadas y bibliotecas personales requieren autenticación externa y no se admiten en esta integración.
 
 ## Archivos directos
 
