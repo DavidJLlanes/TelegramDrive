@@ -4,12 +4,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { makeHarness } from './helpers/harness.js';
 import { createRepo } from '../server/features/music-downloads/repo.js';
-import { createService } from '../server/features/music-downloads/service.js';
 
 const url = 'https://open.spotify.com/album/0VjIjW4GlUZAMYd2vXMi3b';
 
 test('SpotDL usa la cola autenticada y sube las pistas a carpetas de artista/álbum', async () => {
   const h = await makeHarness();
+  const { createService } = await import('../server/features/music-downloads/service.js');
   const spotify = {
     installed: async () => true,
     download: async (_url, dir, { onProgress }) => {
