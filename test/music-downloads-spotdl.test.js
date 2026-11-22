@@ -67,3 +67,9 @@ test('SpotDL: usa un HOME propio y escribible en lugar del de www-data', async (
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test('execute: un plazo agotado es un error aunque el proceso salga con código 0', async () => {
+  const { execute } = await import('../server/features/music-downloads/runner.js');
+  const script = "process.on('SIGTERM', () => process.exit(0)); setInterval(() => {}, 1000);";
+  await assert.rejects(execute(process.execPath, ['-e', script], { timeout: 300 }), /Tiempo de espera agotado/);
+});

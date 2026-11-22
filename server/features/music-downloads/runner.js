@@ -17,7 +17,7 @@ const MAX_OUTPUT = 5 * 1024 * 1024;
 export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, ...(env ? { env } : {}) });
-    let output = '', err = '', buffer = '', done = false;
+    let output = '', err = '', buffer = '', done = false, timedOut = false;
     const finish = (error) => {
       if (done) return;
       done = true;
@@ -26,7 +26,7 @@ export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {
       if (error) reject(error); else resolve(output);
     };
     const abort = () => proc.kill('SIGTERM');
-    const timer = setTimeout(() => proc.kill('SIGTERM'), timeout);
+    const timer = setTimeout(() => { timedOut = true; proc.kill('SIGTERM'); }, timeout);
     timer.unref?.();
     if (signal?.aborted) abort();
     else signal?.addEventListener('abort', abort, { once: true });
@@ -44,6 +44,7 @@ export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {
     proc.stderr.on('data', (chunk) => { err = (err + chunk.toString()).slice(-1500); });
     proc.on('error', (e) => finish(new Error(e.code === 'ENOENT' ? 'Falta instalar ' + path.basename(bin) : e.message)));
     proc.on('close', (code) => finish(signal?.aborted ? new Error('Descarga cancelada')
+      : timedOut ? new Error('Tiempo de espera agotado tras ' + Math.round(timeout / 1000) + ' s')
       : code === 0 ? null : new Error((err.trim() || 'El proceso de descarga falló').slice(-500))));
   });
 }

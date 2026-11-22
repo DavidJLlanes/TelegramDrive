@@ -8,6 +8,8 @@ import { manifestCount, spotdlFiles } from './spotdl-files.js';
 
 const BIN = process.env.SPOTDL_BIN || path.join(config.dataDir, 'tools', 'spotdl-venv', 'bin', 'spotdl');
 const TIMEOUT = 3 * 60 * 60_000;
+// Leer los metadatos de hasta 150 pistas puede tardar varios minutos; SpotDL sale con código 0 al recibir SIGTERM.
+const SAVE_TIMEOUT = 15 * 60_000;
 
 export const spotdlRunner = {
   async installed() {
@@ -23,7 +25,7 @@ export const spotdlRunner = {
     const env = await spotdlEnv();
     const manifest = path.join(dir, 'songs.spotdl');
     const saveOutput = await execute(BIN, ['save', source.url, '--save-file', manifest,
-      '--log-level', 'INFO', '--threads', '1'], { signal, timeout: 120_000, env });
+      '--log-level', 'INFO', '--threads', '4'], { signal, timeout: SAVE_TIMEOUT, env });
     let saved;
     try {
       saved = await fs.readFile(manifest, 'utf8');
