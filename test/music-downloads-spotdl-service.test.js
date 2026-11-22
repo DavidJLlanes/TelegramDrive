@@ -44,9 +44,10 @@ test('SpotDL usa la cola autenticada y sube las pistas a carpetas de artista/ál
     assert.equal(files[0].name, 'Tema.mp3');
     assert.equal(service.enqueueSpotify(url).skipped.length, 1);
     const remote = await h.call('POST', '/api/music-downloads/spotify', {
-      url: 'https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b',
+      url,
     });
     assert.equal(remote.res.status, 202);
+    assert.equal(remote.json.skipped.length, 1);
     const malicious = await h.call('POST', '/api/music-downloads/spotify', { url: 'http://127.0.0.1/admin' });
     assert.equal(malicious.res.status, 400);
   } finally {
