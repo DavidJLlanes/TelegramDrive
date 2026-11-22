@@ -14,9 +14,9 @@ const JS = ['--js-runtimes', 'node'];
 const BASE = ['--ignore-config', '--no-warnings', ...JS];
 const MAX_OUTPUT = 5 * 1024 * 1024;
 
-export function execute(bin, args, { signal, timeout = 60_000, onLine } = {}) {
+export function execute(bin, args, { signal, timeout = 60_000, onLine, env } = {}) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, ...(env ? { env } : {}) });
     let output = '', err = '', buffer = '', done = false;
     const finish = (error) => {
       if (done) return;

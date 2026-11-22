@@ -50,3 +50,20 @@ test('SpotDL: recoge música en Artista/Álbum y rechaza ficheros peligrosos', a
     await assert.rejects(spotdlFiles(root), /simbólico/);
   } finally { await fs.rm(root, { recursive: true, force: true }); }
 });
+
+test('SpotDL: usa un HOME propio y escribible en lugar del de www-data', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'spotdl-home-'));
+  process.env.SPOTDL_HOME = path.join(root, 'home');
+  try {
+    const { spotdlEnv } = await import('../server/features/music-downloads/spotdl-env.js');
+    const env = await spotdlEnv();
+    assert.equal(env.HOME, process.env.SPOTDL_HOME);
+    assert.equal(env.XDG_CONFIG_HOME, path.join(env.HOME, '.config'));
+    assert.equal(env.XDG_CACHE_HOME, path.join(env.HOME, '.cache'));
+    await fs.access(env.XDG_CONFIG_HOME);
+    await fs.access(env.XDG_CACHE_HOME);
+  } finally {
+    delete process.env.SPOTDL_HOME;
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});

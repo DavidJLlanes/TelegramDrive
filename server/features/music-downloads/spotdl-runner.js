@@ -3,6 +3,7 @@ import path from 'node:path';
 import { config } from '../../config/index.js';
 import { execute } from './runner.js';
 import { spotifySource } from './spotify-source.js';
+import { spotdlEnv } from './spotdl-env.js';
 import { manifestCount, spotdlFiles } from './spotdl-files.js';
 
 const BIN = process.env.SPOTDL_BIN || path.join(config.dataDir, 'tools', 'spotdl-venv', 'bin', 'spotdl');
@@ -10,18 +11,19 @@ const TIMEOUT = 3 * 60 * 60_000;
 
 export const spotdlRunner = {
   async installed() {
-    try { await execute(BIN, ['--version'], { timeout: 20_000 }); return true; }
+    try { await execute(BIN, ['--version'], { timeout: 20_000, env: await spotdlEnv() }); return true; }
     catch { return false; }
   },
   async diagnose() {
-    try { await execute(BIN, ['--version'], { timeout: 20_000 }); return ''; }
+    try { await execute(BIN, ['--version'], { timeout: 20_000, env: await spotdlEnv() }); return ''; }
     catch (error) { return String(error.message || error).slice(0, 300); }
   },
   async download(input, dir, { signal, onProgress } = {}) {
     const source = spotifySource(input);
+    const env = await spotdlEnv();
     const manifest = path.join(dir, 'songs.spotdl');
     const saveOutput = await execute(BIN, ['save', source.url, '--save-file', manifest,
-      '--log-level', 'INFO', '--threads', '1'], { signal, timeout: 120_000 });
+      '--log-level', 'INFO', '--threads', '1'], { signal, timeout: 120_000, env });
     let saved;
     try {
       saved = await fs.readFile(manifest, 'utf8');
@@ -35,7 +37,7 @@ export const spotdlRunner = {
     const output = path.join(dir, '{artist}', '{album}', '{title}.{output-ext}');
     await execute(BIN, ['download', source.url, '--format', 'mp3', '--bitrate', '128k',
       '--output', output, '--threads', '1', '--log-level', 'ERROR'], {
-      signal, timeout: TIMEOUT,
+      signal, timeout: TIMEOUT, env,
     });
     if (signal?.aborted) throw new Error('Descarga cancelada');
     const files = await spotdlFiles(dir);
