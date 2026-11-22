@@ -6,7 +6,8 @@ import { sourceUrl, classify } from './metadata.js';
 import { ensureDestination, ensureDirectDestination } from './folders.js';
 import { musicRunner } from './runner.js';
 import { spotdlRunner } from './spotdl-runner.js';
-import { spotifySource } from './spotify-source.js';
+import { runSpotdlJob } from './spotdl-upload.js';
+import { enqueueSpotifyJob } from './spotdl-queue.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
 import { directSource, directCategory } from './direct-url.js';
@@ -38,26 +39,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     try {
       patch(job.id, { state: 'analyzing', progress: 0, error: '', speed: '', eta: '' });
       if (job.format === 'spotdl') {
-        spotifySource(job.url);
-        patch(job.id, { state: 'downloading', title: 'Spotify · ' + job.title });
-        const files = await spotify.download(job.url, dir, {
-          signal, onProgress: (progress) => { if (!signal.aborted) patch(job.id, { progress }); },
-        });
-        if (signal.aborted) throw new Error('Descarga cancelada');
-        let lastFile = null;
-        for (let i = 0; i < files.length; i += 1) {
-          const song = files[i];
-          const destination = await ensureDestination(catalog, {
-            artist: song.artist, album: song.album, format: 'mp3', options: {},
-          });
-          patch(job.id, { state: 'uploading', destination,
-            progress: 75 + Math.floor(i / files.length * 24) });
-          lastFile = await catalog.fileOps.upload({
-            parent: destination, name: song.name, path: song.path, size: song.size,
-          });
-        }
-        patch(job.id, { state: 'done', progress: 100, fileId: lastFile.id });
-        catalog.tagger.kick();
+        await runSpotdlJob({ job, spotify, dir, signal, patch, catalog });
         return;
       }
       if (job.format === 'direct') {
@@ -199,24 +181,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     return { accepted: [j.id], skipped: [] };
   }
 
-  function enqueueSpotify(input) {
-    const source = spotifySource(input);
-    if (repo.pendingCount() >= MAX_QUEUE) throw conflict('Hay demasiadas descargas pendientes');
-    if (repo.activeSources().some((job) => job.sourceId === source.id)) {
-      throw conflict('Este enlace de Spotify ya está en cola');
-    }
-    let previous = repo.bySource(source.id, 'spotdl');
-    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-    if (previous) return { accepted: [], skipped: [source.id] };
-    const created = Date.now();
-    const job = { id: randomUUID(), sourceId: source.id, url: source.url,
-      title: source.type + ' · ' + source.url.split('/').at(-1),
-      artist: '', album: '', format: 'spotdl', options: normalizeOptions(),
-      channel: '', playlist: '', year: '', created };
-    repo.insert(job);
-    queueMicrotask(drain);
-    return { accepted: [job.id], skipped: [] };
-  }
+  const enqueueSpotify = (input) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
 
   function prioritize(id, priority) {
     const job = repo.get(id);
