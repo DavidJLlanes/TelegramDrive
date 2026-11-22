@@ -14,10 +14,8 @@ import { directSource, directCategory } from './direct-url.js';
 import { enqueueDirectJob } from './direct-queue.js';
 import { downloadResumable } from './direct-resume.js';
 import { transferPaths, clearTransfer } from './direct-transfer-state.js';
-
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
-
 export function createService({ repo, catalog, tmpDir, runner = musicRunner, spotify = spotdlRunner }) {
   let active = null;
   let stopped = true;
@@ -34,7 +32,6 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     return checking;
   };
   const patch = (id, fields) => repo.patch(id, fields);
-
   async function run(job, signal) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
     try {
@@ -91,7 +88,6 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
       await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
     }
   }
-
   async function drain() {
     if (stopped || active) return;
     const job = repo.outstanding()[0];
