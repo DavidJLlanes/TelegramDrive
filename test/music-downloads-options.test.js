@@ -40,3 +40,18 @@ test('audioGroup: lista por defecto, artista permitido y valores raros rechazado
   assert.equal(await ensureDestination(catalog, { ...base, options: normalizeOptions({ audioGroup: 'artist' }) }), '/Descargas de Internet/Queen/News');
   assert.equal(await ensureDestination(catalog, { ...base, playlist: '', options: normalizeOptions() }), '/Descargas de Internet/Queen/News');
 });
+
+test('folder: opcional, sanea el nombre y rechaza nombres vacíos tras limpiar', async () => {
+  const { normalizeOptions } = await import('../server/features/music-downloads/options.js');
+  const { ensureDestination, ensureDirectDestination } = await import('../server/features/music-downloads/folders.js');
+  assert.equal(normalizeOptions().folder, '');
+  assert.equal(normalizeOptions({ folder: '   ' }).folder, '');
+  assert.equal(normalizeOptions({ folder: ' Fiesta/2026 ' }).folder, 'Fiesta 2026');
+  assert.throws(() => normalizeOptions({ folder: '..' }));
+  const catalog = { tree: { resolve: () => 1 }, folderOps: { create: async () => {} } };
+  const info = { artist: 'Queen', album: 'News', playlist: 'Lista', format: 'mp3' };
+  assert.equal(await ensureDestination(catalog, { ...info, options: normalizeOptions({ folder: 'Fiesta' }) }), '/Descargas de Internet/Fiesta');
+  assert.equal(await ensureDestination(catalog, { ...info, format: 'video', options: normalizeOptions({ folder: 'Fiesta' }) }), '/Descargas de Internet/Fiesta');
+  assert.equal(await ensureDirectDestination(catalog, 'PDF', 'Docs'), '/Descargas de Internet/Docs');
+  assert.equal(await ensureDirectDestination(catalog, 'PDF'), '/Descargas de Internet/Archivos directos/PDF');
+});

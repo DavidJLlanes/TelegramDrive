@@ -3,7 +3,7 @@ import { conflict } from '../../utils/errors.js';
 import { normalizeOptions } from './options.js';
 import { spotifySource } from './spotify-source.js';
 
-export function enqueueSpotifyJob(input, { repo, catalog, maxQueue, drain }) {
+export function enqueueSpotifyJob(input, { repo, catalog, maxQueue, drain }, folder = '') {
     const source = spotifySource(input);
     if (repo.pendingCount() >= maxQueue) throw conflict('Hay demasiadas descargas pendientes');
     if (repo.activeSources().some((job) => job.sourceId === source.id)) {
@@ -15,7 +15,7 @@ export function enqueueSpotifyJob(input, { repo, catalog, maxQueue, drain }) {
     const created = Date.now();
     const job = { id: randomUUID(), sourceId: source.id, url: source.url,
       title: source.type + ' · ' + source.url.split('/').at(-1),
-      artist: '', album: '', format: 'spotdl', options: normalizeOptions(),
+      artist: '', album: '', format: 'spotdl', options: normalizeOptions({ folder }),
       channel: '', playlist: '', year: '', created };
     repo.insert(job);
     queueMicrotask(drain);

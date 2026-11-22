@@ -2,10 +2,12 @@ import { h } from '../../core/dom.js';
 import { icon } from '../../core/icons.js';
 import { toast, toastError } from '../../ui/toast.js';
 import { musicApi } from './api.js';
+import { folderField } from './folder-field.js';
 
 export function spotifyDownloadForm(refresh, available, error = '') {
   const input = h('input', { class: 'input md-url', type: 'url', required: true,
     autocomplete: 'off', placeholder: 'https://open.spotify.com/playlist/…' });
+  const folder = folderField();
   const submit = h('button', { class: 'btn btn-primary', type: 'submit' },
     icon('download'), 'Añadir música de Spotify');
   return h('section', { class: 'pg-panel md-panel' },
@@ -21,11 +23,11 @@ export function spotifyDownloadForm(refresh, available, error = '') {
       event.preventDefault();
       submit.disabled = true;
       try {
-        const result = await musicApi.addSpotify(input.value);
+        const result = await musicApi.addSpotify(input.value, folder.value());
         toast(result.accepted.length ? 'Spotify añadido a la cola' : 'Esta descarga ya está guardada', { type: 'ok' });
         input.value = '';
         await refresh();
       } catch (error) { toastError(error); }
       finally { submit.disabled = false; }
-    } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace público de Spotify'), input), submit));
+    } }, h('label', { class: 'md-field' }, h('span', {}, 'Enlace público de Spotify'), input), folder.element, submit));
 }

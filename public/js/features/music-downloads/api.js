@@ -3,8 +3,8 @@ import { http } from '../../core/api.js';
 export const musicApi = {
   status: () => http.get('music-downloads'),
   inspect: (url, offset = 0) => http.post('music-downloads/inspect', { url, offset }),
-  addDirect: (url) => http.post('music-downloads/direct', { url }),
-  addSpotify: (url) => http.post('music-downloads/spotify', { url }),
+  addDirect: (url, folder = '') => http.post('music-downloads/direct', { url, folder }),
+  addSpotify: (url, folder = '') => http.post('music-downloads/spotify', { url, folder }),
   add: (items) => http.post('music-downloads', { items }),
   pause: (id) => http.post('music-downloads/' + encodeURIComponent(id) + '/pause'),
   resume: (id) => http.post('music-downloads/' + encodeURIComponent(id) + '/resume'),

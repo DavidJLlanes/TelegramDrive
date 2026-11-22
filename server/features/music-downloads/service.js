@@ -47,7 +47,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
           signal, onProgress: (p) => { if (!signal.aborted) patch(job.id, { progress: p }); },
         });
         if (signal.aborted) throw new Error('Descarga cancelada');
-        const destination = await ensureDirectDestination(catalog, directCategory(source.ext));
+        const destination = await ensureDirectDestination(catalog, directCategory(source.ext),
+          normalizeOptions(JSON.parse(job.optionsJson || '{}')).folder);
         patch(job.id, { state: 'uploading', progress: 80, destination });
         const file = await catalog.fileOps.upload({
           parent: destination, name: source.name, path: downloaded.path, size: downloaded.size,
@@ -160,8 +161,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
     queueMicrotask(drain);
     return { queued: true };
   }
-  const enqueueDirect = (input) => enqueueDirectJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
-  const enqueueSpotify = (input) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain });
+  const enqueueDirect = (input, folder) => enqueueDirectJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain }, folder);
+  const enqueueSpotify = (input, folder) => enqueueSpotifyJob(input, { repo, catalog, maxQueue: MAX_QUEUE, drain }, folder);
 
   function prioritize(id, priority) {
     const job = repo.get(id);

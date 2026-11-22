@@ -1,4 +1,5 @@
 import { h } from '../../core/dom.js';
+import { folderField } from './folder-field.js';
 
 const select = (label, values) => {
   const control = h('select', { class: 'input' }, ...values.map(([value, text]) => h('option', { value }, text)));
@@ -14,10 +15,11 @@ export function downloadOptions() {
     ['year', 'Año'], ['playlist', 'Lista de reproducción']]);
   const audioGroup = select('Organizar audio por', [['playlist', 'Carpeta de la lista (si es lista)'],
     ['artist', 'Artista / Álbum']]);
+  const folder = folderField();
   const subtitles = h('input', { type: 'checkbox' });
   const thumbnail = h('input', { type: 'checkbox', checked: true });
   const element = h('div', { class: 'md-options' },
-    audioFormat.element, audioBitrate.element, audioGroup.element, videoQuality.element, videoGroup.element,
+    audioFormat.element, audioBitrate.element, audioGroup.element, videoQuality.element, videoGroup.element, folder.element,
     h('label', { class: 'md-toggle' }, subtitles, 'Descargar subtítulos disponibles (ES/EN)'),
     h('label', { class: 'md-toggle' }, thumbnail, 'Incluir carátula en MP3'));
   return {
@@ -25,7 +27,7 @@ export function downloadOptions() {
     values: () => ({
       audioFormat: audioFormat.control.value, audioBitrate: audioBitrate.control.value, audioGroup: audioGroup.control.value,
       videoQuality: videoQuality.control.value, videoGroup: videoGroup.control.value,
-      subtitles: subtitles.checked, thumbnail: thumbnail.checked,
+      folder: folder.value(), subtitles: subtitles.checked, thumbnail: thumbnail.checked,
     }),
   };
 }
