@@ -15,23 +15,13 @@ import { directSource, directCategory } from './direct-url.js';
 import { enqueueDirectJob } from './direct-queue.js';
 import { downloadResumable } from './direct-resume.js';
 import { transferPaths, clearTransfer } from './direct-transfer-state.js';
+import { createToolsStatus } from './tools-status.js';
 const BUSY = new Set(['queued', 'analyzing', 'downloading', 'uploading']);
 const MAX_QUEUE = 60;
-export function createService({ repo, catalog, tmpDir, runner = musicRunner, spotify = spotdlRunner }) {
+export function createService({ repo, catalog, tmpDir, runner = musicRunner, spotify = spotdlRunner, toolsTtlMs }) {
   let active = null;
   let stopped = true;
-  let checking = null;
-  let spotdlChecking = null;
-  const spotdlSetup = () => {
-    spotdlChecking ??= spotify.installed().finally(() => {
-      setTimeout(() => { spotdlChecking = null; }, 60_000).unref?.();
-    });
-    return spotdlChecking;
-  };
-  const checkSetup = () => {
-    checking ??= runner.installed().finally(() => { setTimeout(() => { checking = null; }, 60_000).unref?.(); });
-    return checking;
-  };
+  const tools = createToolsStatus({ runner, spotify, ttlMs: toolsTtlMs });
   const patch = (id, fields) => repo.patch(id, fields);
   async function run(job, signal) {
     const dir = await fs.mkdtemp(path.join(tmpDir, 'music-'));
@@ -200,10 +190,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
   }
 
   return {
-    async status() { const spotdlAvailable = await spotdlSetup();
-      return { available: await checkSetup(), spotdlAvailable,
-        spotdlError: !spotdlAvailable && spotify.diagnose ? await spotify.diagnose() : '',
-        jobs: repo.list(), root: '/Descargas de Internet' }; },
+    async status() { return { ...(await tools.get()), jobs: repo.list(), root: '/Descargas de Internet' }; },
     inspect: (url, offset = 0) => runner.inspect(sourceUrl(url).url, offset),
     enqueue, enqueueDirect, enqueueSpotify, retry, cancel, prioritize, pause, resume,
     remove(id) {
@@ -212,7 +199,7 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
       if (job?.format === 'direct') clearTransfer(transferPaths(tmpDir, id)).catch(() => {});
       return { removed: true };
     },
-    start() { stopped = false; repo.interrupt(); queueMicrotask(drain); },
+    start() { stopped = false; tools.warm(); repo.interrupt(); queueMicrotask(drain); },
     stop() { stopped = true; active?.ctrl.abort(); },
   };
 }
