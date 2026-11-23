@@ -2,6 +2,10 @@
 export const FOLDER_ICONS = Object.freeze([
   'music', 'video', 'image', 'file', 'archive', 'cloud', 'disc', 'plane',
   'star', 'heart', 'book', 'code', 'game', 'briefcase', 'home', 'user',
+  'camera', 'mic', 'headphones', 'film', 'palette', 'gift', 'cart', 'euro',
+  'receipt', 'calendar', 'pin', 'globe', 'lock', 'key', 'shield', 'mail',
+  'phone', 'bulb', 'rocket', 'flag', 'bookmark', 'tool', 'paw', 'leaf',
+  'coffee', 'car', 'cap', 'dumbbell', 'chart',
 ]);
 
 export function parseColor(raw) {

@@ -2,19 +2,10 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { dialog } from './modal.js';
+import '../core/icons-folder.js';
+import { FOLDER_COLORS, FOLDER_ICONS } from './folder-styles-data.js';
 
-export const FOLDER_COLORS = [
-  { name: 'Rojo', hue: 25 }, { name: 'Naranja', hue: 55 }, { name: 'Amarillo', hue: 95 }, { name: 'Lima', hue: 130 },
-  { name: 'Verde', hue: 160 }, { name: 'Turquesa', hue: 195 }, { name: 'Azul', hue: 245 }, { name: 'Violeta', hue: 285 },
-  { name: 'Magenta', hue: 325 }, { name: 'Rosa', hue: 355 },
-];
-
-// Debe coincidir con server/utils/folder-style.js (el servidor rechaza cualquier otro nombre).
-export const FOLDER_ICONS = [
-  ['', 'Carpeta'], ['music', 'Música'], ['video', 'Vídeo'], ['image', 'Fotos'], ['file', 'Documentos'], ['archive', 'Archivo'],
-  ['cloud', 'Nube'], ['disc', 'Discos'], ['plane', 'Viajes'], ['star', 'Favoritos'], ['heart', 'Me gusta'], ['book', 'Libros'],
-  ['code', 'Código'], ['game', 'Juegos'], ['briefcase', 'Trabajo'], ['home', 'Casa'], ['user', 'Personal'],
-];
+export { FOLDER_COLORS, FOLDER_ICONS };
 
 function group(label, role) {
   const items = [];
