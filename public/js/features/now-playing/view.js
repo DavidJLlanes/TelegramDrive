@@ -18,8 +18,6 @@ import { attachWave } from '../waveform/seek.js';
 import { followPeaks } from '../waveform/follow.js';
 
 let root = null;
-const TABS = [['art', 'Carátula'], ['lyrics', 'Letra'], ['queue', 'Cola'], ['scope', 'Onda']];
-const narrow = window.matchMedia('(max-width: 860px)');
 const currentFile = () => queueTracks().find((f) => f.id === appState.get().playingId) ?? null;
 
 /** Pulsa el botón equivalente de la barra: así hay una sola lógica de reproducción. */
@@ -36,19 +34,20 @@ export function openNowPlaying(audio, bar) {
   const seek = h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
   const cur = h('span', {}, '0:00'); const dur = h('span', {}, '0:00');
   const play = h('button', { class: 'btn btn-icon np-btn np-play', type: 'button', 'aria-label': 'Reproducir/Pausar', onclick: proxy(bar, 'Reproducir/Pausar') });
+  const artBox = h('div', { class: 'np-art-box' }, art);
   const panes = { lyrics: h('div', { class: 'np-lyrics', tabindex: 0, 'aria-label': 'Letra' }), queue: h('div', { class: 'np-queue-box' }), scope: h('div', { class: 'np-scope-box' }) };
   const lyricsView = createLyricsView(panes.lyrics, { audio, onEdit: () => { close(); document.querySelector('.audio-bar [aria-label="Letra"]')?.click(); } });
   const queueView = createQueueView(panes.queue);
   const scopeView = createScopeView(panes.scope, { audio });
-  const tabs = TABS.map(([id, label]) => h('button', { class: 'np-tab', type: 'button', role: 'tab', onclick: () => select(id) }, label));
-  let shownId = null; let tab = narrow.matches ? 'art' : 'lyrics';
+  let shownId = null;
 
-  function select(id) {
-    tab = id; root?.setAttribute('data-tab', id);
-    tabs.forEach((b, i) => b.setAttribute('aria-selected', String(TABS[i][0] === id)));
-    Object.entries(panes).forEach(([key, el]) => { el.hidden = key !== id; });
-    scopeView.setActive(id === 'scope');
-    if (id === 'queue') queueView.paint(); else if (id === 'lyrics') lyricsView.tick();
+  /** Qué ocupa el lugar de la carátula (art | lyrics | queue) y si se ve el osciloscopio. */
+  function layout() {
+    const panel = look.get('panel');
+    artBox.hidden = panel !== 'art'; panes.lyrics.hidden = panel !== 'lyrics'; panes.queue.hidden = panel !== 'queue';
+    panes.scope.hidden = !look.get('scopeOn');
+    scopeView.setActive(look.get('scopeOn'));
+    if (panel === 'queue') queueView.paint(); else if (panel === 'lyrics') lyricsView.tick();
   }
   const sync = () => { fill(play, icon(audio.paused ? 'play' : 'pause')); root?.classList.toggle('is-playing', !audio.paused); };
   const tick = () => {
@@ -84,19 +83,19 @@ export function openNowPlaying(audio, bar) {
     }
     applyTint(file);
     lyricsView.show(file);
-    if (tab === 'queue') queueView.paint();
+    if (look.get('panel') === 'queue') queueView.paint();
   }
 
-  const onNarrow = () => { if (!narrow.matches && tab === 'art') select('lyrics'); else if (narrow.matches && tab === 'lyrics') select('art'); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const stopLook = look.onChange((key, value) => {
     if (key === 'disc') root.classList.toggle('disc', value);
+    if (key === 'panel' || key === 'scopeOn') layout();
     if (key === 'tint') { const file = currentFile(); if (file) applyTint(file); }
   });
   function close() {
     for (const ev of ['timeupdate', 'loadedmetadata']) audio.removeEventListener(ev, tick);
     for (const ev of ['play', 'pause']) audio.removeEventListener(ev, sync);
-    document.removeEventListener('keydown', onKey); narrow.removeEventListener('change', onNarrow); stopLook(); follow.stop(); scopeView.destroy();
+    document.removeEventListener('keydown', onKey); stopLook(); follow.stop(); scopeView.destroy();
     leave(root); root = null;
     if (previous?.isConnected) previous.focus();
   }
@@ -105,19 +104,18 @@ export function openNowPlaying(audio, bar) {
   root = h('section', { class: `np${look.get('disc') ? ' disc' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Reproduciendo' }, bg,
     h('header', { class: 'np-top' }, closeBtn, h('span', { class: 'np-top-label' }, 'Reproduciendo'),
       h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Aspecto del reproductor', onclick: (e) => openAspectMenu(e.currentTarget, { leave: close, stop: () => { close(); proxy(bar, 'Cerrar reproductor')(); } }) }, icon('palette'))),
-    h('div', { class: 'np-main' },
-      h('div', { class: 'np-left' }, h('div', { class: 'np-art-box' }, art), h('div', { class: 'np-text' }, title, sub),
-        h('div', { class: 'np-seek' }, cur, seek, dur),
-        h('div', { class: 'np-controls' }, control(bar, 'Orden aleatorio', 'shuffle', 'np-small'), control(bar, 'Anterior', 'prev'), play,
-          control(bar, 'Siguiente', 'next'), control(bar, 'Repetir', 'repeat', 'np-small'))),
-      h('div', { class: 'np-right' }, h('div', { class: 'np-tabs', role: 'tablist' }, ...tabs), panes.lyrics, panes.queue, panes.scope)));
+    h('div', { class: 'np-main' }, artBox, panes.lyrics, panes.queue, panes.scope,
+      h('div', { class: 'np-text' }, title, sub),
+      h('div', { class: 'np-seek' }, cur, seek, dur),
+      h('div', { class: 'np-controls' }, control(bar, 'Orden aleatorio', 'shuffle', 'np-small'), control(bar, 'Anterior', 'prev'), play,
+        control(bar, 'Siguiente', 'next'), control(bar, 'Repetir', 'repeat', 'np-small'))));
   const follow = followPeaks(attachWave(seek, audio, { height: 40 }));
   onSwipe(art, { left: () => audioControls.next(), right: () => audioControls.prev() });
   document.body.append(root);
-  document.addEventListener('keydown', onKey); narrow.addEventListener('change', onNarrow);
+  document.addEventListener('keydown', onKey);
   audio.addEventListener('timeupdate', tick); audio.addEventListener('loadedmetadata', tick);
   audio.addEventListener('play', sync); audio.addEventListener('pause', sync);
   watch(appState, root, () => { paint(); follow.refresh(); });
-  select(tab); sync(); tick(); paint();
+  layout(); sync(); tick(); paint();
   closeBtn.focus();
 }

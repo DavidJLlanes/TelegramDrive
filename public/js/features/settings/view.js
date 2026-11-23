@@ -18,6 +18,7 @@ export function renderSettings(el) {
         toggleRow('disc', 'Carátula como disco giratorio', 'Gira mientras suena la música.'),
         toggleRow('wave', 'Forma de onda en la barra de posición', 'Descarga la canción una segunda vez (hasta 14 MB) para dibujarla; se guarda en el dispositivo.'))),
     h('section', { class: 'pg-panel' }, h('h2', {}, 'Osciloscopio'),
-      h('p', { class: 'pg-hint' }, 'Se ve en la pestaña «Osciloscopio» de la pantalla completa. En iPhone y iPad puede cortar el sonido con la pantalla bloqueada, por eso pide confirmación al activarlo.'),
+      h('p', { class: 'pg-hint' }, 'Se ve bajo la carátula en la pantalla completa (también se activa desde el botón de arriba a la derecha). En iPhone y iPad puede cortar el sonido con la pantalla bloqueada, por eso pide confirmación al activarlo.'),
+      h('div', { class: 'pg-rows' }, toggleRow('scopeOn', 'Mostrar el osciloscopio', 'En la pantalla completa del reproductor.')),
       createScopeSettings()));
 }
