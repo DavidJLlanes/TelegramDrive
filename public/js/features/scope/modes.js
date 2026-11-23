@@ -1,6 +1,7 @@
 // Los cinco modos del osciloscopio. Cada uno dibuja un fotograma en un lienzo 2D (w × h en píxeles del lienzo).
 import { bandsFromSpectrum, goniometer } from './bands.js';
 
+export const HUES = [10, 45, 95, 150, 195, 250, 300, 340];
 export const MODES = [['wave', 'Onda'], ['bars', 'Barras'], ['circle', 'Circular'], ['mirror', 'Espejo'], ['xy', 'Lissajous']];
 
 const glow = (ctx, color, blur) => { ctx.shadowColor = color; ctx.shadowBlur = blur; };

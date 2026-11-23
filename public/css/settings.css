@@ -1,0 +1,15 @@
+/* ---------- Configuración ---------- */
+.set-row { cursor: pointer; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; width: 46px; height: 28px; margin: 0; border-radius: 999px; background: var(--line); cursor: pointer; transition: background 0.18s; flex: none; }
+.switch::after { content: ''; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); transition: transform 0.18s; }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(18px); }
+.switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.set-scope { display: grid; gap: 14px; }
+.set-scope .scope-stage { height: 200px; min-height: 0; background: oklch(0.2 0.03 250); }
+.set-scope .scope-chip { color: var(--ink); border-color: var(--line); }
+.set-scope .scope-chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.set-scope .scope-swatches .swatch[aria-checked="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--accent); }
+.set-scope .scope-gain { color: var(--ink); }
+.pg-row.set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.set-row .pg-main { flex: 1; }

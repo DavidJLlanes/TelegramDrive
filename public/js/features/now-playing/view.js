@@ -18,7 +18,8 @@ import { attachWave } from '../waveform/seek.js';
 import { followPeaks } from '../waveform/follow.js';
 
 let root = null;
-const TABS = [['lyrics', 'Letra'], ['queue', 'Cola'], ['scope', 'Osciloscopio']];
+const TABS = [['art', 'Carátula'], ['lyrics', 'Letra'], ['queue', 'Cola'], ['scope', 'Onda']];
+const narrow = window.matchMedia('(max-width: 860px)');
 const currentFile = () => queueTracks().find((f) => f.id === appState.get().playingId) ?? null;
 
 /** Pulsa el botón equivalente de la barra: así hay una sola lógica de reproducción. */
@@ -40,10 +41,10 @@ export function openNowPlaying(audio, bar) {
   const queueView = createQueueView(panes.queue);
   const scopeView = createScopeView(panes.scope, { audio });
   const tabs = TABS.map(([id, label]) => h('button', { class: 'np-tab', type: 'button', role: 'tab', onclick: () => select(id) }, label));
-  let shownId = null; let tab = 'lyrics';
+  let shownId = null; let tab = narrow.matches ? 'art' : 'lyrics';
 
   function select(id) {
-    tab = id;
+    tab = id; root?.setAttribute('data-tab', id);
     tabs.forEach((b, i) => b.setAttribute('aria-selected', String(TABS[i][0] === id)));
     Object.entries(panes).forEach(([key, el]) => { el.hidden = key !== id; });
     scopeView.setActive(id === 'scope');
@@ -86,6 +87,7 @@ export function openNowPlaying(audio, bar) {
     if (tab === 'queue') queueView.paint();
   }
 
+  const onNarrow = () => { if (!narrow.matches && tab === 'art') select('lyrics'); else if (narrow.matches && tab === 'lyrics') select('art'); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const stopLook = look.onChange((key, value) => {
     if (key === 'disc') root.classList.toggle('disc', value);
@@ -94,7 +96,7 @@ export function openNowPlaying(audio, bar) {
   function close() {
     for (const ev of ['timeupdate', 'loadedmetadata']) audio.removeEventListener(ev, tick);
     for (const ev of ['play', 'pause']) audio.removeEventListener(ev, sync);
-    document.removeEventListener('keydown', onKey); stopLook(); follow.stop(); scopeView.destroy();
+    document.removeEventListener('keydown', onKey); narrow.removeEventListener('change', onNarrow); stopLook(); follow.stop(); scopeView.destroy();
     leave(root); root = null;
     if (previous?.isConnected) previous.focus();
   }
@@ -102,21 +104,20 @@ export function openNowPlaying(audio, bar) {
   const closeBtn = h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Cerrar pantalla completa', onclick: close }, icon('chevronDown'));
   root = h('section', { class: `np${look.get('disc') ? ' disc' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Reproduciendo' }, bg,
     h('header', { class: 'np-top' }, closeBtn, h('span', { class: 'np-top-label' }, 'Reproduciendo'),
-      h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Aspecto del reproductor', onclick: (e) => openAspectMenu(e.currentTarget, { stop: () => { close(); proxy(bar, 'Cerrar reproductor')(); } }) }, icon('palette'))),
+      h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Aspecto del reproductor', onclick: (e) => openAspectMenu(e.currentTarget, { leave: close, stop: () => { close(); proxy(bar, 'Cerrar reproductor')(); } }) }, icon('palette'))),
     h('div', { class: 'np-main' },
-      h('div', { class: 'np-left' }, art, h('div', { class: 'np-text' }, title, sub),
+      h('div', { class: 'np-left' }, h('div', { class: 'np-art-box' }, art), h('div', { class: 'np-text' }, title, sub),
         h('div', { class: 'np-seek' }, cur, seek, dur),
         h('div', { class: 'np-controls' }, control(bar, 'Orden aleatorio', 'shuffle', 'np-small'), control(bar, 'Anterior', 'prev'), play,
           control(bar, 'Siguiente', 'next'), control(bar, 'Repetir', 'repeat', 'np-small'))),
       h('div', { class: 'np-right' }, h('div', { class: 'np-tabs', role: 'tablist' }, ...tabs), panes.lyrics, panes.queue, panes.scope)));
   const follow = followPeaks(attachWave(seek, audio, { height: 40 }));
   onSwipe(art, { left: () => audioControls.next(), right: () => audioControls.prev() });
-  onSwipe(root, { down: close });
   document.body.append(root);
-  document.addEventListener('keydown', onKey);
+  document.addEventListener('keydown', onKey); narrow.addEventListener('change', onNarrow);
   audio.addEventListener('timeupdate', tick); audio.addEventListener('loadedmetadata', tick);
   audio.addEventListener('play', sync); audio.addEventListener('pause', sync);
   watch(appState, root, () => { paint(); follow.refresh(); });
-  select('lyrics'); sync(); tick(); paint();
+  select(tab); sync(); tick(); paint();
   closeBtn.focus();
 }

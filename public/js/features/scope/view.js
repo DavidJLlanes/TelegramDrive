@@ -1,11 +1,10 @@
-// Pestaña «Osciloscopio» de la pantalla completa: lienzo + ajustes (tipo, color, sensibilidad). Solo dibuja mientras se ve y suena.
+// Pestaña «Osciloscopio» de la pantalla completa: solo el lienzo (los ajustes están en Configuración). Solo dibuja mientras se ve y suena.
 import { h, fill } from '../../core/dom.js';
 import { webAudioActive } from '../../players/web-audio.js';
 import { look } from '../now-playing/settings.js';
 import { createAnalyser } from './analyser.js';
-import { drawFrame, MODES } from './modes.js';
+import { drawFrame } from './modes.js';
 
-const HUES = [10, 45, 95, 150, 195, 250, 300, 340];
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const QUIET_FRAMES = 45; // con la música en pausa se deja de dibujar pasado un instante
 
@@ -14,22 +13,8 @@ export function createScopeView(box, { audio }) {
   const stage = h('div', { class: 'scope-stage' }, canvas);
   let analyser = null; let consented = false; let active = false; let raf = 0; let quiet = 0; let size = { w: 0, h: 0 };
 
-  const chips = MODES.map(([id, label]) => h('button', { class: 'scope-chip', type: 'button', onclick: () => { look.set('scope', id); clear(); paintControls(); } }, label));
-  const swatch = (hue) => {
-    const el = h('button', { class: `swatch${hue === 'auto' ? ' auto' : ''}`, type: 'button', title: hue === 'auto' ? 'Color de la carátula' : 'Color', 'aria-label': hue === 'auto' ? 'Color de la carátula' : `Tono ${hue}`, onclick: () => { look.set('scopeHue', hue); paintControls(); } });
-    if (hue !== 'auto') el.style.setProperty('--h', hue);
-    return el;
-  };
-  const swatches = ['auto', ...HUES].map(swatch);
-  const gain = h('input', { class: 'range', type: 'range', min: 0.5, max: 3, step: 0.1, value: look.get('scopeGain'), 'aria-label': 'Sensibilidad', oninput: (e) => look.set('scopeGain', Number(e.target.value)) });
-  box.append(stage, h('div', { class: 'scope-controls' }, h('div', { class: 'scope-chips' }, ...chips), h('div', { class: 'scope-swatches' }, ...swatches), h('label', { class: 'scope-gain' }, 'Sensibilidad', gain)));
+  box.append(stage);
 
-  function paintControls() {
-    chips.forEach((c, i) => c.setAttribute('aria-pressed', String(MODES[i][0] === look.get('scope'))));
-    swatches.forEach((s, i) => s.setAttribute('aria-checked', String(['auto', ...HUES][i] === look.get('scopeHue'))));
-  }
-
-  const clear = () => canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   const color = () => {
     const hue = look.get('scopeHue') === 'auto' ? parseFloat(getComputedStyle(box.closest('.np') ?? box).getPropertyValue('--h')) || 230 : look.get('scopeHue');
     return `oklch(0.82 0.16 ${hue})`;
@@ -68,7 +53,6 @@ export function createScopeView(box, { audio }) {
   resize.observe(stage);
   audio.addEventListener('play', update);
   document.addEventListener('visibilitychange', update);
-  paintControls();
 
   return {
     setActive(value) { active = value; update(); },
