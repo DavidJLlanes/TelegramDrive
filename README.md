@@ -33,6 +33,16 @@ Android y escritorio: carpetas, subida/descarga, música con biblioteca, vídeo,
   al mapa · álbumes de fotos · retomar vídeos donde se dejaron · **Espacio** (uso por tipo y carpeta) · enlaces compartidos con
   contraseña, caducidad y límite de descargas · **Seguridad** (registro de accesos, aviso de dispositivo nuevo) · copia de seguridad
   cifrada · compartir hacia la app desde Android.
+- **Carpetas con personalidad**: cada carpeta puede tener **color** (20 tonos) e **icono** (más de 40, o *Sin icono*) desde su menú; el
+  tono se reparte por toda la interfaz. El explorador alterna entre **cuadrícula** y **lista con columnas** (nombre, tipo, tamaño, fecha).
+- **Reproductor a pantalla completa**: se abre tocando la barra (o deslizándola hacia arriba; hacia los lados cambia de canción). Carátula,
+  osciloscopio y controles caben siempre en la pantalla, sin deslizar, en cualquier móvil (vertical y apaisado). Ver
+  [Reproductor a pantalla completa](#reproductor-a-pantalla-completa).
+- **Letras desde internet**: busca la letra (sincronizada si existe) en [LRCLIB](https://lrclib.net) al reproducir, a mano con un selector
+  o para toda la biblioteca de una vez. Ver [Letras](#letras).
+- **Configuración**: sección propia con los ajustes de la app que se guardan en el dispositivo (aspecto del reproductor, osciloscopio con
+  vista previa, letras).
+- **Inicio** en la barra superior (icono de casa) y **estados vacíos y esqueletos de carga** en todas las pantallas.
 - **Frontend sin build**: HTML + CSS + módulos ES nativos. Cero dependencias en el navegador.
 
 ## Estructura
@@ -43,8 +53,8 @@ server/
   middleware/    Sesión (cookie firmada), rate-limit, cabeceras CSP, errores
   db/            database.js (SQLite: node:sqlite o better-sqlite3) · folder-tree.js · files-repo.js
   core/          events.js (bus interno) · notify.js (avisos por webhook)
-  features/      UNA CARPETA POR FUNCIÓN: access-log · share-access · backup · duplicates · lyrics · library-audit ·
-                 photos · photo-albums · usage  (index.js las registra)
+  features/      UNA CARPETA POR FUNCIÓN: access-log · share-access · backup · duplicates · lyrics (+ LRCLIB) · library-audit ·
+                 photos · photo-albums · usage · image-cache · music-downloads · cover-rescan  (index.js las registra)
   tools/         migrate-chat.js · restore-backup.js (usadas por los scripts)
   routes/        auth.js · drive.js
   services/      catalog.js (fachada) · folder-ops.js · file-ops.js · sync.js (incremental/completa)
@@ -60,14 +70,45 @@ public/
   js/core/       api · store · router · drive (datos) · dom (DOM seguro) · icons · format
   js/ui/         topbar · explorer · actions · modal · menu · login · toast …
   js/features/   uploads · filters · dragmove · shortcuts · lyrics · audio-fx · library-audit · photos · usage ·
-                 video-resume · share-target · security · share-policy
-  js/players/    audio-player · video-player · lightbox · viewer (despacho por tipo)
+                 video-resume · share-target · security · share-policy · now-playing (pantalla completa) · player-look ·
+                 scope (osciloscopio) · waveform · settings (Configuración) · touch-gestures · music-downloads
+  js/players/    audio-player · media-session · recovery · web-audio (grafo compartido) · video-player · lightbox · viewer (despacho por tipo)
   js/pwa/        registro del service worker e instalación
 deploy/          nginx-telegram.conf · nginx-telegram-limits.conf · telegram-drive.service · deploy.sh
 test/            Integración con un Telegram simulado (npm test) y servidor demo (npm run dev:fake; FAKE_SEED=650 para 650 pistas)
 ```
 
 Regla de oro: ningún archivo de código supera ~220 líneas (`npm run check` lo verifica).
+
+## Reproductor a pantalla completa
+
+- **Diseño fijo**: arriba la carátula (o la letra, o la lista de reproducción), debajo el **osciloscopio**, el título, la barra de posición
+  y los controles. Nada se desplaza; solo la letra y la lista tienen su propio scroll. Se sale con el botón de arriba a la izquierda (o `Esc`).
+- **Botón de arriba a la derecha (Aspecto)**: elige qué ocupa el lugar de la carátula (carátula, letra o lista), muestra u oculta el
+  osciloscopio y activa o no el disco giratorio, los colores de la carátula y la forma de onda. Incluye «Más ajustes…» y «Cerrar el reproductor».
+- **Colores de la carátula**: el fondo y los botones toman el tono dominante de cada portada. **Disco giratorio**: la carátula gira mientras suena.
+- **Letra sincronizada (LRC)**: resalta y sigue la línea que suena; tocar una línea salta a ese momento.
+- **Barra de posición con forma de onda**: se dibuja a partir del propio audio (archivos de hasta 14 MB, una segunda descarga a los 2,5 s de empezar,
+  picos guardados en el dispositivo) y se desactiva con el ahorro de datos.
+- **Osciloscopio**: 5 tipos (onda, barras, circular, espejo y Lissajous estéreo), color (el de la carátula o 8 tonos) y sensibilidad,
+  configurables en **Configuración** con una vista previa animada. Usa Web Audio, que solo se crea cuando se activa (ver Notas).
+- **Gestos**: en la barra, deslizar hacia arriba abre la pantalla completa y hacia los lados pasa a la siguiente o anterior; en la carátula, lo mismo hacia los lados.
+- **Reproducción en segundo plano y con la pantalla apagada**: Media Session (controles y carátula en la pantalla de bloqueo y en la
+  *Isla dinámica* del iPhone, que iOS rellena solo a partir de ella), posición y salto de ±10 s, y recuperación del flujo si se corta
+  (hasta 3 reintentos). El service worker solo interviene en la música guardada para uso sin conexión.
+
+## Letras
+
+- **Fuentes**: escritas a mano, importadas de las etiquetas del archivo o buscadas en [LRCLIB](https://lrclib.net) (base abierta, sin clave).
+- **Automática**: al empezar una canción sin letra se busca sola (se desactiva en *Configuración → Letras*). Solo se guarda una coincidencia
+  segura (título y artista parecidos y duración compatible); si no la hay no se guarda nada y no se vuelve a intentar en 30 días. Una letra
+  que quitas a mano no se vuelve a poner sola.
+- **A mano**: «Buscar en internet» (pantalla completa y panel de letras) abre un selector con las coincidencias, una vista previa y la
+  marca *Sincronizada*; se puede afinar el texto de búsqueda.
+- **Toda la biblioteca**: *Configuración → Letras → Buscar letras que faltan* recorre en segundo plano las canciones sin letra, con progreso
+  y cancelación; se detiene sola si LRCLIB deja de responder.
+- **Privacidad**: el servidor solo envía a `lrclib.net` el título, el artista, el álbum y la duración (con los «Remastered», «feat.», «Official
+  Video»… ya limpiados del título); el texto de la letra lo descarga el propio servidor. Necesita salida HTTPS a `lrclib.net`.
 
 ## Marca e iconos
 
@@ -109,7 +150,11 @@ Con `BACKUP_ENABLED=true` y `BACKUP_PASSPHRASE` (12+ caracteres) el servidor env
   Para una capa extra delante, ver `deploy/nginx-telegram.conf` (ejemplo con `allow`/`auth_basic` comentado).
 - `data/telegram.session` equivale a tu cuenta de Telegram: permisos `600`, fuera de git y fuera del alcance web. **Sirve la app solo por HTTPS.**
 - CSP estricta (`script-src 'self'`), sin HTML inyectado desde nombres de archivo, y `nosniff` en descargas.
-- La API y los medios nunca se guardan en la caché del service worker.
+- La API y los medios nunca se guardan en la caché del service worker (salvo la música guardada para uso sin conexión).
+- Todo archivo servido se abre **aislado con `sandbox`** (sin scripts ni acceso a la sesión) salvo audio, vídeo, imágenes de mapa de bits y PDF:
+  una lista blanca, porque una lista de tipos peligrosos siempre se queda corta (RSS, Atom, SVG…).
+- Las descargas por URL directa solo admiten HTTPS a dominios públicos (IPv4 fijada, sin redirecciones), con tope de tamaño, de tiempo
+  total y de inactividad.
 
 ## Caché fotográfica (10 GB)
 
@@ -142,6 +187,13 @@ Las carpetas se crean mediante las operaciones normales de TelegramDrive, el arc
 
 **Instalación:** `bash deploy/deploy.sh` ejecuta `deploy/install-music-tools.sh` en el VPS Ubuntu, creando `data/tools/yt-dlp-venv` e instalando `yt-dlp[default]` y FFmpeg. Para actualizar manualmente el motor: `UPDATE_MUSIC_TOOLS=1 bash deploy/install-music-tools.sh`. Para el soporte EJS de YouTube se recomienda Node >= 22.6. Los binarios se instalan fuera del repositorio, nunca en GitHub.
 
+## Desarrollo y calidad
+
+`npm test` ejecuta primero **ESLint** (`npm run lint`: variables sin definir, imports duplicados, código muerto…) y después las pruebas de
+integración contra un Telegram simulado. Un test propio (`client-imports`) comprueba que cada `import` del cliente apunta a un fichero que
+existe y exporta lo que se pide, y que `index.html` solo enlaza ficheros existentes: un import roto deja la pantalla en blanco y ningún otro
+test lo vería. `npm run dev:fake` simula también LRCLIB, de modo que las letras se pueden probar sin red.
+
 ## Despliegue
 
 Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` de Nginx (`deploy/nginx-telegram.conf`).
@@ -161,5 +213,14 @@ Ver `deploy/`. Resumen: `bash deploy/deploy.sh` y bloque `location /telegram/` d
 - **Ecualizador**: usa Web Audio y está desactivado por defecto; en iPhone/iPad puede cortar la música con la pantalla bloqueada. El
   fundido es «baja al final, sube al principio» (no solapa canciones) y no tiene efecto en iOS, donde el volumen es de solo lectura.
 - **Compartir hacia la app** solo funciona en Android/Chrome con la PWA instalada (iOS no admite *share target*).
+- **Límite de 48 h de Telegram**: Telegram no deja editar mensajes de más de 48 horas, y *enviar a la papelera* edita el pie del archivo. Para
+  esos archivos la app ofrece **eliminarlos definitivamente** (con confirmación) en lugar de mandarlos a la papelera. Renombrar o mover archivos
+  tan antiguos sí falla con un aviso; las carpetas no tienen este problema porque se republican.
+- **Reproducción en segundo plano**: iOS puede cerrar una PWA en segundo plano y no hay API web para la *Isla dinámica* (la alimenta el
+  sistema con Media Session). Con la pantalla bloqueada, el **ecualizador y el osciloscopio** (Web Audio) pueden cortar el sonido en iPhone y
+  iPad: por eso el osciloscopio pide confirmación en iOS y el grafo de audio no se crea hasta que se activa alguno de los dos.
+- **Forma de onda**: descarga una segunda vez la canción (≤ 14 MB) para dibujarla; las canciones que el navegador no sabe decodificar se
+  descartan y no se reintentan en la sesión.
+- **Arrastrar archivos desde el sistema**: el aviso «Suelta para subir» desaparece solo al dejar de arrastrar, con `Esc` o al tocar la pantalla.
 - Las miniaturas de vídeo dependen de las que genere Telegram para cada documento.
 - Los formatos que el navegador no reproduce (p. ej. MKV/HEVC) se pueden descargar desde el propio reproductor.

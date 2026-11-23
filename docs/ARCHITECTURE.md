@@ -78,7 +78,7 @@ export default {
 ```
 
 Después, importarla y añadirla a la lista en `server/features/index.js`. `publicRouter` (opcional) monta rutas sin sesión en `/share`.
-Rangos de migraciones en uso: 010 access-log · 020 share-access · 030 lyrics · 040 photos · 041 photo-albums.
+Rangos de migraciones en uso: 010 access-log · 020 share-access · 030-031 lyrics · 040 photos · 041 photo-albums.
 
 ## Cómo añadir una pantalla (cliente)
 
