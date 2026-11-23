@@ -65,20 +65,25 @@ export function pickFiles({ directory = false } = {}) {
   input.click();
 }
 
-/** Arrastrar y soltar sobre toda la ventana (solo si lo arrastrado son archivos del sistema). */
+/** Arrastrar y soltar sobre toda la ventana (solo si lo arrastrado son archivos del sistema).
+ *  El aviso se quita solo: el navegador no avisa al cancelar un arrastre externo (Esc, salir de la ventana, soltar fuera), así que
+ *  se oculta si dejan de llegar `dragover` (se emiten sin parar mientras se arrastra), y también con Esc, un clic o toque, o al perder el foco. */
 export function enableDropZone() {
-  let depth = 0; let hint = null;
-  const hide = () => { depth = 0; hint?.remove(); hint = null; };
-  window.addEventListener('dragenter', (e) => {
-    if (!e.dataTransfer?.types?.includes('Files')) return;
-    depth += 1;
-    hint ??= document.body.appendChild(h('div', { class: 'drop-hint' }, 'Suelta para subir a esta carpeta'));
-  });
-  window.addEventListener('dragleave', () => { depth -= 1; if (depth <= 0) hide(); });
-  window.addEventListener('dragover', (e) => e.preventDefault());
+  let hint = null; let timer = 0;
+  const hide = () => { clearTimeout(timer); hint?.remove(); hint = null; };
+  const isFiles = (e) => e.dataTransfer?.types?.includes('Files');
+  const keepAlive = () => { clearTimeout(timer); timer = setTimeout(hide, 700); };
+  const show = () => { hint ??= document.body.appendChild(h('div', { class: 'drop-hint' }, 'Suelta para subir a esta carpeta')); keepAlive(); };
+  window.addEventListener('dragenter', (e) => { if (isFiles(e)) show(); });
+  window.addEventListener('dragover', (e) => { e.preventDefault(); if (isFiles(e)) show(); });
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) keepAlive(); }); // salió de la ventana
+  window.addEventListener('dragend', hide);
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+  for (const ev of ['pointerdown', 'touchstart', 'blur']) window.addEventListener(ev, hide, { passive: true });
+  document.addEventListener('visibilitychange', hide);
   window.addEventListener('drop', (e) => {
     e.preventDefault(); hide();
-    if (!e.dataTransfer?.types?.includes('Files')) return;
+    if (!isFiles(e)) return;
     scanDrop(e.dataTransfer).then(enqueueEntries).catch(() => toast('No se pudo leer lo que soltaste', { type: 'error' }));
   });
 }
