@@ -1,6 +1,6 @@
 // Cliente HTTP. Todas las URLs son relativas al documento: la app funciona bajo cualquier prefijo (/telegram/).
 export class ApiError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, code) { super(message); this.status = status; this.code = code; }
 }
 
 const listeners = new Set();
@@ -23,7 +23,7 @@ async function request(path, { method = 'GET', body, query } = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 401 && path !== 'auth/login') listeners.forEach((fn) => fn());
-    throw new ApiError(res.status, data.error || `Error ${res.status}`);
+    throw new ApiError(res.status, data.error || `Error ${res.status}`, data.code);
   }
   return data;
 }

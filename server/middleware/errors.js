@@ -8,5 +8,5 @@ export function errorHandler(err, req, res, _next) {
   if (status >= 500) console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
   if (res.headersSent) return res.destroy();
   const message = status >= 500 ? 'Error interno del servidor' : err.message;
-  return res.status(status).json({ error: message });
+  return res.status(status).json(err.code && status < 500 ? { error: message, code: err.code } : { error: message });
 }

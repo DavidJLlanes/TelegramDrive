@@ -112,7 +112,7 @@ export class TelegramService {
     } catch (err) {
       if (!/MESSAGE_EDIT_TIME_EXPIRED/.test(String(err?.errorMessage || err?.message || ''))) throw err;
       const expired = new HttpError(409, 'Telegram no permite modificar este elemento: lleva más de 48 horas en el chat de almacenamiento');
-      expired.editExpired = true;
+      expired.editExpired = true; expired.code = 'EDIT_EXPIRED';
       throw expired;
     }
     this.messageCache.delete(id);

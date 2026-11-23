@@ -3,7 +3,7 @@ import { api } from '../core/api.js';
 import { reload, refreshStats } from '../core/drive.js';
 import { appState } from '../core/store.js';
 import { navigate } from '../core/router.js';
-import { pickFolder, promptText } from './modal.js';
+import { pickFolder, promptText, confirmDialog } from './modal.js';
 import { toast, toastError } from './toast.js';
 import { openFile } from '../players/viewer.js';
 import { download, downloadZip } from './download.js';
@@ -25,13 +25,26 @@ async function guarded(fn, okMessage) {
 }
 
 /** Envía a la papelera con la opción de deshacer al momento. */
-async function trash(label, remove) {
+async function trash(label, remove, destroy) {
   try {
     const restoreBody = await remove();
     toast(`«${label}» enviado a la papelera`, { action: { label: 'Deshacer', run: () => guarded(() => api.restore(restoreBody)) } });
     await reload();
     refreshStats();
-  } catch (err) { toastError(err); }
+  } catch (err) {
+    if (err.code === 'EDIT_EXPIRED' && destroy) return destroyInstead(label, destroy);
+    toastError(err);
+  }
+}
+
+/** Telegram no deja editar mensajes de más de 48 h, así que no se puede marcar como «en la papelera»: se ofrece borrarlo del todo. */
+async function destroyInstead(label, destroy) {
+  const ok = await confirmDialog({
+    title: 'No se puede enviar a la papelera',
+    message: `«${label}» lleva más de 48 horas en Telegram y este ya no permite modificarlo, así que no puede pasar por la papelera. ¿Eliminarlo definitivamente? No se podrá recuperar.`,
+    confirmLabel: 'Eliminar definitivamente',
+  });
+  if (ok) await guarded(destroy, `«${label}» eliminado`);
 }
 
 export function fileMenu(file, siblings) {
@@ -53,7 +66,7 @@ export function fileMenu(file, siblings) {
     } },
     ...extraFileMenu(file),
     'sep',
-    { label: 'Enviar a la papelera', icon: 'trash', danger: true, run: () => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; }) },
+    { label: 'Enviar a la papelera', icon: 'trash', danger: true, run: () => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; }, () => api.bulk({ action: 'delete', files: [file.id] })) },
   ];
 }
 
@@ -92,5 +105,5 @@ export async function createFolder() {
 }
 
 /** Mismas acciones que el menú, para los gestos táctiles (con «Deshacer»). */
-export const trashFile = (file) => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; });
+export const trashFile = (file) => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; }, () => api.bulk({ action: 'delete', files: [file.id] }));
 export const trashFolder = (folder) => trash(folder.name, async () => ({ folders: [(await api.deleteFolder(folder.path)).id] }));
