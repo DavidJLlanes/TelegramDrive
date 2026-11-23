@@ -44,11 +44,26 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre');
       validateFolderChange(this.tree, folder.parent, name, id);
       const oldPath = this.tree.pathOf(id);
-      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name, color: folder.color }));
       if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent: folder.parent, name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));
       return { path: this.tree.pathOf(id) };
+    });
+  }
+
+  /** Color de la carpeta: tono 0-359, o null/-1 para el automático. Se guarda también en su mensaje de Telegram. */
+  setColor(path, raw) {
+    const color = raw === null || raw === '' || raw === -1 ? -1 : Number(raw);
+    if (color !== -1 && !(Number.isInteger(color) && color >= 0 && color < 360)) throw badRequest('Color no válido');
+    return this.lock.run(async () => {
+      const id = this.#needSub(path);
+      const folder = this.tree.get(id);
+      if (folder.color === color) return { color };
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name: folder.name, color }));
+      if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
+      this.tree.setColor(id, color);
+      return { color };
     });
   }
 
@@ -62,7 +77,7 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre en el destino');
       validateFolderChange(this.tree, parent, folder.name, id);
       const oldPath = this.tree.pathOf(id);
-      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent, name: folder.name }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent, name: folder.name, color: folder.color }));
       if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent, name: folder.name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));

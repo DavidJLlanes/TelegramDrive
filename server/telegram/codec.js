@@ -2,7 +2,7 @@
 // renombrar/mover una carpeta es editar UN mensaje, no uno por archivo.
 //   Carpeta: #tgdrive {"v":2,"t":"folder","i":"a1b2c3d4e5","p":"root","n":"Música"}
 //   Archivo: #tgdrive {"v":2,"t":"file","f":"a1b2c3d4e5","n":"tema.mp3"}
-//   Opcionales: "x" (papelera: fecha en ms), "m" (etiquetas de música corregidas por el usuario).
+//   Opcionales: "x" (papelera: fecha en ms), "m" (etiquetas de música corregidas por el usuario), "c" (carpeta: tono de color 0-359).
 //   Lista:   #tgdrive {"v":2,"t":"playlist","i":"a1b2c3d4e5","n":"Para correr","s":"1x,2k,3d"}  (ids de archivo en base 36)
 import { randomBytes } from 'node:crypto';
 import { badRequest } from '../utils/errors.js';
@@ -19,7 +19,8 @@ function encode(meta) {
 
 export const newFolderId = () => randomBytes(5).toString('hex');
 export const newId = newFolderId;
-export const encodeFolder = ({ id, parent, name, trashed = 0 }) => encode({ t: 'folder', i: id, p: parent, n: name, ...(trashed ? { x: trashed } : {}) });
+export const encodeFolder = ({ id, parent, name, trashed = 0, color = -1 }) =>
+  encode({ t: 'folder', i: id, p: parent, n: name, ...(trashed ? { x: trashed } : {}), ...(color >= 0 ? { c: color } : {}) });
 export const encodeFile = ({ folder, name, trashed = 0, ovr = null }) =>
   encode({ t: 'file', f: folder, n: name, ...(trashed ? { x: trashed } : {}), ...(ovr && Object.keys(ovr).length ? { m: ovr } : {}) });
 
@@ -39,7 +40,7 @@ export function decode(text) {
     const m = JSON.parse(text.slice(TAG.length).trim());
     if (m?.v !== VERSION || !isStr(m.n)) return null;
     const trashed = Number.isFinite(m.x) && m.x > 0 ? m.x : 0;
-    if (m.t === 'folder' && isStr(m.i) && isStr(m.p)) return { type: 'folder', id: m.i, parent: m.p, name: m.n, trashed };
+    if (m.t === 'folder' && isStr(m.i) && isStr(m.p)) return { type: 'folder', id: m.i, parent: m.p, name: m.n, trashed, color: Number.isInteger(m.c) && m.c >= 0 && m.c < 360 ? m.c : -1 };
     if (m.t === 'file' && isStr(m.f)) return { type: 'file', folder: m.f, name: m.n, trashed, ovr: m.m && typeof m.m === 'object' ? m.m : null };
     if (m.t === 'playlist' && isStr(m.i)) {
       const ids = String(m.s ?? '').split(',').filter(Boolean).map((v) => parseInt(v, 36)).filter(Number.isInteger);

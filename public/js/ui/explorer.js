@@ -26,7 +26,7 @@ const clickOr = (key, open) => () => (appState.get().selected.length ? toggleSel
 function sleeve(folder) {
   const key = folderKey(folder);
   const open = clickOr(key, () => navigate(folder.path));
-  return enhanceCard(tint(h('div', {
+  const card = h('div', {
     class: `sleeve${isSelected(key) ? ' selected' : ''}`, tabindex: 0, role: 'link', 'aria-label': `Carpeta ${folder.name}`, onclick: open,
     dataset: { path: folder.path },
     onkeydown: (e) => e.key === 'Enter' && open(),
@@ -37,7 +37,9 @@ function sleeve(folder) {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
       onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
     }, icon('play')),
-    moreButton(() => folderMenu(folder))), folder.name), folder, 'folder');
+    moreButton(() => folderMenu(folder)));
+  if (Number.isInteger(folder.color)) { card.style.setProperty('--h', folder.color); card.classList.add('hued'); } else tint(card, folder.name);
+  return enhanceCard(card, folder, 'folder');
 }
 
 function tile(file, siblings, playingId) {

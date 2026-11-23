@@ -44,9 +44,10 @@ export function driveRoutes({ catalog, tg }) {
   }));
   router.patch('/folders', wrap(async (req, res) => {
     const { path, name, parent } = req.body ?? {};
+    if (req.body && 'color' in req.body) return res.json(await folderOps.setColor(path, req.body.color));
     if (name !== undefined) return res.json(await folderOps.rename(path, name));
     if (parent !== undefined) return res.json(await folderOps.move(path, parent));
-    throw badRequest('Indica "name" o "parent"');
+    throw badRequest('Indica "name", "parent" o "color"');
   }));
   router.delete('/folders', wrap(async (req, res) => {
     if (req.query.permanent === '1') return res.json(await folderOps.delete(req.query.path));

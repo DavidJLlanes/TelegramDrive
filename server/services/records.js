@@ -6,7 +6,7 @@ export function toRecord(message) {
   const meta = decode(message.message);
   if (!meta) return null;
   if (meta.type === 'folder') {
-    return { type: 'folder', id: meta.id, msgId: message.id, parent: meta.parent, name: meta.name, trashed: meta.trashed };
+    return { type: 'folder', id: meta.id, msgId: message.id, parent: meta.parent, name: meta.name, trashed: meta.trashed, color: meta.color };
   }
   if (meta.type === 'playlist') return { type: 'playlist', id: meta.id, msgId: message.id, name: meta.name, ids: meta.ids };
   const doc = message.media?.document;

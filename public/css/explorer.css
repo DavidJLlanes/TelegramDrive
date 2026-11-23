@@ -8,6 +8,11 @@
   content: ""; position: absolute; left: 0; top: -9px; width: 62px; height: 16px; border-radius: 10px 10px 0 0; background: inherit;
 }
 .sleeve:hover { transform: translateY(-2px); }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0 8px; max-width: 320px; }
+.swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; background: oklch(0.7 0.14 var(--h, 230)); transition: transform 0.12s, box-shadow 0.12s; }
+.swatch.auto { background: conic-gradient(from 0deg, oklch(0.7 0.14 25), oklch(0.7 0.14 95), oklch(0.7 0.14 160), oklch(0.7 0.14 245), oklch(0.7 0.14 325), oklch(0.7 0.14 25)); }
+.swatch:hover { transform: scale(1.08); }
+.swatch[aria-checked="true"] { border-color: var(--text, #fff); box-shadow: 0 0 0 3px var(--accent); }
 .sleeve-name { font: 650 1.05rem/1.2 var(--font-display); letter-spacing: -0.015em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: break-word; hyphens: auto; }
 /* Icono de carpeta: arriba a la izquierda; la casilla de selección ocupa su sitio al pasar el ratón o seleccionar */
 .sleeve > .icon { position: absolute; left: 16px; top: 14px; width: 26px; height: 26px; opacity: 0.6; transition: opacity 0.12s; }

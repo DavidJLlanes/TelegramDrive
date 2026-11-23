@@ -12,7 +12,7 @@ export class FolderTree {
 
   /** `byId` contiene todas las carpetas (también las de la papelera); `kids` y las búsquedas solo las visibles. */
   reload() {
-    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name, trashed FROM folders').all();
+    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name, trashed, color FROM folders').all();
     this.byId = new Map(rows.map((r) => [r.id, r]));
     const all = new Map();
     for (const f of this.byId.values()) {
@@ -115,6 +115,12 @@ export class FolderTree {
     this.reload();
   }
 
+  /** Tono (0-359) con el que se pinta la carpeta; -1 = automático según el nombre. */
+  setColor(id, color) {
+    this.db.stmt('UPDATE folders SET color = ? WHERE id = ?').run(color, id);
+    this.reload();
+  }
+
   /** La carpeta se republicó en Telegram con otro mensaje. */
   setMsgId(id, msgId) {
     this.db.stmt('UPDATE folders SET msg_id = ? WHERE id = ?').run(msgId, id);
@@ -127,14 +133,14 @@ export class FolderTree {
   }
 
   /** Alta desde la sincronización: tolera duplicados de nombre sufijando con el id del mensaje. */
-  upsertFromSync({ id, msgId, parent, name, trashed = 0 }) {
-    const sql = `INSERT INTO folders (id, msg_id, parent, name, trashed) VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name, trashed = excluded.trashed`;
+  upsertFromSync({ id, msgId, parent, name, trashed = 0, color = -1 }) {
+    const sql = `INSERT INTO folders (id, msg_id, parent, name, trashed, color) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name, trashed = excluded.trashed, color = excluded.color`;
     try {
-      this.db.stmt(sql).run(id, msgId, parent, name, trashed);
+      this.db.stmt(sql).run(id, msgId, parent, name, trashed, color);
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
-      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`, trashed);
+      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`, trashed, color);
     }
   }
 

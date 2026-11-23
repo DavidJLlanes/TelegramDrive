@@ -12,6 +12,7 @@ import { playFolder } from '../core/playback.js';
 import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
+import { pickFolderColor } from './folder-color.js';
 import { extraFileMenu } from '../core/explorer-ext.js';
 
 async function guarded(fn, okMessage) {
@@ -64,6 +65,10 @@ export function folderMenu(folder) {
       { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
     ]),
     'sep',
+    { label: 'Cambiar color…', icon: 'palette', run: async () => {
+      const color = await pickFolderColor(folder);
+      if (color !== null && color !== (folder.color ?? -1)) guarded(() => api.setFolderColor(folder.path, color), 'Color cambiado');
+    } },
     { label: 'Editar etiquetas de la carpeta…', icon: 'tag', run: () => editTagsBulk({ folders: [folder.path] }) },
     { label: 'Descargar como ZIP', icon: 'archive', run: () => downloadZip({ path: folder.path }) },
     { label: 'Compartir como ZIP…', icon: 'share', run: () => shareItem({ kind: 'folder', target: folder.path, label: folder.name }) },
