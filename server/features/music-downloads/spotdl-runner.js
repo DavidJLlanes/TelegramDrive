@@ -38,7 +38,7 @@ export const spotdlRunner = {
     onProgress?.(5);
     const output = path.join(dir, '{artist}', '{album}', '{title}.{output-ext}');
     await execute(BIN, ['download', manifest, '--format', 'mp3', '--bitrate', '128k',
-      '--output', output, '--threads', '2', '--log-level', 'ERROR'], {
+      '--output', output, '--threads', '3', '--log-level', 'ERROR'], {
       signal, timeout: TIMEOUT, env,
     });
     if (signal?.aborted) throw new Error('Descarga cancelada');

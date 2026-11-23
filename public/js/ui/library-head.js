@@ -15,6 +15,7 @@ import { addToPlaylist, createPlaylistWith } from './playlist-picker.js';
 import { editAlbumTags, editArtistName } from './tag-editor.js';
 import { toggleOffline } from './audio-actions.js';
 import { downloadZip } from './download.js';
+import { rescanCovers } from './cover-rescan.js';
 import { toast, toastError } from './toast.js';
 
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
@@ -76,7 +77,10 @@ export function libraryHead({ view, a, b, items, tracks, loading, name }) {
       return { crumbs: null, title: 'Sin conexión', sub: saved.length ? `${plural(saved.length, 'canción', 'canciones')} · ${formatBytes(saved.reduce((s, t) => s + t.size, 0))}` : 'Música guardada en este dispositivo',
         tools: saved.length ? withMore(playButtons((o) => playList(saved, o)), trackSetItems(saved).slice(1, 2)) : null };
     }
-    default:
-      return { crumbs: null, title: TITLES[view] ?? 'Álbumes', sub: count(view in COUNTS ? view : 'albums'), tools: null };
+    default: {
+      const covers = ['albums', 'artists'].includes(view) || !view
+        ? [more([{ label: 'Releer carátulas…', icon: 'image', run: () => rescanCovers('/') }])] : null;
+      return { crumbs: null, title: TITLES[view] ?? 'Álbumes', sub: count(view in COUNTS ? view : 'albums'), tools: covers };
+    }
   }
 }

@@ -32,6 +32,9 @@ export class FileOps {
     return candidate;
   }
 
+  /** Archivo ya subido con ese nombre en la carpeta (null si no hay). */
+  existing(parent, name) { return this.files.named(this.#folder(parent), name) ?? null; }
+
   async upload({ parent, name: rawName, path, size, onProgress }) {
     const folder = this.#folder(parent);
     const name = this.freeName(folder, validateName(rawName));

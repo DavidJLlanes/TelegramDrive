@@ -39,6 +39,10 @@ export class FilesRepo {
     return Boolean(this.db.stmt('SELECT 1 AS x FROM files WHERE folder = ? AND name = ? AND trashed = 0 AND msg_id != ?').get(folder, name, exceptId));
   }
 
+  named(folder, name) {
+    return this.db.stmt('SELECT msg_id AS id, tagged, artist, band FROM files WHERE folder = ? AND name = ? AND trashed = 0 AND hidden = 0 LIMIT 1').get(folder, name);
+  }
+
   /** Busca por nombre de archivo y por etiquetas (título, artista, álbum). */
   search(query, limit) {
     const like = `%${searchKey(query).replace(/[\\%_]/g, '\\$&')}%`;
@@ -93,6 +97,18 @@ export class FilesRepo {
       .run(raw ? 1 : 2, raw ? JSON.stringify(raw) : '', Math.round(duration) || 0, cover ? 1 : 0, id);
     this.reapply(id);
   }
+
+  /** Marca audios para que el lector de etiquetas los vuelva a procesar (etiquetas y carátula). */
+  resetTags(ids) {
+    inChunks(ids, (c) => this.db.stmt(`UPDATE files SET tagged = 0 WHERE kind = 'audio' AND msg_id IN (${marks(c.length)})`).run(...c));
+  }
+
+  /** Canciones etiquetadas con álbum pero sin carátula, para buscarla fuera. */
+  withoutCover() {
+    return this.db.stmt("SELECT msg_id AS id, band, album FROM files WHERE kind = 'audio' AND hidden = 0 AND tagged = 1 AND thumb = 0 AND album != '' AND band != ''").all();
+  }
+
+  markCover(id) { this.db.stmt('UPDATE files SET thumb = 1 WHERE msg_id = ?').run(id); }
 
   setOverride(id, ovr) {
     this.db.stmt('UPDATE files SET ovr = ? WHERE msg_id = ?').run(Object.keys(ovr).length ? JSON.stringify(ovr) : '', id);

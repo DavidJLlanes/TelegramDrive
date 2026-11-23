@@ -11,8 +11,16 @@ WorkingDirectory=/var/www/djl.com.es/telegram
 ExecStart=/usr/bin/node server/index.js
 Environment=NODE_ENV=production
 Environment=NODE_NO_WARNINGS=1
+# yt-dlp y SpotDL viven en venvs dentro de data/tools (antes estaba en un drop-in fuera del repositorio).
+# El HOME escribible de SpotDL lo fija la propia app (server/features/music-downloads/spotdl-env.js).
+Environment=PATH=/var/www/djl.com.es/telegram/data/tools/yt-dlp-venv/bin:/var/www/djl.com.es/telegram/data/tools/spotdl-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Restart=always
 RestartSec=5
+# Límites de recursos (incluyen a yt-dlp, SpotDL y FFmpeg, que cuelgan del mismo servicio).
+# Ajusta a la RAM de tu VPS: MemoryHigh frena antes de MemoryMax, que mata el servicio si se supera.
+MemoryHigh=1536M
+MemoryMax=2560M
+TasksMax=512
 # Endurecimiento
 NoNewPrivileges=true
 PrivateTmp=true

@@ -63,7 +63,7 @@ public/
                  video-resume · share-target · security · share-policy
   js/players/    audio-player · video-player · lightbox · viewer (despacho por tipo)
   js/pwa/        registro del service worker e instalación
-deploy/          nginx-telegram.conf · telegram-drive.service · deploy.sh
+deploy/          nginx-telegram.conf · nginx-telegram-limits.conf · telegram-drive.service · deploy.sh
 test/            Integración con un Telegram simulado (npm test) y servidor demo (npm run dev:fake; FAKE_SEED=650 para 650 pistas)
 ```
 

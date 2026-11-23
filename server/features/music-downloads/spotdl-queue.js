@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { conflict } from '../../utils/errors.js';
 import { normalizeOptions } from './options.js';
 import { spotifySource } from './spotify-source.js';
+import { alreadyDownloaded } from './dedupe.js';
 
 export function enqueueSpotifyJob(input, { repo, catalog, maxQueue, drain }, folder = '') {
     const source = spotifySource(input);
@@ -9,13 +10,12 @@ export function enqueueSpotifyJob(input, { repo, catalog, maxQueue, drain }, fol
     if (repo.activeSources().some((job) => job.sourceId === source.id)) {
       throw conflict('Este enlace de Spotify ya está en cola');
     }
-    let previous = repo.bySource(source.id, 'spotdl');
-    if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
-    if (previous) return { accepted: [], skipped: [source.id] };
+    const options = normalizeOptions({ folder });
+    if (alreadyDownloaded(repo.bySource(source.id, 'spotdl'), options, catalog)) return { accepted: [], skipped: [source.id] };
     const created = Date.now();
     const job = { id: randomUUID(), sourceId: source.id, url: source.url,
       title: source.type + ' · ' + source.url.split('/').at(-1),
-      artist: '', album: '', format: 'spotdl', options: normalizeOptions({ folder }),
+      artist: '', album: '', format: 'spotdl', options,
       channel: '', playlist: '', year: '', created };
     repo.insert(job);
     queueMicrotask(drain);

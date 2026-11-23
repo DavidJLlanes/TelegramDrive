@@ -10,6 +10,7 @@ import { runSpotdlJob } from './spotdl-upload.js';
 import { enqueueSpotifyJob } from './spotdl-queue.js';
 import { normalizeOptions } from './options.js';
 import { sidecars } from './subtitles.js';
+import { alreadyDownloaded } from './dedupe.js';
 import { directSource, directCategory } from './direct-url.js';
 import { enqueueDirectJob } from './direct-queue.js';
 import { downloadResumable } from './direct-resume.js';
@@ -125,10 +126,8 @@ export function createService({ repo, catalog, tmpDir, runner = musicRunner, spo
       if (src.type !== 'video') throw badRequest('Primero analiza la lista de reproducción');
       const options = normalizeOptions(item.options);
       const codec = format === 'video' ? 'mp4' : options.audioFormat;
-      let previous = repo.bySource(src.id, format, codec);
-      if (previous) { try { catalog.getFile(previous.fileId); } catch { previous = null; } }
       const key = src.id + ':' + format + ':' + codec;
-      if (previous || queued.has(key)) { skipped.push(src.id); continue; }
+      if (alreadyDownloaded(repo.bySource(src.id, format, codec), options, catalog) || queued.has(key)) { skipped.push(src.id); continue; }
       const created = Date.now();
       const j = { id: randomUUID(), sourceId: src.id, url: src.url,
         title: String(item.title ?? '').slice(0, 180), artist: String(item.artist ?? '').slice(0, 180),
