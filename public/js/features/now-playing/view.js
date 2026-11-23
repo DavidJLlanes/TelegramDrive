@@ -60,6 +60,7 @@ export function openNowPlaying(audio, bar) {
 
   /** Tono de la pantalla: el de la carátula si está activado y se puede leer; si no, el de la carpeta. */
   async function applyTint(file) {
+    if (!root) return;
     root.style.setProperty('--h', hueOf(file.parent));
     if (!look.get('tint') || !file.thumb) return;
     const hue = await coverHue(thumbUrl(file.id));
@@ -68,7 +69,7 @@ export function openNowPlaying(audio, bar) {
 
   function paint() {
     const file = currentFile();
-    if (!file || file.id === shownId) return;
+    if (!root || !file || file.id === shownId) return;
     shownId = file.id;
     title.textContent = trackTitle(file); sub.textContent = trackSubtitle(file);
     for (const el of [art, title, sub]) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
