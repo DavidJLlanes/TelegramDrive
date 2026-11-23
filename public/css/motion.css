@@ -43,7 +43,7 @@ html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 
 .cover > img.ready { opacity: 1; transform: none; }
 
 /* ===== Respuesta al tacto: hunde rápido, recupera con muelle ===== */
-.btn, .chip, .sleeve, .tile, .tree-item, .menu-item, .folder-option, .crumb, .home-title, .queue-btn, .lb-nav {
+.btn, .chip, .sleeve, .tile, .tree-item, .menu-item, .folder-option, .crumb, .home-btn, .queue-btn, .lb-nav {
   transition: transform 0.5s var(--spring), background-color 0.2s var(--out), color 0.2s var(--out), box-shadow 0.3s var(--out), opacity 0.2s var(--out);
 }
 .btn:active, .chip:active, .menu-item:active, .folder-option:active, .crumb:active, .queue-btn:active { transform: scale(0.955); transition-duration: 0.09s; }

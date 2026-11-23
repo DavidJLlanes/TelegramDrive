@@ -10,6 +10,7 @@ import { openMenu } from './menu.js';
 import { toast, toastError } from './toast.js';
 import { offlineTracks } from '../core/offline.js';
 import { manageShares } from './share-dialog.js';
+import { homeButton } from './home-button.js';
 
 export function renderTopbar({ onLogout }) {
   const searchInput = h('input', {
@@ -33,6 +34,7 @@ export function renderTopbar({ onLogout }) {
 
   const header = h('header', { class: 'topbar' },
     h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 40, height: 40 })),
+    homeButton(),
     h('div', { class: 'search' }, icon('search'), searchInput),
     h('div', { class: 'toolbar-spacer' }),
     h('button', { class: 'btn', onclick: createFolder }, icon('folderPlus'), h('span', { class: 'hide-mobile' }, 'Nueva carpeta')),

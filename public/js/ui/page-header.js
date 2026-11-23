@@ -15,21 +15,12 @@ import { pageHead } from './page-view.js';
 const SORT_LABELS = { name: 'Nombre', date: 'Fecha', size: 'Tamaño' };
 const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
 
-/** Pulsar la casa: rebote + onda y, un instante después, navega (la animación se aprecia antes del cambio de vista). */
-function goHome(e) {
-  const btn = e.currentTarget;
-  btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
-  setTimeout(() => navigate('/'), 220);
-}
-
-const homeButton = (cls) => h('button', { class: cls, type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: goHome }, icon('home'));
-
 function crumbs(path) {
   const parts = path.split('/').filter(Boolean);
-  if (!parts.length) return null;
-  const nodes = [homeButton('crumb crumb-home')];
+  if (parts.length < 2) return null; // en la raíz y en el primer nivel no hay carpetas madre que mostrar
+  const nodes = [];
   parts.slice(0, -1).forEach((part, i) => {
-    nodes.push(h('span', { class: 'crumb-sep', 'aria-hidden': 'true' }, '/'));
+    if (i) nodes.push(h('span', { class: 'crumb-sep', 'aria-hidden': 'true' }, '/'));
     nodes.push(h('button', { class: 'crumb', onclick: () => navigate(`/${parts.slice(0, i + 1).join('/')}`) }, part));
   });
   return h('nav', { class: 'crumbs', 'aria-label': 'Ruta' }, nodes);
@@ -68,7 +59,7 @@ function tools(s) {
 function folderHead(s) {
   return {
     crumbs: s.results !== null ? null : crumbs(s.path),
-    title: s.results !== null ? 'Resultados' : s.path === '/' ? homeButton('home-title') : s.path.split('/').pop(),
+    title: s.results !== null ? 'Resultados' : s.path === '/' ? 'Inicio' : s.path.split('/').pop(),
     sub: subtitle(s), tools: tools(s),
   };
 }
