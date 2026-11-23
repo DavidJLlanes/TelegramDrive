@@ -1,34 +1,31 @@
 import { BANDS } from './presets.js';
+import { getGraph, webAudioSupported } from '../../players/web-audio.js';
 
 /**
  * Ecualizador con Web Audio. El grafo se crea la primera vez que se activa (no antes): en iPhone, pasar el audio por Web Audio
- * puede cortar la música con la pantalla bloqueada, así que quien no lo use no se ve afectado.
+ * puede cortar la música con la pantalla bloqueada, así que quien no lo use no se ve afectado. Comparte el grafo con el osciloscopio.
  */
 export function createEq(audio) {
-  let ctx = null;
+  let graph = null;
   let filters = [];
 
   function build() {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) return false;
-    ctx = new Context();
-    const source = ctx.createMediaElementSource(audio);
-    filters = BANDS.map(({ hz, type }) => Object.assign(ctx.createBiquadFilter(), { type }));
+    graph = getGraph(audio);
+    if (!graph) return false;
+    filters = BANDS.map(({ hz, type }) => Object.assign(graph.ctx.createBiquadFilter(), { type }));
     filters.forEach((f, i) => { f.frequency.value = BANDS[i].hz; f.Q.value = 1; });
-    [source, ...filters, ctx.destination].reduce((a, b) => { a.connect(b); return b; });
-    // Si el reproductor se creó sin gesto del usuario (al restaurar la cola) el contexto nace suspendido y no sonaría nada.
-    audio.addEventListener('play', () => { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); });
+    graph.setInserts('eq', filters);
     return true;
   }
 
   return {
-    get supported() { return Boolean(window.AudioContext || window.webkitAudioContext); },
+    get supported() { return webAudioSupported(); },
     /** `gains`: dB por banda; con `enabled` false queda plano (el grafo sigue conectado, sin cambiar el sonido). */
     apply(enabled, gains) {
-      if (!ctx && enabled && !build()) return false;
-      if (!ctx) return true;
+      if (!graph && enabled && !build()) return false;
+      if (!graph) return true;
       filters.forEach((f, i) => { f.gain.value = enabled ? gains[i] : 0; });
-      if (enabled && ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (enabled && graph.ctx.state === 'suspended') graph.ctx.resume().catch(() => {});
       return true;
     },
   };

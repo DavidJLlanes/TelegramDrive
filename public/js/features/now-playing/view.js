@@ -11,13 +11,14 @@ import { leave } from '../../core/motion.js';
 import { queueTracks, audioControls } from '../../players/audio-player.js';
 import { createLyricsView } from './lyrics-view.js';
 import { createQueueView } from './queue-view.js';
+import { createScopeView } from '../scope/view.js';
 import { openAspectMenu } from './aspect-menu.js';
 import { look } from './settings.js';
 import { attachWave } from '../waveform/seek.js';
 import { followPeaks } from '../waveform/follow.js';
 
 let root = null;
-const TABS = [['lyrics', 'Letra'], ['queue', 'Cola']];
+const TABS = [['lyrics', 'Letra'], ['queue', 'Cola'], ['scope', 'Osciloscopio']];
 const currentFile = () => queueTracks().find((f) => f.id === appState.get().playingId) ?? null;
 
 /** Pulsa el botón equivalente de la barra: así hay una sola lógica de reproducción. */
@@ -34,9 +35,10 @@ export function openNowPlaying(audio, bar) {
   const seek = h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
   const cur = h('span', {}, '0:00'); const dur = h('span', {}, '0:00');
   const play = h('button', { class: 'btn btn-icon np-btn np-play', type: 'button', 'aria-label': 'Reproducir/Pausar', onclick: proxy(bar, 'Reproducir/Pausar') });
-  const panes = { lyrics: h('div', { class: 'np-lyrics', tabindex: 0, 'aria-label': 'Letra' }), queue: h('div', { class: 'np-queue-box' }) };
+  const panes = { lyrics: h('div', { class: 'np-lyrics', tabindex: 0, 'aria-label': 'Letra' }), queue: h('div', { class: 'np-queue-box' }), scope: h('div', { class: 'np-scope-box' }) };
   const lyricsView = createLyricsView(panes.lyrics, { audio, onEdit: () => { close(); document.querySelector('.audio-bar [aria-label="Letra"]')?.click(); } });
   const queueView = createQueueView(panes.queue);
+  const scopeView = createScopeView(panes.scope, { audio });
   const tabs = TABS.map(([id, label]) => h('button', { class: 'np-tab', type: 'button', role: 'tab', onclick: () => select(id) }, label));
   let shownId = null; let tab = 'lyrics';
 
@@ -44,7 +46,8 @@ export function openNowPlaying(audio, bar) {
     tab = id;
     tabs.forEach((b, i) => b.setAttribute('aria-selected', String(TABS[i][0] === id)));
     Object.entries(panes).forEach(([key, el]) => { el.hidden = key !== id; });
-    if (id === 'queue') queueView.paint(); else lyricsView.tick();
+    scopeView.setActive(id === 'scope');
+    if (id === 'queue') queueView.paint(); else if (id === 'lyrics') lyricsView.tick();
   }
   const sync = () => { fill(play, icon(audio.paused ? 'play' : 'pause')); root?.classList.toggle('is-playing', !audio.paused); };
   const tick = () => {
@@ -91,7 +94,7 @@ export function openNowPlaying(audio, bar) {
   function close() {
     for (const ev of ['timeupdate', 'loadedmetadata']) audio.removeEventListener(ev, tick);
     for (const ev of ['play', 'pause']) audio.removeEventListener(ev, sync);
-    document.removeEventListener('keydown', onKey); stopLook(); follow.stop();
+    document.removeEventListener('keydown', onKey); stopLook(); follow.stop(); scopeView.destroy();
     leave(root); root = null;
     if (previous?.isConnected) previous.focus();
   }
@@ -105,7 +108,7 @@ export function openNowPlaying(audio, bar) {
         h('div', { class: 'np-seek' }, cur, seek, dur),
         h('div', { class: 'np-controls' }, control(bar, 'Orden aleatorio', 'shuffle', 'np-small'), control(bar, 'Anterior', 'prev'), play,
           control(bar, 'Siguiente', 'next'), control(bar, 'Repetir', 'repeat', 'np-small'))),
-      h('div', { class: 'np-right' }, h('div', { class: 'np-tabs', role: 'tablist' }, ...tabs), panes.lyrics, panes.queue)));
+      h('div', { class: 'np-right' }, h('div', { class: 'np-tabs', role: 'tablist' }, ...tabs), panes.lyrics, panes.queue, panes.scope)));
   const follow = followPeaks(attachWave(seek, audio, { height: 40 }));
   onSwipe(art, { left: () => audioControls.next(), right: () => audioControls.prev() });
   onSwipe(root, { down: close });

@@ -71,3 +71,20 @@
   .np-lyrics, .np-queue-box { max-height: 36vh; overflow: auto; mask-image: linear-gradient(transparent, #000 8%, #000 92%, transparent); }
   .np-right { grid-template-rows: auto auto; }
 }
+
+/* Osciloscopio */
+.np-scope-box[hidden] { display: none; }
+.np-scope-box { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; min-height: 0; height: min(60vh, 560px); }
+.scope-stage { position: relative; min-height: 180px; border-radius: 20px; background: rgb(0 0 0 / 0.28); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); overflow: hidden; }
+.scope-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scope-gate { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 22px; text-align: center; font-size: 0.95rem; line-height: 1.5; }
+.scope-gate p { margin: 0; max-width: 44ch; opacity: 0.85; }
+.scope-controls { display: grid; gap: 12px; }
+.scope-chips, .scope-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.scope-chip { border: 1px solid rgb(255 255 255 / 0.22); background: transparent; color: #fff; padding: 6px 14px; border-radius: 999px; font: 600 0.85rem var(--font-body, inherit); cursor: pointer; }
+.scope-chip[aria-pressed="true"] { background: #fff; color: #111; border-color: #fff; }
+.scope-swatches .swatch { width: 28px; height: 28px; }
+.scope-swatches .swatch[aria-checked="true"] { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+.scope-gain { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; opacity: 0.9; }
+.scope-gain .range { flex: 1; min-width: 0; }
+@media (max-width: 900px) { .np-scope-box { height: 44vh; } }
