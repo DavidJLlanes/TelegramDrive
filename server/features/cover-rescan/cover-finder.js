@@ -26,6 +26,8 @@ export async function findAlbumCover(artist, album, fetcher = fetch) {
   if (!small) return null;
   const url = small.replace(/\/\d+x\d+bb\./, '/600x600bb.');
   if (!IMAGE_HOST.test(url)) return null;
-  const bytes = Buffer.from(await (await get(url, fetcher)).arrayBuffer());
+  const image = await get(url, fetcher);
+  if (Number(image.headers.get('content-length')) > MAX_BYTES) return null;
+  const bytes = Buffer.from(await image.arrayBuffer());
   return bytes.length && bytes.length <= MAX_BYTES ? bytes : null;
 }

@@ -1,7 +1,9 @@
 import { normalizeOptions } from './options.js';
 
 const same = (a, b) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
-const optionsOf = (job) => normalizeOptions(JSON.parse(job.optionsJson || '{}'));
+const optionsOf = (job) => {
+  try { return normalizeOptions(JSON.parse(job.optionsJson || '{}')); } catch { return { folder: '' }; }
+};
 
 /**
  * ¿Ya se descargó esta fuente y sigue en la biblioteca? Si se pide ahora otra carpeta propia distinta,

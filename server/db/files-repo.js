@@ -98,11 +98,6 @@ export class FilesRepo {
     this.reapply(id);
   }
 
-  /** Marca audios para que el lector de etiquetas los vuelva a procesar (etiquetas y carátula). */
-  resetTags(ids) {
-    inChunks(ids, (c) => this.db.stmt(`UPDATE files SET tagged = 0 WHERE kind = 'audio' AND msg_id IN (${marks(c.length)})`).run(...c));
-  }
-
   /** Canciones etiquetadas con álbum pero sin carátula, para buscarla fuera. */
   withoutCover() {
     return this.db.stmt("SELECT msg_id AS id, band, album FROM files WHERE kind = 'audio' AND hidden = 0 AND tagged = 1 AND thumb = 0 AND album != '' AND band != ''").all();

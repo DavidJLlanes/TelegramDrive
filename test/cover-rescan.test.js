@@ -54,3 +54,22 @@ test('la ruta POST /api/covers/rescan arranca la tarea y GET informa del estado'
   assert.equal(state.running, false);
   assert.equal(state.total, 2);
 });
+
+test('releer no oculta las canciones de la biblioteca mientras trabaja', async () => {
+  let seenDuring = null;
+  const { createService } = await import('../server/features/cover-rescan/service.js');
+  const slow = { reread: async (rows, tick) => { seenDuring = h.catalog.getFile(withCover.id).tags?.title; rows.forEach(tick); } };
+  const rescan = createService({ files: h.catalog.repo, tree: h.catalog.tree, tagger: slow, pause: 0, find: async () => null });
+  rescan.start({ folder: '/', lookup: false });
+  await wait(() => !rescan.state().running);
+  assert.equal(seenDuring, 'A', 'la canción sigue etiquetada durante la relectura');
+  assert.equal(h.catalog.repo.db.stmt("SELECT COUNT(*) AS n FROM files WHERE kind = 'audio' AND tagged = 0").get().n, 0);
+});
+
+test('si Telegram falla varias veces seguidas, la relectura se detiene con un aviso', async () => {
+  const { Tagger } = await import('../server/services/tagger.js');
+  const tg = { getMessage: async () => { throw new Error('sin red'); } };
+  const tagger = new Tagger({ tg, files: h.catalog.repo });
+  const rows = Array.from({ length: 20 }, (_, i) => ({ id: 900 + i, name: `x${i}.mp3` }));
+  await assert.rejects(() => tagger.reread(rows), /Telegram no responde/);
+});

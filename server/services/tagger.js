@@ -26,6 +26,24 @@ export class Tagger {
     return this.promise;
   }
 
+  /**
+   * Vuelve a leer etiquetas y carátula de estas canciones sin ocultarlas: mientras tanto conservan los datos
+   * anteriores (la biblioteca solo muestra canciones con `tagged = 1`). Se detiene tras varios fallos seguidos.
+   */
+  async reread(rows, onEach) {
+    const queue = [...rows];
+    let failures = 0;
+    const worker = async () => {
+      for (let row = queue.shift(); row; row = queue.shift()) {
+        if (failures >= MAX_FAILURES) return;
+        failures = (await this.#one(row)) ? 0 : failures + 1;
+        onEach?.();
+      }
+    };
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+    if (failures >= MAX_FAILURES) throw new Error('Telegram no responde; inténtalo de nuevo más tarde');
+  }
+
   async #loop() {
     let failures = 0;
     for (;;) {

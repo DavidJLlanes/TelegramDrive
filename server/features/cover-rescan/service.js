@@ -48,11 +48,10 @@ export function createService({ files, tree, tagger, find = findAlbumCover, paus
       if (job.running) return false;
       const id = tree.resolve(folder);
       if (id === null) throw Object.assign(new Error('La carpeta no existe'), { status: 404 });
-      const ids = files.audioIn(tree.subtree(id)).map((row) => row.id);
-      job = { running: true, phase: 'tags', done: 0, total: ids.length, found: 0, error: null };
-      files.resetTags(ids);
+      const rows = files.audioIn(tree.subtree(id)).map(({ id: rowId, name }) => ({ id: rowId, name }));
+      job = { running: true, phase: 'tags', done: 0, total: rows.length, found: 0, error: null };
       (async () => {
-        await tagger.kick();
+        await tagger.reread(rows, () => { job.done += 1; });
         if (lookup) await search(signal);
       })().catch((err) => { job.error = err.message; })
         .finally(() => { job = { ...job, running: false, phase: '' }; });
