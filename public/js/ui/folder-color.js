@@ -24,7 +24,7 @@ export function pickFolderStyle(folder) {
     if (hue !== -1) el.style.setProperty('--h', hue); // la CSP no admite el atributo style: solo la API CSSOM
     return colors.add(el, hue, (v) => { state.color = v; });
   };
-  const pick = (value, label) => icons.add(h('button', { type: 'button', class: 'icon-choice', title: label, 'aria-label': label }, icon(value || 'folder')), value, (v) => { state.icon = v; });
+  const pick = (value, label) => icons.add(h('button', { type: 'button', class: 'icon-choice', title: label, 'aria-label': label }, icon(value === 'none' ? 'ban' : value || 'folder')), value, (v) => { state.icon = v; });
   const content = h('div', { class: 'style-picker' },
     h('div', { class: 'picker-label' }, 'Color'),
     colors.wrap(swatch(-1, 'Automático'), ...FOLDER_COLORS.map((c) => swatch(c.hue, c.name))),

@@ -60,6 +60,8 @@ test('icono de carpeta: se guarda, se valida y se hereda el tono de la madre con
   assert.equal((await set('/Madre', { icon: '<script>' })).res.status, 400);
   const top = (await h.call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Madre');
   assert.equal(top.icon, 'music'); assert.equal(top.color, 100); assert.equal(top.inherited, null);
+  assert.equal((await set('/Madre', { icon: 'none' })).res.status, 200);
+  assert.equal((await h.call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Madre').icon, 'none');
   const child = (await h.call('GET', '/api/list?path=/Madre')).json.folders[0];
   assert.equal(child.color, null); assert.equal(child.inherited, 114);
   const grand = (await h.call('GET', '/api/list?path=/Madre/Hija')).json.folders[0];

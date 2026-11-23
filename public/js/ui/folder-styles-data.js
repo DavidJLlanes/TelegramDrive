@@ -8,7 +8,7 @@ export const FOLDER_COLORS = [
 ];
 
 export const FOLDER_ICONS = [
-  ['', 'Carpeta'], ['music', 'Música'], ['video', 'Vídeo'], ['image', 'Fotos'], ['file', 'Documentos'], ['archive', 'Archivo'],
+  ['', 'Carpeta'], ['none', 'Sin icono'], ['music', 'Música'], ['video', 'Vídeo'], ['image', 'Fotos'], ['file', 'Documentos'], ['archive', 'Archivo'],
   ['cloud', 'Nube'], ['disc', 'Discos'], ['plane', 'Viajes'], ['star', 'Favoritos'], ['heart', 'Me gusta'], ['book', 'Libros'],
   ['code', 'Código'], ['game', 'Juegos'], ['briefcase', 'Trabajo'], ['home', 'Casa'], ['user', 'Personal'],
   ['camera', 'Cámara'], ['mic', 'Podcasts'], ['headphones', 'Audio'], ['film', 'Cine'], ['palette', 'Arte'], ['gift', 'Regalos'],

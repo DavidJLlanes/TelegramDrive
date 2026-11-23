@@ -12,7 +12,7 @@ test('los iconos del cliente coinciden con los que acepta el servidor', () => {
 test('cada icono elegible tiene dibujo SVG definido', () => {
   const src = readFileSync(new URL('../public/js/core/icons.js', import.meta.url), 'utf8')
     + readFileSync(new URL('../public/js/core/icons-folder.js', import.meta.url), 'utf8');
-  for (const name of serverIcons) assert.match(src, new RegExp(`\\b${name}: '`), `falta el icono ${name}`);
+  for (const name of serverIcons.filter((n) => n !== 'none')) assert.match(src, new RegExp(`\\b${name}: '`), `falta el icono ${name}`);
 });
 
 test('los colores de la paleta son tonos válidos y distintos', () => {

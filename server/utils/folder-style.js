@@ -5,7 +5,7 @@ export const FOLDER_ICONS = Object.freeze([
   'camera', 'mic', 'headphones', 'film', 'palette', 'gift', 'cart', 'euro',
   'receipt', 'calendar', 'pin', 'globe', 'lock', 'key', 'shield', 'mail',
   'phone', 'bulb', 'rocket', 'flag', 'bookmark', 'tool', 'paw', 'leaf',
-  'coffee', 'car', 'cap', 'dumbbell', 'chart',
+  'coffee', 'car', 'cap', 'dumbbell', 'chart', 'none', // 'none' = carpeta sin icono
 ]);
 
 export function parseColor(raw) {

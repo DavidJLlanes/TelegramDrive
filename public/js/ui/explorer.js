@@ -34,7 +34,7 @@ function sleeve(folder) {
     dataset: { path: folder.path },
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
-  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon(folder.icon || 'folder'),
+  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), folder.icon === 'none' ? null : icon(folder.icon || 'folder'),
     checkbox(key),
     folder.music === false ? null : h('button', {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
