@@ -10,12 +10,19 @@ import { createQueue } from './audio-queue.js';
 import { saveResume, clearResume } from './resume.js';
 import { emitAudioReady } from './audio-hooks.js';
 import { toggleQueuePanel, refreshQueuePanel } from '../ui/queue-panel.js';
+import { setMetadata, setPlaying, setupSession } from './media-session.js';
+import { createRecovery } from './recovery.js';
+import { isSaved } from '../core/offline.js';
 
 const queue = createQueue();
 let bar = null;
 let audio = null;
 const ui = {};
 let lastSave = 0;
+let recovery = null;
+
+/** Las pistas guardadas sin conexión pasan por el service worker (`?offline=1`); el resto va directo a la red. */
+const trackUrl = (file) => (isSaved(file.id) ? `${contentUrl(file.id)}?offline=1` : contentUrl(file.id));
 
 /** Guarda la cola y la posición (solo ids) para retomar al volver a abrir la aplicación. */
 const MAX_SAVED = 5000;
@@ -77,15 +84,19 @@ function build() {
     if (audio.duration) { ui.seek.value = Math.round((audio.currentTime / audio.duration) * 1000); fill(ui.seek, audio.currentTime / audio.duration); }
     if (Date.now() - lastSave > 5000) persist();
   });
-  audio.addEventListener('error', () => { ui.sub.textContent = 'No se pudo reproducir este archivo'; });
-  setupMediaSession();
+  recovery = createRecovery(audio);
+  audio.addEventListener('error', () => { if (!recovery.onError()) ui.sub.textContent = 'No se pudo reproducir este archivo'; });
+  // Al volver a la aplicación (o desbloquear el móvil) la interfaz puede haberse quedado desfasada: se repinta con el estado real.
+  const resync = () => { if (document.visibilityState === 'hidden') return; syncPlay(!audio.paused); audio.dispatchEvent(new Event('timeupdate')); };
+  document.addEventListener('visibilitychange', resync); window.addEventListener('pageshow', resync);
+  setupSession(audio, { prev: () => go(queue.prev()), next: () => go(queue.next()) });
   syncModes();
   emitAudioReady(audio, bar);
 }
 
 const syncPlay = (playing) => {
   setChildren(ui.play, icon(playing ? 'pause' : 'play'));
-  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  setPlaying(playing);
 };
 const syncVolume = () => setChildren(ui.mute, icon(audio.muted || audio.volume === 0 ? 'mute' : 'volume'));
 const toggle = () => (audio.paused ? audio.play().catch(() => {}) : audio.pause());
@@ -108,7 +119,8 @@ function paintArt(file) {
 
 function go(file, { autoplay = true } = {}) {
   if (!file) return;
-  audio.src = contentUrl(file.id);
+  recovery?.reset();
+  audio.src = trackUrl(file);
   ui.title.textContent = trackTitle(file);
   ui.sub.textContent = trackSubtitle(file) || `${queue.position} de ${queue.length}`;
   ui.seek.value = 0; fill(ui.seek, 0); ui.cur.textContent = '0:00'; ui.dur.textContent = '0:00';
@@ -116,21 +128,8 @@ function go(file, { autoplay = true } = {}) {
   appState.set({ playingId: file.id });
   persist();
   refreshQueuePanel();
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: trackTitle(file), artist: file.tags?.artist || 'Telegram Drive', album: file.tags?.album || '',
-      artwork: file.thumb ? [{ src: thumbUrl(file.id), sizes: '512x512' }] : [],
-    });
-  }
+  setMetadata({ title: trackTitle(file), artist: file.tags?.artist, album: file.tags?.album, artUrl: file.thumb ? thumbUrl(file.id) : null });
   if (autoplay) audio.play().catch(() => {});
-}
-
-function setupMediaSession() {
-  if (!('mediaSession' in navigator)) return;
-  const set = (a, fn) => { try { navigator.mediaSession.setActionHandler(a, fn); } catch { /* no soportado */ } };
-  set('play', () => audio.play()); set('pause', () => audio.pause());
-  set('previoustrack', () => go(queue.prev())); set('nexttrack', () => go(queue.next()));
-  set('seekto', (d) => { audio.currentTime = d.seekTime; });
 }
 
 /** Operaciones que usa el panel de la cola. */

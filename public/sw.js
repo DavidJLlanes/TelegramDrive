@@ -19,9 +19,11 @@ self.addEventListener('activate', (event) => {
 
 const AUDIO_CACHE = 'tgdrive-audio-v1';
 
-/** Sirve el audio guardado (con soporte de Range para poder avanzar); si no está guardado, va a la red. */
+/** Sirve el audio guardado (con soporte de Range para poder avanzar); si no está en la caché, va a la red. */
 async function offlineAudio(request) {
-  const cached = await (await caches.open(AUDIO_CACHE)).match(request.url);
+  const url = new URL(request.url);
+  url.search = ''; // la caché guarda la URL sin «?offline=1»
+  const cached = await (await caches.open(AUDIO_CACHE)).match(url.href);
   if (!cached) return fetch(request);
   const blob = await cached.blob();
   const type = cached.headers.get('Content-Type') || 'audio/mpeg';
@@ -43,8 +45,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-  // Única excepción en /api: audio guardado para escuchar sin conexión (el resto va siempre a la red).
-  if (/\/api\/files\/\d+\/content$/.test(url.pathname) && !url.search) { event.respondWith(offlineAudio(request)); return; }
+  // Única excepción en /api: audio guardado para escuchar sin conexión, que el cliente pide con ?offline=1. El resto del streaming
+  // (audio, vídeo, imágenes) no pasa por el service worker: así el navegador gestiona los rangos y el segundo plano por su cuenta.
+  if (/\/api\/files\/\d+\/content$/.test(url.pathname) && url.search === '?offline=1') { event.respondWith(offlineAudio(request)); return; }
   if (url.pathname.includes('/api/') || url.pathname.endsWith('/healthz')) return; // red directa
 
   if (request.mode === 'navigate') {
