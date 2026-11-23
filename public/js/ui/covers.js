@@ -27,9 +27,17 @@ const equalizer = () => h('span', { class: 'eq', 'aria-hidden': 'true' }, h('i')
 
 function audioCover(file) {
   const num = trackNumber(file);
-  return tint(h('div', { class: 'cover audio' },
+  const cover = tint(h('div', { class: 'cover audio' },
     num ? h('span', { class: 'cover-num' }, num) : h('span', { class: 'cover-num' }, icon('music')),
     playBadge(), equalizer()), file.parent);
+  if (file.thumb) { // carátula incrustada en las etiquetas: sustituye al número de pista
+    const img = photo(file);
+    if (img) {
+      img.addEventListener('load', () => cover.classList.add('has-art'));
+      cover.prepend(img);
+    }
+  }
+  return cover;
 }
 
 const RECENT = 15 * 60 * 1000;

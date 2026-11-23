@@ -38,6 +38,8 @@
   content: ""; position: absolute; width: 30%; aspect-ratio: 1; border-radius: 50%;
   background: oklch(calc(var(--cover-l) + 0.07) calc(var(--cover-c) + 0.03) var(--h, 230)); box-shadow: 0 0 0 5px rgb(0 0 0 / 0.08);
 }
+.cover.audio.has-art { background-image: none; }
+.cover.audio.has-art::after, .cover.audio.has-art .cover-num { display: none; }
 .cover-num { position: absolute; left: 12px; bottom: 8px; font: 750 1.9rem/1 var(--font-display); letter-spacing: -0.04em; opacity: 0.8; z-index: 1; }
 .cover.video .icon.big { width: 38%; height: 38%; stroke-width: 1.4; }
 .cover.other { color: var(--muted); }
