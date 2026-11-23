@@ -21,11 +21,9 @@ export function isPublicIp(ip) {
 /** Only public IPv4 is permitted; pin the resolved address in the TLS request. */
 export async function publicAddress(hostname) {
   if (net.isIP(hostname)) throw new Error('No se admiten direcciones IP directas');
-  const records = await dns.lookup(hostname, { all: true, verbatim: true });
-  if (!records.length || records.some((r) => !isPublicIp(r.address))) {
-    throw new Error('El dominio apunta a una red privada o no permitida');
-  }
-  const record = records.find((r) => r.family === 4);
-  if (!record) throw new Error('No se encontró una dirección IPv4 pública');
-  return record.address;
+  // Solo cuenta IPv4: la conexión se fija a esa dirección, así que una AAAA (habitual en las CDN) no se usa ni debe rechazar el dominio.
+  const records = (await dns.lookup(hostname, { all: true, verbatim: true })).filter((r) => r.family === 4);
+  if (!records.length) throw new Error('No se encontró una dirección IPv4 pública');
+  if (records.some((r) => !isPublicIp(r.address))) throw new Error('El dominio apunta a una red privada o no permitida');
+  return records[0].address;
 }

@@ -10,7 +10,9 @@ import { directSource } from './direct-url.js';
 const MAX_BYTES = 1024 ** 3;
 const TIMEOUT_MS = 45 * 60_000;
 
-export async function downloadDirect(input, dir, { signal, onProgress } = {}) {
+export async function downloadDirect(input, dir, { signal: outer, onProgress } = {}) {
+  // Tope total además del de inactividad: un servidor que envíe gota a gota no puede dejar la descarga colgada.
+  const signal = AbortSignal.any([outer, AbortSignal.timeout(TIMEOUT_MS)].filter(Boolean));
   const source = directSource(input);
   const url = new URL(source.url);
   const ip = await publicAddress(url.hostname);
@@ -25,8 +27,9 @@ export async function downloadDirect(input, dir, { signal, onProgress } = {}) {
   const response = await new Promise((resolve, reject) => {
     request.once('response', resolve);
     request.once('error', reject);
-    request.once('timeout', () => request.destroy(new Error('Tiempo de conexión agotado')));
   });
+  // Inactividad de 30 s en cualquier momento (también durante la descarga), no solo al conectar.
+  request.on('timeout', () => request.destroy(new Error('El servidor dejó de enviar datos')));
   if (response.statusCode !== 200) {
     response.destroy();
     throw new Error(response.statusCode >= 300 && response.statusCode < 400

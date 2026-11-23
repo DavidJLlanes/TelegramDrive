@@ -1,7 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { makeHarness } from './helpers/harness.js';
 import { encrypt, decrypt } from '../server/features/backup/cipher.js';

@@ -33,7 +33,7 @@ test('cerrar sesión invalida la cookie aunque alguien la hubiera copiado', asyn
   assert.equal((await pub('/api/stats', { headers: { cookie: forged } })).status, 401);
 });
 
-test('los documentos activos (HTML, SVG) se sirven aislados con sandbox; el audio no lleva esa cabecera', async () => {
+test('todo archivo se sirve aislado con sandbox salvo audio, vídeo, imágenes de mapa de bits y PDF', async () => {
   const doc = await h.raw(`/api/files/${html.id}/content`);
   assert.match(doc.headers.get('content-security-policy'), /^sandbox;/);
   const audio = await h.raw(`/api/files/${file.id}/content`);
@@ -96,4 +96,12 @@ test('la profundidad y longitud de rutas se validan antes de crear o mover carpe
   assert.equal(third.res.status, 201);
   const overflow = await call('POST', '/api/folders', { parent: '/Auditoria/' + 'x'.repeat(120) + '/' + 'y'.repeat(120) + '/' + 'z'.repeat(120), name: 'w'.repeat(120) });
   assert.equal(overflow.res.status, 400);
+});
+
+test('los tipos que no están en la lista blanca (XML, RSS, SVG, texto) también van aislados', async () => {
+  const { isolated } = await import('../server/services/streamer.js');
+  for (const type of ['text/html', 'application/rss+xml', 'application/atom+xml', 'image/svg+xml', 'text/plain', 'application/octet-stream', 'text/xsl']) {
+    assert.equal(isolated(type), true, type);
+  }
+  for (const type of ['audio/mpeg', 'video/mp4', 'image/png', 'image/jpeg', 'application/pdf']) assert.equal(isolated(type), false, type);
 });

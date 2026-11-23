@@ -2,11 +2,10 @@
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { tint } from '../core/color.js';
-import { thumbUrl } from '../core/api.js';
+import { thumbUrl, api } from '../core/api.js';
 import { navigateLib } from '../core/router.js';
 import { playTagged } from '../core/playback.js';
 import { playList } from '../players/audio-player.js';
-import { api } from '../core/api.js';
 import { toastError } from './toast.js';
 
 export const plural = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;

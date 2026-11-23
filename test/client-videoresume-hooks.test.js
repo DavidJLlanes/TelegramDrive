@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const mem = new Map();
 globalThis.localStorage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
 globalThis.document = { body: { append() {} }, createElement: () => ({ addEventListener() {}, append() {}, classList: { add() {}, remove() {} }, style: {}, setAttribute() {}, remove() {} }), createTextNode: (t) => t, querySelector: () => null };
-const { onVideoLoad, emitVideoLoad } = await import('../public/js/players/video-hooks.js');
+const { emitVideoLoad } = await import('../public/js/players/video-hooks.js');
 await import('../public/js/features/video-resume/index.js');
 const { getPosition } = await import('../public/js/features/video-resume/store.js');
 
@@ -23,7 +23,7 @@ test('al pasar al siguiente vídeo, el anterior conserva su posición y el nuevo
   v.readyState = 0; v.currentTime = 0;  // src nuevo: aún sin cargar
   v.readyState = 4; v.currentTime = 50; v.dispatchEvent(new Event('timeupdate')); v.dispatchEvent(new Event('pause'));
   assert.equal(getPosition(1), 300);
-  assert.equal(getPosition(2), 50 >= 15 ? 50 : 0);
+  assert.equal(getPosition(2), 50);
 });
 
 test('cerrar el reproductor (se descarga el vídeo antes del evento pause) no borra la posición', () => {

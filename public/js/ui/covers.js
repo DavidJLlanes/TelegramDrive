@@ -47,7 +47,7 @@ function retryLater(file, cover) {
   if (Date.now() - file.date > RECENT) return;
   setTimeout(() => {
     noThumb.delete(file.id);
-    const img = h('img', { src: `${thumbUrl(file.id)}?r=${Date.now()}`, alt: '', decoding: 'async' });
+    const img = h('img', { src: `${thumbUrl(file.id)}&r=${Date.now()}`, alt: '', decoding: 'async' });
     img.addEventListener('load', () => { cover.querySelector(':scope > .icon')?.remove(); cover.prepend(img); requestAnimationFrame(() => img.classList.add('ready')); });
     img.addEventListener('error', () => { // sin miniatura en Telegram: la propia imagen, si es de tamaño razonable
       if (file.kind === 'image' && !img.dataset.full && file.size <= MAX_FULL_FALLBACK) { img.dataset.full = '1'; img.src = contentUrl(file.id); }

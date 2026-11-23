@@ -27,18 +27,23 @@ export function savedPeaks(id) {
 function decode(buffer) {
   const Offline = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   const ctx = new Offline(1, 1, 44100);
-  return new Promise((resolve, reject) => ctx.decodeAudioData(buffer, resolve, reject));
+  // Forma con callbacks (Safari antiguo); en los navegadores actuales además devuelve una promesa que también se rechaza: se silencia.
+  return new Promise((resolve, reject) => { ctx.decodeAudioData(buffer, resolve, reject)?.catch?.(() => {}); });
 }
+
+const undecodable = new Set(); // archivos que el navegador no sabe decodificar: no se vuelven a descargar en esta sesión
 
 /** Picos 0-255 de `file` (o null). `signal` cancela la descarga si la canción cambia. */
 export async function loadPeaks(file, signal) {
   if (!canWave(file) || !(window.OfflineAudioContext || window.webkitOfflineAudioContext)) return null;
   const saved = savedPeaks(file.id);
   if (saved) return saved;
+  if (undecodable.has(file.id)) return null;
   try {
     const res = await fetch(contentUrl(file.id), { credentials: 'same-origin', signal });
     if (!res.ok) return null;
-    const audio = await decode(await res.arrayBuffer());
+    const audio = await decode(await res.arrayBuffer()).catch(() => { undecodable.add(file.id); return null; });
+    if (!audio) return null;
     const peaks = peaksFromChannel(audio.getChannelData(0), BARS);
     remember(file.id, peaks);
     return peaks;
