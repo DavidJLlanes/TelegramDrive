@@ -203,4 +203,6 @@ export const audioControls = {
 };
 
 export const queueTracks = () => queue.ordered;
+/** Operaciones sobre la cola (saltar, mover, quitar) para las vistas que la muestran. */
+export const queueApi = panelApi;
 export const playAudio = (file, list) => playList(list.length ? list : [file], { startId: file.id });

@@ -7,6 +7,8 @@ import './dragmove/index.js';
 import './shortcuts/index.js';
 import './lyrics/index.js';
 import './now-playing/index.js';
+import './player-look/index.js';
+import './waveform/index.js';
 import './touch-gestures/index.js';
 import './audio-fx/index.js';
 import './library-audit/index.js';
