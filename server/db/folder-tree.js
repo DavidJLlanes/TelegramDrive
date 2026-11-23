@@ -12,7 +12,7 @@ export class FolderTree {
 
   /** `byId` contiene todas las carpetas (también las de la papelera); `kids` y las búsquedas solo las visibles. */
   reload() {
-    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name, trashed, color FROM folders').all();
+    const rows = this.db.stmt('SELECT id, msg_id AS msgId, parent, name, trashed, color, icon FROM folders').all();
     this.byId = new Map(rows.map((r) => [r.id, r]));
     const all = new Map();
     for (const f of this.byId.values()) {
@@ -115,10 +115,19 @@ export class FolderTree {
     this.reload();
   }
 
-  /** Tono (0-359) con el que se pinta la carpeta; -1 = automático según el nombre. */
-  setColor(id, color) {
-    this.db.stmt('UPDATE folders SET color = ? WHERE id = ?').run(color, id);
+  /** Estilo visual: tono (0-359, -1 = automático) e icono ('' = el de carpeta). */
+  setStyle(id, { color, icon }) {
+    this.db.stmt('UPDATE folders SET color = ?, icon = ? WHERE id = ?').run(color, icon, id);
     this.reload();
+  }
+
+  /** Tono heredado: el de la carpeta ancestro más cercana que tenga color, desplazado 14° por nivel; null si ninguna. */
+  inheritedHue(id) {
+    let level = 1;
+    for (let cur = this.byId.get(this.byId.get(id)?.parent); cur; cur = this.byId.get(cur.parent), level += 1) {
+      if (cur.color >= 0) return (cur.color + 14 * level) % 360;
+    }
+    return null;
   }
 
   /** La carpeta se republicó en Telegram con otro mensaje. */
@@ -133,14 +142,14 @@ export class FolderTree {
   }
 
   /** Alta desde la sincronización: tolera duplicados de nombre sufijando con el id del mensaje. */
-  upsertFromSync({ id, msgId, parent, name, trashed = 0, color = -1 }) {
-    const sql = `INSERT INTO folders (id, msg_id, parent, name, trashed, color) VALUES (?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name, trashed = excluded.trashed, color = excluded.color`;
+  upsertFromSync({ id, msgId, parent, name, trashed = 0, color = -1, icon = '' }) {
+    const sql = `INSERT INTO folders (id, msg_id, parent, name, trashed, color, icon) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET msg_id = excluded.msg_id, parent = excluded.parent, name = excluded.name, trashed = excluded.trashed, color = excluded.color, icon = excluded.icon`;
     try {
-      this.db.stmt(sql).run(id, msgId, parent, name, trashed, color);
+      this.db.stmt(sql).run(id, msgId, parent, name, trashed, color, icon);
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
-      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`, trashed, color);
+      this.db.stmt(sql).run(id, msgId, parent, `${name} (${msgId})`, trashed, color, icon);
     }
   }
 

@@ -1,5 +1,5 @@
 // Esquema SQLite (v4) y migraciones. La base es solo una caché: Telegram es la fuente de verdad.
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 const TEXT = (extra = '') => `TEXT NOT NULL DEFAULT ''${extra}`;
 const INT = 'INTEGER NOT NULL DEFAULT 0';
@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS folders (
   parent  TEXT NOT NULL,
   name    TEXT NOT NULL COLLATE NOCASE,
   trashed ${INT},
-  color   INTEGER NOT NULL DEFAULT -1
+  color   INTEGER NOT NULL DEFAULT -1,
+  icon    TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX IF NOT EXISTS folders_name ON folders (parent, name) WHERE trashed = 0;
 CREATE TABLE IF NOT EXISTS files (

@@ -12,7 +12,7 @@ import { playFolder } from '../core/playback.js';
 import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
-import { pickFolderColor } from './folder-color.js';
+import { pickFolderStyle } from './folder-color.js';
 import { extraFileMenu } from '../core/explorer-ext.js';
 
 async function guarded(fn, okMessage) {
@@ -65,9 +65,9 @@ export function folderMenu(folder) {
       { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
     ]),
     'sep',
-    { label: 'Cambiar color…', icon: 'palette', run: async () => {
-      const color = await pickFolderColor(folder);
-      if (color !== null && color !== (folder.color ?? -1)) guarded(() => api.setFolderColor(folder.path, color), 'Color cambiado');
+    { label: 'Color e icono…', icon: 'palette', run: async () => {
+      const style = await pickFolderStyle(folder);
+      if (style && (style.color !== (folder.color ?? -1) || style.icon !== (folder.icon || ''))) guarded(() => api.setFolderStyle(folder.path, style), 'Carpeta actualizada');
     } },
     { label: 'Editar etiquetas de la carpeta…', icon: 'tag', run: () => editTagsBulk({ folders: [folder.path] }) },
     { label: 'Descargar como ZIP', icon: 'archive', run: () => downloadZip({ path: folder.path }) },
@@ -90,3 +90,7 @@ export async function createFolder() {
   const name = await promptText({ title: 'Nueva carpeta', label: 'Nombre de la carpeta', confirmLabel: 'Crear' });
   if (name) guarded(() => api.createFolder(appState.get().path, name), 'Carpeta creada');
 }
+
+/** Mismas acciones que el menú, para los gestos táctiles (con «Deshacer»). */
+export const trashFile = (file) => trash(file.name, async () => { await api.deleteFile(file.id); return { files: [file.id] }; });
+export const trashFolder = (folder) => trash(folder.name, async () => ({ folders: [(await api.deleteFolder(folder.path)).id] }));

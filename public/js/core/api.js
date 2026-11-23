@@ -44,7 +44,7 @@ export const api = {
   refresh: (confirmPrune = false) => request('refresh', { method: 'POST', body: { confirmPrune } }),
   createFolder: (parent, name) => request('folders', { method: 'POST', body: { parent, name } }),
   renameFolder: (path, name) => request('folders', { method: 'PATCH', body: { path, name } }),
-  setFolderColor: (path, color) => request('folders', { method: 'PATCH', body: { path, color } }),
+  setFolderStyle: (path, style) => request('folders', { method: 'PATCH', body: { path, ...style } }),
   moveFolder: (path, parent) => request('folders', { method: 'PATCH', body: { path, parent } }),
   deleteFolder: (path) => request('folders', { method: 'DELETE', query: { path } }),
   renameFile: (id, name) => request(`files/${id}`, { method: 'PATCH', body: { name } }),

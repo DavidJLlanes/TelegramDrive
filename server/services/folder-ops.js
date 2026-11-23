@@ -2,6 +2,7 @@ import { encodeFolder, newFolderId } from '../telegram/codec.js';
 import { ROOT } from '../db/folder-tree.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
 import { normalizePath, validateName } from '../utils/paths.js';
+import { parseColor, parseIcon } from '../utils/folder-style.js';
 import { validateFolderChange } from './folder-limits.js';
 import { dropThumbnail } from './thumbnails.js';
 import { moveCacheFolder, dropCacheFolder } from './image-cache/paths.js';
@@ -44,7 +45,7 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre');
       validateFolderChange(this.tree, folder.parent, name, id);
       const oldPath = this.tree.pathOf(id);
-      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name, color: folder.color }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name, color: folder.color, icon: folder.icon }));
       if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent: folder.parent, name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));
@@ -52,18 +53,21 @@ export class FolderOps {
     });
   }
 
-  /** Color de la carpeta: tono 0-359, o null/-1 para el automático. Se guarda también en su mensaje de Telegram. */
-  setColor(path, raw) {
-    const color = raw === null || raw === '' || raw === -1 ? -1 : Number(raw);
-    if (color !== -1 && !(Number.isInteger(color) && color >= 0 && color < 360)) throw badRequest('Color no válido');
+  /** Estilo de la carpeta: `color` (0-359, -1/null = automático) e `icon` (de FOLDER_ICONS, '' = normal). Lo omitido no cambia. Se guarda también en Telegram. */
+  setStyle(path, raw = {}) {
+    const color = 'color' in raw ? parseColor(raw.color) : undefined;
+    const icon = 'icon' in raw ? parseIcon(raw.icon) : undefined;
+    if (color === undefined && 'color' in raw) throw badRequest('Color no válido');
+    if (icon === undefined && 'icon' in raw) throw badRequest('Icono no válido');
     return this.lock.run(async () => {
       const id = this.#needSub(path);
       const folder = this.tree.get(id);
-      if (folder.color === color) return { color };
-      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name: folder.name, color }));
+      const next = { color: color ?? folder.color, icon: icon ?? folder.icon };
+      if (next.color === folder.color && next.icon === folder.icon) return next;
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent: folder.parent, name: folder.name, ...next }));
       if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
-      this.tree.setColor(id, color);
-      return { color };
+      this.tree.setStyle(id, next);
+      return next;
     });
   }
 
@@ -77,7 +81,7 @@ export class FolderOps {
       if (clash && clash.id !== id) throw conflict('Ya existe una carpeta con ese nombre en el destino');
       validateFolderChange(this.tree, parent, folder.name, id);
       const oldPath = this.tree.pathOf(id);
-      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent, name: folder.name, color: folder.color }));
+      const msgId = await this.tg.rewriteText(folder.msgId, encodeFolder({ id, parent, name: folder.name, color: folder.color, icon: folder.icon }));
       if (msgId !== folder.msgId) this.tree.setMsgId(id, msgId);
       this.tree.update(id, { parent, name: folder.name });
       await moveCacheFolder(oldPath, this.tree.pathOf(id));

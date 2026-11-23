@@ -49,3 +49,23 @@ test('el color sobrevive a la papelera y a la restauración', async () => {
   assert.ok(restored.res.status < 300, restored.text);
   assert.equal((await h.call('GET', '/api/list?path=/Destino')).json.folders.find((f) => f.name === 'Discos').color, 285);
 });
+
+test('icono de carpeta: se guarda, se valida y se hereda el tono de la madre con desplazamiento', async () => {
+  const set = (path, body) => h.call('PATCH', '/api/folders', { path, ...body });
+  await h.call('POST', '/api/folders', { parent: '/', name: 'Madre' });
+  await h.call('POST', '/api/folders', { parent: '/Madre', name: 'Hija' });
+  await h.call('POST', '/api/folders', { parent: '/Madre/Hija', name: 'Nieta' });
+  assert.equal((await set('/Madre', { color: 100, icon: 'music' })).res.status, 200);
+  assert.equal((await set('/Madre', { icon: 'no-existe' })).res.status, 400);
+  assert.equal((await set('/Madre', { icon: '<script>' })).res.status, 400);
+  const top = (await h.call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Madre');
+  assert.equal(top.icon, 'music'); assert.equal(top.color, 100); assert.equal(top.inherited, null);
+  const child = (await h.call('GET', '/api/list?path=/Madre')).json.folders[0];
+  assert.equal(child.color, null); assert.equal(child.inherited, 114);
+  const grand = (await h.call('GET', '/api/list?path=/Madre/Hija')).json.folders[0];
+  assert.equal(grand.inherited, 128);
+  assert.equal((await set('/Madre', { icon: '' })).res.status, 200);
+  assert.equal((await h.call('GET', '/api/list?path=/')).json.folders.find((f) => f.name === 'Madre').icon, null);
+  const caption = [...h.tg.messages.values()].find((m) => String(m.message).includes('"n":"Madre"')).message;
+  assert.equal(decode(caption).color, 100, 'quitar el icono no pierde el color');
+});

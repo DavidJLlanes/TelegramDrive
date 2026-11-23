@@ -1,0 +1,76 @@
+/* ---------- Reproductor a pantalla completa ---------- */
+.audio-info.openable { cursor: pointer; border-radius: 18px; }
+.audio-info.openable:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.audio-bar { touch-action: pan-y; }
+
+.np {
+  position: fixed; inset: 0; z-index: 65; display: grid; grid-template-rows: auto 1fr; overflow: hidden; color: #fff;
+  padding: var(--safe-t) 0 var(--safe-b);
+  background: oklch(0.24 0.06 var(--h, 230));
+}
+.np-bg { position: absolute; inset: -12%; background-size: cover; background-position: center; filter: blur(64px) saturate(1.5); opacity: 0.6; transform: scale(1.1); }
+.np::before { content: ''; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.55)); }
+.np > * { position: relative; z-index: 1; }
+.np-bg { z-index: 0 !important; position: absolute !important; }
+.np-top { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; }
+.np-top-label { font: 650 0.8rem var(--font-body, inherit); text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.75; }
+.np .btn-icon { background: rgb(255 255 255 / 0.12); color: #fff; box-shadow: none; }
+.np .btn-icon:hover { background: rgb(255 255 255 / 0.22); }
+.np-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4vw; align-items: center; padding: 0 5vw 24px; min-height: 0; }
+.np-left { display: grid; justify-items: center; gap: 18px; min-width: 0; }
+.np-art {
+  position: relative; display: grid; place-items: center; width: min(44vh, 38vw, 460px); aspect-ratio: 1; border-radius: 22px; overflow: hidden;
+  background: oklch(0.34 0.08 var(--h, 230)); box-shadow: 0 30px 70px rgb(0 0 0 / 0.5); touch-action: pan-y;
+}
+.np-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.np-art .icon.big { width: 38%; height: 38%; opacity: 0.6; }
+.np-text { width: min(44vh, 38vw, 460px); min-width: 240px; }
+.np-title { margin: 0; font: 700 1.6rem/1.2 var(--font-display); letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-sub { margin: 4px 0 0; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-seek { display: flex; align-items: center; gap: 10px; width: min(44vh, 38vw, 460px); min-width: 240px; font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: 0.9; }
+.np-seek .range { flex: 1; min-width: 0; }
+.np-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.np-btn { width: 48px; height: 48px; border-radius: 50%; }
+.np-small { width: 40px; height: 40px; opacity: 0.8; }
+.np-play { width: 68px; height: 68px; background: #fff !important; color: #111 !important; }
+.np-play .icon { width: 30px; height: 30px; }
+.np-lyrics { max-height: calc(100vh - 150px); overflow: auto; padding: 8px 6px; scrollbar-width: thin; mask-image: linear-gradient(transparent, #000 6%, #000 94%, transparent); }
+.np-lyrics-text { white-space: pre-wrap; font: 600 clamp(1.05rem, 1.7vw, 1.5rem)/1.55 var(--font-display); opacity: 0.92; padding: 6vh 0; }
+.np-hint { opacity: 0.7; text-align: center; margin-top: 20vh; }
+.np-hint .btn { margin-top: 12px; background: rgb(255 255 255 / 0.16); color: #fff; }
+
+@media (max-width: 860px) {
+  .np-main { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); align-items: start; gap: 12px; padding: 0 22px 18px; overflow: auto; }
+  .np-art { width: min(78vw, 42vh); } .np-text, .np-seek { width: min(88vw, 520px); }
+  .np-lyrics { max-height: none; overflow: visible; mask-image: none; }
+  .np-hint { margin-top: 4vh; }
+}
+@media (prefers-reduced-motion: no-preference) { .np { animation: np-in 0.28s ease-out; } @keyframes np-in { from { transform: translateY(24px); opacity: 0; } } }
+
+/* ---------- Estados vacíos y esqueletos ---------- */
+.empty-art { position: relative; display: grid; place-items: center; width: 132px; height: 132px; margin-bottom: 10px; border-radius: 38px; background: var(--accent-soft); }
+.empty-art .icon { position: relative; width: 56px; height: 56px; margin: 0; opacity: 1; }
+.empty-art i { position: absolute; border-radius: 50%; background: var(--accent); opacity: 0.16; }
+.empty-art .a { width: 54px; height: 54px; top: -14px; right: -12px; }
+.empty-art .b { width: 30px; height: 30px; bottom: -8px; left: -10px; opacity: 0.24; }
+.empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+.empty span { max-width: 38ch; }
+.sk-card { display: grid; gap: 8px; }
+.sk-line { display: block; height: 11px; width: var(--w, 60%); border-radius: 6px; background: linear-gradient(90deg, var(--sunken), var(--raised), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.8s ease-in-out infinite; }
+.skeleton.row { aspect-ratio: auto; height: 64px; }
+@media (prefers-reduced-motion: reduce) { .skeleton, .sk-line { animation: none; } }
+
+/* ---------- Gestos táctiles ---------- */
+@media (pointer: coarse) {
+  .tile, .sleeve { touch-action: pan-y; -webkit-touch-callout: none; user-select: none; }
+  .tile.swipe-left, .sleeve.swipe-left { outline: 2px solid var(--danger); }
+  .tile.swipe-right { outline: 2px solid var(--accent); }
+}
+
+/* ---------- Carátulas: acabado ---------- */
+.tile .cover { transition: transform 0.22s var(--out, ease), box-shadow 0.22s; box-shadow: 0 1px 2px rgb(13 26 44 / 0.12), 0 8px 18px -10px rgb(13 26 44 / 0.35); }
+.tile .cover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1); pointer-events: none; }
+@media (hover: hover) { .tile:hover .cover { transform: translateY(-3px); box-shadow: 0 2px 4px rgb(13 26 44 / 0.14), 0 16px 28px -12px rgb(13 26 44 / 0.45); } }
+.tile.playing .cover { box-shadow: 0 0 0 3px var(--accent), 0 12px 26px -12px rgb(13 26 44 / 0.5); }
+.tile:active .cover { transform: scale(0.98); }
+.empty .empty-actions .icon { width: 18px; height: 18px; margin: 0; opacity: 1; stroke-width: 1.8; color: inherit; }

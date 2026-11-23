@@ -76,7 +76,7 @@ export class Catalog {
     return {
       path: this.tree.pathOf(id),
       total: rows.length,
-      folders: this.tree.childrenOf(id).map((f) => ({ type: 'folder', name: f.name, path: this.tree.pathOf(f.id), color: f.color >= 0 ? f.color : null, music: this.repo.hasAudio(this.tree.subtree(f.id)) })),
+      folders: this.tree.childrenOf(id).map((f) => ({ type: 'folder', name: f.name, path: this.tree.pathOf(f.id), color: f.color >= 0 ? f.color : null, inherited: f.color >= 0 ? null : this.tree.inheritedHue(f.id), icon: f.icon || null, music: this.repo.hasAudio(this.tree.subtree(f.id)) })),
       files: rows.slice(start, start + size).map((r) => this.toDto(r, paths)),
     };
   }

@@ -1,4 +1,6 @@
 import { h, clear } from '../core/dom.js';
+import { emptyBlock, skeletons } from './empty.js';
+import { pickFiles } from '../features/uploads/index.js';
 import { icon } from '../core/icons.js';
 import { tint } from '../core/color.js';
 import { formatBytes, formatDate } from '../core/format.js';
@@ -9,9 +11,10 @@ import { openMenu } from './menu.js';
 import { moreButton } from './more-button.js';
 import { playFolder } from '../core/playback.js';
 import { fileKey, folderKey, isSelected, toggleSelected } from './selection.js';
-import { fileMenu, folderMenu } from './actions.js';
+import { fileMenu, folderMenu, createFolder } from './actions.js';
 import { sortFiles } from './sorting.js';
 import { fileCover } from './covers.js';
+import { listHead, kindLabel } from './list-head.js';
 import { openFile } from '../players/viewer.js';
 import { applyFileFilters, enhanceCard, explorerBars } from '../core/explorer-ext.js';
 
@@ -31,14 +34,15 @@ function sleeve(folder) {
     dataset: { path: folder.path },
     onkeydown: (e) => e.key === 'Enter' && open(),
     oncontextmenu: (e) => { e.preventDefault(); openMenu(e.currentTarget, folderMenu(folder)); },
-  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon('folder'),
+  }, h('span', { class: 'sleeve-name', title: folder.name }, folder.name), icon(folder.icon || 'folder'),
     checkbox(key),
     folder.music === false ? null : h('button', {
       class: 'sleeve-play', 'aria-label': `Reproducir ${folder.name}`, title: 'Reproducir la música de esta carpeta',
       onclick: (e) => { e.stopPropagation(); playFolder(folder.path); },
     }, icon('play')),
     moreButton(() => folderMenu(folder)));
-  if (Number.isInteger(folder.color)) { card.style.setProperty('--h', folder.color); card.classList.add('hued'); } else tint(card, folder.name);
+  const hue = Number.isInteger(folder.color) ? folder.color : folder.inherited; // propio, o heredado de la carpeta madre
+  if (Number.isInteger(hue)) { card.style.setProperty('--h', hue); card.classList.add('hued'); } else tint(card, folder.name);
   return enhanceCard(card, folder, 'folder');
 }
 
@@ -53,14 +57,19 @@ function tile(file, siblings, playingId) {
   fileCover(file), checkbox(key),
   h('div', { class: 'tile-body' }, h('div', { class: 'tile-name', title: file.name }, file.name),
     h('div', { class: 'tile-meta' }, h('span', {}, file.tags?.artist || formatBytes(file.size)), h('span', {}, formatDate(file.date)))),
+  h('span', { class: 'tile-col', title: kindLabel(file) }, kindLabel(file)),
+  h('span', { class: 'tile-col num' }, formatBytes(file.size)),
+  h('span', { class: 'tile-col num' }, formatDate(file.date)),
   moreButton(() => fileMenu(file, siblings))), file, 'file');
 }
 
 function emptyState(s, searching) {
-  if (searching) return h('div', { class: 'empty' }, icon('search'), h('strong', {}, 'Sin resultados'), h('span', {}, 'Prueba con otro nombre o una parte del mismo.'));
-  return h('div', { class: 'empty' }, icon('upload'),
-    h('strong', {}, s.path === '/' ? 'Tu unidad está vacía' : 'Esta carpeta está vacía'),
-    h('span', {}, 'Arrastra archivos aquí o usa Subir. También puedes crear una carpeta.'));
+  if (searching) return emptyBlock({ glyph: 'search', title: 'Sin resultados', text: 'Prueba con otro nombre o una parte del mismo.' });
+  return emptyBlock({
+    glyph: 'cloud', title: s.path === '/' ? 'Tu unidad está vacía' : 'Esta carpeta está vacía',
+    text: 'Arrastra archivos aquí o súbelos desde tu dispositivo. También puedes crear una carpeta.',
+    actions: [{ label: 'Subir archivos', icon: 'upload', primary: true, run: () => pickFiles() }, { label: 'Nueva carpeta', icon: 'folderPlus', run: createFolder }],
+  });
 }
 
 export function renderExplorer(container) {
@@ -68,7 +77,7 @@ export function renderExplorer(container) {
   clear(container);
   container.classList.toggle('selecting', s.selected.length > 0);
   if (s.loading) {
-    container.append(h('div', { class: `tiles view-${s.view}` }, Array.from({ length: 10 }, () => h('div', { class: 'skeleton' }))));
+    container.append(h('div', { class: `tiles view-${s.view}` }, skeletons(s.view === 'list' ? 'row' : 'tile')));
     return;
   }
   const searching = s.results !== null;
@@ -86,6 +95,7 @@ export function renderExplorer(container) {
   }
   if (files.length) {
     if (both) container.append(h('h2', { class: 'section-title' }, 'Archivos'));
+    if (s.view === 'list') container.append(listHead(s.sort));
     container.append(h('div', { class: `tiles view-${s.view}`, role: 'list' }, files.map((f) => tile(f, files, s.playingId))));
   }
   if (!searching && s.files.length < s.total) container.append(sentinel(s));

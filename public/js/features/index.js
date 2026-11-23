@@ -6,6 +6,8 @@ import './filters/index.js';
 import './dragmove/index.js';
 import './shortcuts/index.js';
 import './lyrics/index.js';
+import './now-playing/index.js';
+import './touch-gestures/index.js';
 import './audio-fx/index.js';
 import './library-audit/index.js';
 import './video-resume/index.js';

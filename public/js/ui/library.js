@@ -30,7 +30,7 @@ function emptyState(view, tagging) {
   const [title, text] = texts[view] ?? (tagging?.running
     ? ['Leyendo etiquetas…', 'Estamos leyendo artista, álbum y género de tus canciones. Aparecerán aquí enseguida.']
     : ['Todavía no hay música etiquetada', 'Sube archivos de audio con etiquetas (artista, álbum…) o pulsa Sincronizar para indexar los que ya tienes.']);
-  return h('div', { class: 'empty' }, icon('music'), h('strong', {}, title), h('span', {}, text));
+  return emptyBlock({ glyph: 'music', title, text });
 }
 
 /** Menú de cada canción dentro de una lista: quitar y reordenar. */
@@ -51,7 +51,7 @@ export function renderLibrary(container) {
   const s = appState.get();
   const { lib } = s;
   clear(container);
-  if (lib.loading) { container.append(h('div', { class: 'cards' }, Array.from({ length: 10 }, () => h('div', { class: 'skeleton' })))); return; }
+  if (lib.loading) { container.append(h('div', { class: 'cards' }, skeletons('tile'))); return; }
   if (['album', 'playlist', 'offline'].includes(lib.view)) {
     if (!lib.tracks.length) { container.append(emptyState(lib.view, s.stats?.tagging)); return; }
     const extra = lib.view === 'playlist' ? playlistMenu(lib) : undefined;

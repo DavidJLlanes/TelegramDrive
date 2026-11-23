@@ -1,15 +1,18 @@
 /* ---------- Acabado visual: capa final, solo presentación ---------- */
-:root {
+:root { --halo: rgb(20 121 201 / 0.07); }
+/* Los tonos de carpeta se calculan en cada carpeta (no en :root) para que cada una pueda tener el suyo. */
+.sleeves .sleeve {
   --sleeve-a: oklch(0.93 0.035 var(--h, 230)); --sleeve-b: oklch(0.89 0.05 var(--h, 230));
   --sleeve-line: oklch(0.6 0.09 var(--h, 230) / 0.28);
-  --halo: rgb(20 121 201 / 0.07);
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --accent: #58b0ea; --accent-soft: #112a42; /* cian algo más sereno: el botón principal destaca sin gritar */
+    --halo: rgb(88 176 234 / 0.06);
+  }
+  .sleeves .sleeve {
     --sleeve-a: oklch(0.29 0.055 var(--h, 230)); --sleeve-b: oklch(0.23 0.04 var(--h, 230));
     --sleeve-line: oklch(0.62 0.1 var(--h, 230) / 0.32);
-    --halo: rgb(88 176 234 / 0.06);
   }
 }
 
