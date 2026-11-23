@@ -19,6 +19,8 @@ const { Catalog } = await import('../../server/services/catalog.js');
 const { bootFeatures } = await import('../../server/features/index.js');
 const { FakeTelegram } = await import('./fake-telegram.js');
 const { mp3WithTags } = await import('./id3.js');
+const { installFakeLrclib } = await import('./fake-lrclib.js');
+installFakeLrclib();
 
 ensureDirs();
 const tg = new FakeTelegram();

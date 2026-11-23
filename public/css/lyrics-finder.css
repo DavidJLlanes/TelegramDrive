@@ -1,0 +1,23 @@
+/* Buscar letra en internet: diálogo de candidatos y control de búsqueda masiva. */
+body:has(.np) .overlay { z-index: 90; } /* los diálogos se ven por encima de la pantalla completa del reproductor */
+.lf { display: grid; gap: 12px; min-height: 0; }
+.lf-search { display: flex; gap: 8px; }
+.lf-search .input { flex: 1; min-width: 0; }
+.lf-list { display: grid; gap: 8px; max-height: 46vh; overflow: auto; overscroll-behavior: contain; padding: 2px; }
+.lf-note { margin: 0; padding: 14px 4px; color: var(--muted); text-align: center; }
+.lf-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 12px; padding: 12px; border-radius: var(--r-md); cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 12%, transparent); }
+.lf-row:has(input:checked) { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in oklab, var(--accent) 8%, transparent); }
+.lf-row input { margin-top: 3px; accent-color: var(--accent); }
+.lf-main { display: grid; gap: 2px; min-width: 0; }
+.lf-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lf-meta { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lf-preview { color: var(--muted); font-size: 12.5px; font-style: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lf-badge { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; background: color-mix(in oklab, var(--accent) 16%, transparent); color: var(--accent); white-space: nowrap; }
+.lf-bulk { display: grid; gap: 10px; }
+.lf-bulk .pg-hint { margin: 0; }
+.lf-bulk-actions { display: flex; }
+.lf-progress { width: 100%; height: 8px; accent-color: var(--accent); }
+.lf-progress[hidden] { display: none; }
+.np-hint .lf-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.np-hint .lf-actions .btn { margin-top: 0; }

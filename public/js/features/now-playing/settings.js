@@ -1,6 +1,6 @@
 // Ajustes de aspecto del reproductor (se guardan en este dispositivo). Cada cambio avisa a quien escuche.
 const KEY = 'tgd.look';
-const DEFAULTS = { disc: false, wave: true, tint: true, scope: 'bars', scopeHue: 'auto', scopeGain: 1.3, scopeOn: true, panel: 'art' };
+const DEFAULTS = { disc: false, wave: true, tint: true, scope: 'bars', scopeHue: 'auto', scopeGain: 1.3, scopeOn: true, panel: 'art', lyricsAuto: true };
 const listeners = new Set();
 
 const read = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...DEFAULTS }; } };

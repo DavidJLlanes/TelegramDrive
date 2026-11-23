@@ -20,7 +20,8 @@ export function createService({ repo, catalog, tg, settings }) {
       repo.upsert(Number(id), clean, 'manual');
       return repo.get(Number(id));
     },
-    remove(id) { audio(id); return repo.remove(Number(id)); },
+    /** Quitar una letra es deliberado: la búsqueda automática no la vuelve a poner. */
+    remove(id) { audio(id); repo.markTried(Number(id), 'removed'); return repo.remove(Number(id)); },
     /** Copia la letra que lleve el propio archivo. */
     async importEmbedded(id) {
       const file = audio(id);

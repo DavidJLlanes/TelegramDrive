@@ -4,6 +4,9 @@ import { icon } from '../../core/icons.js';
 import { trackTitle } from '../../core/tags.js';
 import { toast, toastError } from '../../ui/toast.js';
 import { lyricsApi } from './api.js';
+import { ensureLyrics } from './auto.js';
+import { openLyricsFinder } from './finder-dialog.js';
+import { look } from '../now-playing/settings.js';
 
 /** Panel de letras de la canción que suena. `current()` devuelve el archivo actual o null. */
 export function createLyricsPanel(current) {
@@ -16,7 +19,14 @@ export function createLyricsPanel(current) {
   async function load(file) {
     shownId = file.id; editing = false;
     fill(root.querySelector('.ly-body'), h('p', { class: 'ly-empty' }, 'Cargando…'));
-    try { paint(file, await lyricsApi.get(file.id)); } catch (err) { toastError(err); }
+    try {
+      let lyrics = await lyricsApi.get(file.id);
+      if (!lyrics && look.get('lyricsAuto')) {
+        fill(root.querySelector('.ly-body'), h('p', { class: 'ly-empty' }, 'Buscando la letra en internet…'));
+        lyrics = await ensureLyrics(file);
+      }
+      paint(file, lyrics);
+    } catch (err) { toastError(err); }
   }
 
   async function run(file, action, okText) {
@@ -38,6 +48,7 @@ export function createLyricsPanel(current) {
     }
     fill(body, lyrics ? h('div', { class: 'ly-text' }, lyrics.text) : h('p', { class: 'ly-empty' }, 'Todavía no hay letra para esta canción. Puedes escribirla, pegarla o importarla de las etiquetas del archivo.'));
     fill(actions,
+      h('button', { class: 'btn', type: 'button', onclick: () => run(file, async () => (await openLyricsFinder(file)) ?? lyrics) }, lyrics ? 'Buscar otra' : 'Buscar en internet'),
       h('button', { class: 'btn', type: 'button', onclick: () => run(file, () => lyricsApi.importFromFile(file.id), 'Letra importada del archivo') }, 'Importar del archivo'),
       lyrics ? h('button', { class: 'btn btn-danger', type: 'button', onclick: () => run(file, async () => { await lyricsApi.remove(file.id); return null; }, 'Letra quitada') }, 'Quitar') : null,
       h('button', { class: 'btn btn-primary', type: 'button', onclick: () => { editing = true; paint(file, lyrics); } }, lyrics ? 'Editar' : 'Escribir letra'));
