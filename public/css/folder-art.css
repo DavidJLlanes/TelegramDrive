@@ -1,6 +1,6 @@
-/* Icono de carpeta: centrado y de media altura de la funda (solo cuadrícula; la lista conserva el icono pequeño). */
+/* Icono de carpeta: centrado en horizontal, en la parte alta y de media altura de la funda (deja libre el nombre) (solo cuadrícula; la lista conserva el icono pequeño). */
 .sleeves:not(.view-list) .sleeve > .icon {
-  left: 50%; top: 50%; right: auto; width: auto; height: 50%; aspect-ratio: 1; margin: 0;
-  transform: translate(-50%, -50%); opacity: 0.9; z-index: 0; pointer-events: none; stroke-width: 1.5;
+  left: 50%; top: 3%; right: auto; width: auto; height: 50%; aspect-ratio: 1; margin: 0;
+  transform: translateX(-50%); opacity: 0.9; z-index: 0; pointer-events: none; stroke-width: 1.5;
 }
 .sleeves:not(.view-list) .sleeve .sleeve-name { position: relative; z-index: 1; }
