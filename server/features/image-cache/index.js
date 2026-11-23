@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { wrap } from '../../utils/async-handler.js';
 import { notFound } from '../../utils/errors.js';
 import { getCachedImage } from '../../services/image-cache/images.js';
+import { getThumbnail } from '../../services/thumbnails.js';
 import { pruneCache } from '../../services/image-cache/prune.js';
 import { migrateLegacyThumbs } from '../../services/image-cache/legacy.js';
 
@@ -11,7 +12,12 @@ export default {
     const router = Router();
     const serve = (kind) => wrap(async (req, res) => {
       const entry = catalog.getFile(req.params.id);
-      if (entry.kind !== 'image') throw notFound('No es una fotografía');
+      if (entry.kind !== 'image') {
+        // Audio y vídeo: la miniatura es la carátula extraída o la de Telegram, sin conversión.
+        const bytes = kind === 'thumb' ? await getThumbnail(tg, entry.id) : null;
+        if (!bytes) throw notFound(kind === 'thumb' ? 'Sin miniatura' : 'No es una fotografía');
+        return res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=604800' }).end(bytes);
+      }
       const result = await getCachedImage(tg, entry, kind);
       if (!result) throw notFound('Vista previa no disponible');
       res.set({ 'Content-Type': result.type, 'Cache-Control': 'private, max-age=604800' });
