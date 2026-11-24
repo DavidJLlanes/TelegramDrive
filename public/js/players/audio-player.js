@@ -73,6 +73,8 @@ function build() {
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cola de reproducción', onclick: () => toggleQueuePanel(panelApi) }, icon('queue')),
       h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue.current()) }, icon('download')),
       h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar reproductor', onclick: stop }, icon('close'))));
+  // Pestaña de cierre sobre la tarjeta (solo móvil, donde los botones de la derecha no caben)
+  bar.append(h('button', { class: 'audio-tab', type: 'button', 'aria-label': 'Cerrar reproductor', onclick: stop }, icon('close')));
   document.body.append(bar);
 
   audio.addEventListener('play', () => syncPlay(true));
