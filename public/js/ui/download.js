@@ -1,4 +1,4 @@
-import { contentUrl, zipUrl } from '../core/api.js';
+import { contentUrl, zipUrl, thumbUrl } from '../core/api.js';
 
 function click(href, name) {
   const a = document.createElement('a');
@@ -11,6 +11,9 @@ function click(href, name) {
 
 /** Descarga nativa del navegador (con Content-Disposition: attachment desde el servidor). */
 export const download = (file) => click(contentUrl(file.id, { download: true }), file.name);
+
+/** Descarga la carátula (JPEG) de una canción, con el nombre de la canción. */
+export const downloadCover = (file) => click(thumbUrl(file.id), `${file.name.replace(/\.[^.]+$/, '')} (carátula).jpg`);
 
 /** ZIP de una carpeta (`{ path }`) o de una selección de archivos (`{ ids }`), en streaming. */
 // `download` evita que el navegador abandone la aplicación si el servidor responde con un error (carpeta vacía, sesión caducada).

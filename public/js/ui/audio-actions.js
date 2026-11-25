@@ -5,6 +5,7 @@ import { enqueueTrack } from '../players/audio-player.js';
 import { addToPlaylist } from './playlist-picker.js';
 import { editTrackTags } from './tag-editor.js';
 import { chooseCover } from './cover-assign.js';
+import { downloadCover } from './download.js';
 import { toast, toastError } from './toast.js';
 
 /** Guarda o quita de "sin conexión" las canciones indicadas (si todas están guardadas, las quita). */
@@ -32,5 +33,6 @@ export function audioItems(file) {
     offlineSupported() && { label: isSaved(file.id) ? 'Quitar de sin conexión' : 'Guardar sin conexión', icon: 'cloud', run: () => toggleOffline([file]) },
     { label: 'Editar etiquetas…', icon: 'tag', run: () => editTrackTags(file) },
     { label: 'Cambiar carátula…', icon: 'image', run: () => chooseCover([file]) },
+    file.thumb && { label: 'Descargar carátula', icon: 'download', run: () => downloadCover(file) },
   ].filter(Boolean);
 }
