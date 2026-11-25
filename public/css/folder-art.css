@@ -1,10 +1,8 @@
 /* Icono de carpeta: centrado (horizontal y verticalmente) en el espacio que deja libre el nombre, aunque la tarjeta se estire para igualar a otra de su fila
    (solo cuadrícula; la lista conserva el icono pequeño). */
 .sleeves:not(.view-list) .sleeve > .icon {
-  left: 50%; top: 8px; right: auto; width: 70%; height: calc(100% - 56px); max-height: 116px; margin: auto;
+  left: 50%; top: 17px; right: auto; width: 70%; height: calc(100% - 65px); max-height: 116px; margin: auto;
   transform: translateX(-50%); opacity: 0.9; z-index: 0; pointer-events: none; stroke-width: 1.5;
 }
 .sleeves:not(.view-list) .sleeve .sleeve-name { position: relative; z-index: 1; }
 
-/* Con imagen la tarjeta incluye la pestaña (9 px más arriba): el icono baja esa distancia */
-.sleeves:not(.view-list) .sleeve.has-image > .icon { top: 17px; height: calc(100% - 65px); }
