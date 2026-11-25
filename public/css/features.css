@@ -13,7 +13,7 @@
 
 .selection-bar {
   position: fixed; z-index: 48; left: 50%; transform: translateX(-50%); bottom: calc(16px + var(--player-h) + var(--safe-b));
-  display: flex; align-items: center; gap: 8px; width: min(640px, calc(100% - 24px)); padding: 8px 10px; border-radius: var(--r-lg);
+  display: flex; align-items: center; gap: 8px; width: max-content; min-width: min(420px, calc(100% - 24px)); max-width: calc(100% - 24px); padding: 8px 10px; border-radius: var(--r-lg);
   background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
 }
 .selection-bar[hidden] { display: none; }
@@ -57,7 +57,7 @@
 .offline-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 
 @media (max-width: 640px) {
-  .selection-bar { gap: 4px; padding: 6px; }
+  .selection-bar { gap: 4px; padding: 6px; width: calc(100% - 24px); }
   /* En móvil los seis controles deben caber en el ancho: botones cuadrados y contador que cede espacio */
   .selection-bar .btn { flex: 0 0 auto; width: 38px; min-height: 38px; padding: 0; }
   .selection-bar strong { flex: 0 1 auto; min-width: 0; padding: 0 2px; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
