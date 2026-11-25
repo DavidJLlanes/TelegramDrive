@@ -13,6 +13,7 @@ import { editTagsBulk } from './tag-editor.js';
 import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
 import { pickFolderStyle } from './folder-color.js';
+import { rescanCovers } from './cover-rescan.js';
 import { extraFileMenu } from '../core/explorer-ext.js';
 
 async function guarded(fn, okMessage) {
@@ -76,6 +77,7 @@ export function folderMenu(folder) {
     ...(folder.music === false ? [] : [
       { label: 'Reproducir música', icon: 'play', run: () => playFolder(folder.path) },
       { label: 'Reproducir en aleatorio', icon: 'shuffle', run: () => playFolder(folder.path, { shuffle: true }) },
+      { label: 'Releer carátulas…', icon: 'image', run: () => rescanCovers(folder.path) },
     ]),
     'sep',
     { label: 'Color e icono…', icon: 'palette', run: async () => {
