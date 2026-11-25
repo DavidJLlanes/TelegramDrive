@@ -5,7 +5,7 @@ import path from 'node:path';
 import { config } from '../config/index.js';
 
 export const WIDTH = 900;
-export const HEIGHT = 600;
+export const HEIGHT = 625; // 900×625 = 1,44:1: la silueta completa de la tarjeta (cuerpo + pestaña)
 let stamps = null;
 
 const fileFor = (id) => path.join(config.folderImagesDir, `${id}.jpg`);
@@ -35,7 +35,7 @@ export function drop(id) {
 }
 
 let sharpLoading;
-/** Ajusta la imagen a 900×600 (3:2, la proporción de la tarjeta). Sin «sharp» solo se admite una imagen pequeña tal cual. */
+/** Ajusta la imagen a 900×625 (la proporción de la tarjeta con su pestaña). Sin «sharp» solo se admite una imagen pequeña tal cual. */
 export async function prepare(buffer) {
   sharpLoading ??= import('sharp').then((m) => m.default).catch(() => null);
   const sharp = await sharpLoading;
