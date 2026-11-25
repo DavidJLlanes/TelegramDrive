@@ -1,8 +1,7 @@
-/* Icono de carpeta: centrado (horizontal y verticalmente) en el espacio que deja libre el nombre, aunque la tarjeta se estire para igualar a otra de su fila
-   (solo cuadrícula; la lista conserva el icono pequeño). */
+/* Icono de carpeta (solo cuadrícula; la lista conserva el icono pequeño): todas las tarjetas tienen la misma proporción (1,44:1, la del recorte
+   de las imágenes), así que el icono, en porcentaje de la tarjeta, mide y se sitúa exactamente igual en todas. */
 .sleeves:not(.view-list) .sleeve > .icon {
-  left: 50%; top: 17px; right: auto; width: 70%; height: calc(100% - 65px); max-height: 116px; margin: auto;
+  left: 50%; top: 17%; right: auto; width: auto; height: 40%; aspect-ratio: 1; max-height: none; margin: 0;
   transform: translateX(-50%); opacity: 0.9; z-index: 0; pointer-events: none; stroke-width: 1.5;
 }
 .sleeves:not(.view-list) .sleeve .sleeve-name { position: relative; z-index: 1; }
-

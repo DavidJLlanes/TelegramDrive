@@ -184,7 +184,7 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
    .sleeve-shape (folder-card-shape.js) con un único trazado; la tarjeta no tiene fondo propio. */
 .sleeves:not(.view-list) { row-gap: 13px; }
 .sleeves:not(.view-list) .sleeve {
-  min-height: 121px; border-radius: 0; background: none !important; box-shadow: none !important; outline: none !important;
+  aspect-ratio: 1.44 / 1; min-height: 0; border-radius: 0; background: none !important; box-shadow: none !important; outline: none !important;
 }
 .sleeves:not(.view-list) .sleeve::before { display: none; }
 .sleeves:not(.view-list) .sleeve .check { top: 21px; }
@@ -197,7 +197,7 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
 .sleeves.view-list .sleeve-shape { display: none; }
 
 /* Con imagen: recuadro 1,44:1 (como el recorte); el borde toma el tono de la imagen; el icono no cambia */
-.sleeves:not(.view-list) .sleeve.has-image { aspect-ratio: 1.44 / 1; color: #fff; --sleeve-line: oklch(0.78 0.13 var(--h, 230) / 0.8); }
+.sleeves:not(.view-list) .sleeve.has-image { color: #fff; --sleeve-line: oklch(0.78 0.13 var(--h, 230) / 0.8); }
 .sleeves .sleeve.has-image > .icon { color: #fff; opacity: 0.92; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.55)); }
 .sleeves .sleeve.has-image .sleeve-name { text-shadow: 0 1px 6px rgb(0 0 0 / 0.7); }
 .sleeves.view-list .sleeve.has-image { color: var(--ink); }
