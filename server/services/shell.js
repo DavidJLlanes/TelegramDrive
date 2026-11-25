@@ -27,9 +27,12 @@ export function buildShell(publicDir) {
 
 /** Manejador de GET /sw.js: la plantilla public/sw.js con la versión y la lista de archivos rellenadas. */
 export function serviceWorkerHandler(publicDir) {
-  let body;
+  // La versión se recalcula (como mucho cada 5 s): tras un «git pull» sin reiniciar, el navegador recibe un service worker nuevo y
+  // descarta los archivos viejos. Antes se calculaba una sola vez al arrancar y el móvil seguía mezclando CSS/JS antiguos con los nuevos.
+  let body; let at = 0;
   return (_req, res) => {
-    if (!body) {
+    if (!body || Date.now() - at > 5000) {
+      at = Date.now();
       const { version, files } = buildShell(publicDir);
       body = fs.readFileSync(path.join(publicDir, 'sw.js'), 'utf8').replace("'__BUILD__'", JSON.stringify(version)).replace("['__SHELL__']", JSON.stringify(files));
     }
