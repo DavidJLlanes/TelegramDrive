@@ -158,3 +158,9 @@
 .pg-row.us-row { grid-template-columns: minmax(0, 1fr) 230px; }
 .us-row .pg-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 @media (max-width: 560px) { .pg-row.us-row { grid-template-columns: minmax(0, 1fr); } .us-row .pg-side { justify-content: space-between; } }
+
+/* Diálogo «Cambiar carátula» */
+.cover-pick { display: grid; gap: 12px; }
+.cover-pick-preview { width: 160px; max-width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-md); justify-self: center; }
+.cover-pick-preview[hidden] { display: none; }
+.cover-pick-replace { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 0.92rem; cursor: pointer; }

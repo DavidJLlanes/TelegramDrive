@@ -18,6 +18,7 @@ import usage from './usage/index.js';
 import imageCache from './image-cache/index.js';
 import musicDownloads from './music-downloads/index.js';
 import coverRescan from './cover-rescan/index.js';
+import coverAssign from './cover-assign/index.js';
 
 const FEATURES = [
   accessLog,
@@ -32,6 +33,7 @@ const FEATURES = [
   imageCache,
   musicDownloads,
   coverRescan,
+  coverAssign,
 ];
 
 export function bootFeatures({ db, tg, catalog }) {

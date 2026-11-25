@@ -16,8 +16,8 @@ async function request(path, { method = 'GET', body, query } = {}) {
   const res = await fetch(url(path, query), {
     method,
     credentials: 'same-origin',
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : undefined,
+    body: body instanceof FormData || !body ? body : JSON.stringify(body),
   });
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
@@ -66,6 +66,12 @@ export const api = {
   revokeShare: (token) => request(`shares/${token}`, { method: 'DELETE' }),
   setTags: (id, patch) => request(`files/${id}/tags`, { method: 'PATCH', body: patch }),
   retag: (filter, set) => request('library/retag', { method: 'POST', body: { filter, set } }),
+  /** Una misma imagen como carátula de varias pistas; `replace` también cambia las que ya tienen una. */
+  assignCover: (ids, image, replace) => {
+    const form = new FormData();
+    form.set('ids', JSON.stringify(ids)); form.set('replace', replace ? '1' : '0'); form.set('image', image, image.name || 'portada');
+    return request('covers/assign', { method: 'POST', body: form });
+  },
   retagIds: (ids, set) => request('library/retag', { method: 'POST', body: { ids, set } }),
 };
 
@@ -80,7 +86,10 @@ export const http = {
 
 export const contentUrl = (id, { download = false } = {}) =>
   url(`files/${id}/content`, download ? { download: 1 } : undefined).href;
-export const thumbUrl = (id) => url(`files/${id}/thumb`, { v: 2 }).href;
+let coverStamp = 0;
+/** Tras cambiar carátulas: las miniaturas se piden de nuevo (la URL cambia). */
+export const bumpCovers = () => { coverStamp = Date.now(); };
+export const thumbUrl = (id) => url(`files/${id}/thumb`, { v: coverStamp ? `2.${coverStamp}` : 2 }).href;
 export const previewUrl = (id) => url(`files/${id}/preview`).href;
 /** ZIP de una carpeta (`path`) o de una selección (`ids`). Se descarga navegando a la URL (la cookie de sesión va sola). */
 export const zipUrl = ({ path, ids }) => url('zip', ids ? { ids: ids.join(',') } : { path }).href;

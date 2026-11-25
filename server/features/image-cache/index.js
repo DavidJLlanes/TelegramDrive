@@ -16,7 +16,8 @@ export default {
         // Audio y vídeo: la miniatura es la carátula extraída o la de Telegram, sin conversión.
         const bytes = kind === 'thumb' ? await getThumbnail(tg, entry.id) : null;
         if (!bytes) throw notFound(kind === 'thumb' ? 'Sin miniatura' : 'No es una fotografía');
-        return res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=604800' }).end(bytes);
+        // no-cache + ETag: si se cambia la carátula, todos los dispositivos la ven al momento (y si no cambió, responde 304)
+        return res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, no-cache' }).send(bytes);
       }
       const result = await getCachedImage(tg, entry, kind);
       if (!result) throw notFound('Vista previa no disponible');

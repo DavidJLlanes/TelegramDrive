@@ -10,6 +10,7 @@ import { openMenu } from './menu.js';
 import { downloadZip } from './download.js';
 import { addToPlaylist } from './playlist-picker.js';
 import { editTagsBulk } from './tag-editor.js';
+import { chooseCover } from './cover-assign.js';
 import { toast, toastError } from './toast.js';
 
 export const fileKey = (f) => `f:${f.id}`;
@@ -92,6 +93,7 @@ export function createSelectionBar() {
     btn('Mover', 'move', async () => { const to = await pickFolder({ title: 'Mover selección' }); if (to !== null) bulk('move', to); }),
     btn('ZIP', 'archive', zip),
     btn('Etiquetas', 'tag', async () => { const picked = split(appState.get()); await editTagsBulk(picked); clearSelection(); }),
+    btn('Carátula', 'image', async () => { if (await chooseCover(split(appState.get()).files)) clearSelection(); }),
     btn('Añadir a lista', 'playlist', () => addToPlaylist(split(appState.get()).files.filter((f) => f.kind === 'audio').map((f) => f.id))),
     h('button', { class: 'btn btn-danger', type: 'button', 'aria-haspopup': 'menu', onclick: (e) => openMenu(e.currentTarget, [
       { label: 'Enviar a la papelera', icon: 'trash', run: () => bulk('trash') },
