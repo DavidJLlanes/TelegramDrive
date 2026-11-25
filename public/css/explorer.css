@@ -68,8 +68,11 @@
 .tile.playing .eq { display: flex; }
 .tile.playing .play-badge { display: none; }
 .eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent-ink); transform-origin: bottom; transform: scaleY(0.45); }
-body.audio-live .eq i { animation: eq 0.9s ease-in-out infinite; }
-.eq i:nth-child(2) { animation-delay: -0.3s; } .eq i:nth-child(3) { animation-delay: -0.6s; }
+/* Sin análisis de audio (iPhone, sin Web Audio): animación suelta con ritmos distintos para que no suban y bajen a la vez */
+body.audio-live:not(.eq-live) .eq i { animation: eq var(--d, 0.9s) ease-in-out infinite; }
+.eq i:nth-child(1) { --d: 0.74s; } .eq i:nth-child(2) { --d: 1.07s; animation-delay: -0.3s; } .eq i:nth-child(3) { --d: 0.58s; animation-delay: -0.6s; }
+/* Con análisis de audio: la altura de cada barra viene de --lv (graves, medios, agudos), puesto desde features/eq-bars */
+body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.09s linear; }
 @keyframes eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
 .tile.playing .tile-name { color: var(--accent); }
 
@@ -176,3 +179,15 @@ body.audio-live .eq i { animation: eq 0.9s ease-in-out infinite; }
 .sleeves.view-list .sleeve-name { -webkit-line-clamp: 1; }
 .sleeves.view-list .sleeve-play { top: 8px; right: 50px; width: 40px; height: 40px; }
 .sleeves.view-list .sleeve .more { top: 10px; bottom: auto; right: 6px; }
+
+/* Carpeta con imagen: la imagen sustituye al fondo (3:2, como el recorte); el borde y la pestaña siguen el tono de la imagen; el icono no cambia */
+.sleeves .sleeve.has-image {
+  aspect-ratio: 3 / 2; background-size: cover; background-position: center; color: #fff;
+  --sleeve-line: oklch(0.78 0.13 var(--h, 230) / 0.7);
+  box-shadow: inset 0 0 0 1.5px var(--sleeve-line), 0 1px 2px rgb(0 0 0 / 0.2);
+}
+.sleeves .sleeve.has-image::before { background: oklch(0.34 0.07 var(--h, 230)); box-shadow: inset 1px 1px 0 var(--sleeve-line), inset -1px 0 0 var(--sleeve-line); }
+.sleeves .sleeve.has-image:hover { box-shadow: inset 0 0 0 1.5px var(--sleeve-line), var(--shadow); }
+.sleeves .sleeve.has-image > .icon { color: #fff; opacity: 0.92; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.55)); }
+.sleeves .sleeve.has-image .sleeve-name { text-shadow: 0 1px 6px rgb(0 0 0 / 0.7); }
+.sleeves.view-list .sleeve.has-image { aspect-ratio: auto; background-image: none !important; color: var(--ink); }
