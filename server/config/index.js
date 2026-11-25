@@ -19,6 +19,7 @@ export const config = Object.freeze({
   dataDir,
   tmpDir: path.join(dataDir, 'tmp'),
   thumbsDir: path.join(dataDir, 'thumbs'),
+  folderImagesDir: path.join(dataDir, 'folder-images'),
   previewsDir: path.join(dataDir, 'previews'),
   sessionFile: path.join(dataDir, 'telegram.session'),
   dbFile: path.join(dataDir, 'index.db'),
@@ -44,7 +45,7 @@ export const config = Object.freeze({
 });
 
 export function ensureDirs() {
-  for (const dir of [config.dataDir, config.tmpDir, config.thumbsDir, config.previewsDir]) {
+  for (const dir of [config.dataDir, config.tmpDir, config.thumbsDir, config.previewsDir, config.folderImagesDir]) {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   }
 }

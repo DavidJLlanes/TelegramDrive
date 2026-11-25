@@ -14,6 +14,7 @@ import { audioItems } from './audio-actions.js';
 import { shareItem } from './share-dialog.js';
 import { pickFolderStyle } from './folder-color.js';
 import { rescanCovers } from './cover-rescan.js';
+import { chooseFolderImage, removeFolderImages } from './folder-image.js';
 import { extraFileMenu } from '../core/explorer-ext.js';
 
 async function guarded(fn, okMessage) {
@@ -80,6 +81,8 @@ export function folderMenu(folder) {
       { label: 'Releer carátulas…', icon: 'image', run: () => rescanCovers(folder.path) },
     ]),
     'sep',
+    { label: 'Imagen de la carpeta…', icon: 'image', run: () => chooseFolderImage([folder]) },
+    ...(folder.image ? [{ label: 'Quitar imagen', icon: 'close', run: () => removeFolderImages([folder]) }] : []),
     { label: 'Color e icono…', icon: 'palette', run: async () => {
       const style = await pickFolderStyle(folder);
       if (style && (style.color !== (folder.color ?? -1) || style.icon !== (folder.icon || ''))) guarded(() => api.setFolderStyle(folder.path, style), 'Carpeta actualizada');

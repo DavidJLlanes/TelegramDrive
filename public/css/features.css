@@ -161,6 +161,13 @@
 
 /* Diálogo «Cambiar carátula» */
 .cover-pick { display: grid; gap: 12px; }
-.cover-pick-preview { width: 160px; max-width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-md); justify-self: center; }
-.cover-pick-preview[hidden] { display: none; }
 .cover-pick-replace { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 0.92rem; cursor: pointer; }
+.crop { display: grid; gap: 10px; justify-items: center; }
+.crop-canvas { width: 100%; max-width: 320px; height: auto; border-radius: var(--r-md); cursor: grab; touch-action: none; background: var(--sunken); }
+.crop-canvas:active { cursor: grabbing; }
+.crop-tools { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 320px; }
+.crop-tools .range { flex: 1; }
+.crop[hidden] { display: none; }
+.crop-hint { font-size: 0.85rem; }
+.tree-item.dragging { opacity: 0.5; }
+.tree-item.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-soft); }

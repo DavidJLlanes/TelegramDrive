@@ -72,6 +72,13 @@ export const api = {
     form.set('ids', JSON.stringify(ids)); form.set('replace', replace ? '1' : '0'); form.set('image', image, image.name || 'portada');
     return request('covers/assign', { method: 'POST', body: form });
   },
+  /** Imagen de portada de carpetas (por ruta); `replace` también cambia las que ya tienen una. */
+  setFolderImages: (paths, image, replace) => {
+    const form = new FormData();
+    form.set('paths', JSON.stringify(paths)); form.set('replace', replace ? '1' : '0'); form.set('image', image, image.name || 'carpeta.jpg');
+    return request('folders/image', { method: 'POST', body: form });
+  },
+  removeFolderImages: (paths) => request('folders/image', { method: 'DELETE', body: { paths } }),
   retagIds: (ids, set) => request('library/retag', { method: 'POST', body: { ids, set } }),
 };
 
@@ -90,6 +97,7 @@ let coverStamp = 0;
 /** Tras cambiar carátulas: las miniaturas se piden de nuevo (la URL cambia). */
 export const bumpCovers = () => { coverStamp = Date.now(); };
 export const thumbUrl = (id) => url(`files/${id}/thumb`, { v: coverStamp ? `2.${coverStamp}` : 2 }).href;
+export const folderImageUrl = (folder) => url(`folder-image/${folder.id}`, { v: folder.image }).href;
 export const previewUrl = (id) => url(`files/${id}/preview`).href;
 /** ZIP de una carpeta (`path`) o de una selección (`ids`). Se descarga navegando a la URL (la cookie de sesión va sola). */
 export const zipUrl = ({ path, ids }) => url('zip', ids ? { ids: ids.join(',') } : { path }).href;

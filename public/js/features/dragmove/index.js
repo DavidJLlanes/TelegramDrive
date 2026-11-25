@@ -45,6 +45,7 @@ function makeTarget(el, path) {
 
 addCardEnhancer((el, item, kind) => {
   if (kind === 'file') { makeDraggable(el, `f:${item.id}`); return; }
+  if (kind === 'root') { makeTarget(el, '/'); return; }
   makeDraggable(el, `d:${item.path}`);
   makeTarget(el, item.path);
 });

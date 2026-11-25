@@ -6,6 +6,7 @@ import { formatBytes } from '../core/format.js';
 import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
 import { menuViews, navigateView } from '../core/views.js';
+import { enhanceCard } from '../core/explorer-ext.js';
 
 const parentOf = (p) => p.slice(0, p.lastIndexOf('/')) || '/';
 
@@ -34,6 +35,8 @@ function item(path, label, iconName, depth, current) {
   const el = h('button', { class: 'tree-item', 'aria-current': path === current ? 'page' : null, onclick: () => navigate(path) },
     icon(iconName), h('span', { title: label }, label));
   el.style.setProperty('--depth', depth);
+  // Las carpetas del lateral se arrastran y reciben lo que se suelta encima; «Inicio» solo recibe (features/dragmove)
+  if (iconName === 'folder' || path === '/') enhanceCard(el, { path }, path === '/' ? 'root' : 'folder');
   return el;
 }
 

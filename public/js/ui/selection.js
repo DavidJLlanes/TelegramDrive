@@ -11,6 +11,7 @@ import { downloadZip } from './download.js';
 import { addToPlaylist } from './playlist-picker.js';
 import { editTagsBulk } from './tag-editor.js';
 import { chooseCover } from './cover-assign.js';
+import { chooseFolderImage } from './folder-image.js';
 import { toast, toastError } from './toast.js';
 
 export const fileKey = (f) => `f:${f.id}`;
@@ -84,6 +85,15 @@ function zip() {
   if (files.length && folders.length) toast('El ZIP incluye solo los archivos seleccionados; las carpetas se descargan de una en una');
 }
 
+/** Imagen para la selección: carátula si son canciones, portada si son carpetas (no se mezclan: llevan recortes distintos). */
+function chooseImage() {
+  const state = appState.get();
+  const { files, folders } = split(state);
+  if (files.length && folders.length) { toast('Selecciona solo canciones (carátula) o solo carpetas (imagen de carpeta)'); return false; }
+  if (folders.length) return chooseFolderImage((state.folders ?? []).filter((f) => folders.includes(f.path)));
+  return chooseCover(files);
+}
+
 export function createSelectionBar() {
   const count = h('strong', {});
   const btn = (label, name, fn, extra = '') => h('button', { class: `btn ${extra}`, type: 'button', onclick: fn }, icon(name), h('span', { class: 'hide-mobile' }, label));
@@ -93,7 +103,7 @@ export function createSelectionBar() {
     btn('Mover', 'move', async () => { const to = await pickFolder({ title: 'Mover selección' }); if (to !== null) bulk('move', to); }),
     btn('ZIP', 'archive', zip),
     btn('Etiquetas', 'tag', async () => { const picked = split(appState.get()); await editTagsBulk(picked); clearSelection(); }),
-    btn('Carátula', 'image', async () => { if (await chooseCover(split(appState.get()).files)) clearSelection(); }),
+    btn('Imagen', 'image', async () => { if (await chooseImage()) clearSelection(); }),
     btn('Añadir a lista', 'playlist', () => addToPlaylist(split(appState.get()).files.filter((f) => f.kind === 'audio').map((f) => f.id))),
     h('button', { class: 'btn btn-danger', type: 'button', 'aria-haspopup': 'menu', onclick: (e) => openMenu(e.currentTarget, [
       { label: 'Enviar a la papelera', icon: 'trash', run: () => bulk('trash') },
