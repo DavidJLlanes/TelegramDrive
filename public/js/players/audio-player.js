@@ -99,7 +99,7 @@ function build() {
 const syncPlay = (playing) => {
   setChildren(ui.play, icon(playing ? 'pause' : 'play'));
   setPlaying(playing);
-  document.body.classList.toggle('audio-paused', !playing); // el ecualizador de las tarjetas se detiene con la música parada
+  document.body.classList.toggle('audio-live', playing); // el ecualizador de las tarjetas se detiene con la música parada
 };
 const syncVolume = () => setChildren(ui.mute, icon(audio.muted || audio.volume === 0 ? 'mute' : 'volume'));
 const toggle = () => (audio.paused ? audio.play().catch(() => {}) : audio.pause());

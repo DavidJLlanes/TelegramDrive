@@ -67,9 +67,9 @@
 .eq { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: none; align-items: flex-end; gap: 3px; height: 22px; padding: 5px 7px; border-radius: 8px; background: var(--accent); }
 .tile.playing .eq { display: flex; }
 .tile.playing .play-badge { display: none; }
-.eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent-ink); transform-origin: bottom; animation: eq 0.9s ease-in-out infinite; }
+.eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent-ink); transform-origin: bottom; transform: scaleY(0.45); }
+body.audio-live .eq i { animation: eq 0.9s ease-in-out infinite; }
 .eq i:nth-child(2) { animation-delay: -0.3s; } .eq i:nth-child(3) { animation-delay: -0.6s; }
-body.audio-paused .eq i { animation: none; transform: scaleY(0.45); }
 @keyframes eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
 .tile.playing .tile-name { color: var(--accent); }
 
