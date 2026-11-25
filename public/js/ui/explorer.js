@@ -3,7 +3,7 @@ import { emptyBlock, skeletons } from './empty.js';
 import { pickFiles } from '../features/uploads/index.js';
 import { icon } from '../core/icons.js';
 import { tint } from '../core/color.js';
-import { withImage } from './folder-card-image.js';
+import { imageFor } from './folder-card-image.js';
 import { shapeCard } from './folder-card-shape.js';
 import { formatBytes, formatDate } from '../core/format.js';
 import { navigate } from '../core/router.js';
@@ -45,8 +45,7 @@ function sleeve(folder) {
     moreButton(() => folderMenu(folder)));
   const hue = Number.isInteger(folder.color) ? folder.color : folder.inherited; // propio, o heredado de la carpeta madre
   if (Number.isInteger(hue)) { card.style.setProperty('--h', hue); card.classList.add('hued'); } else tint(card, folder.name);
-  shapeCard(card);
-  if (folder.image) withImage(card, folder);
+  shapeCard(card, folder.image ? imageFor(card, folder) : null);
   return enhanceCard(card, folder, 'folder');
 }
 

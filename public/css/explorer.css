@@ -180,26 +180,24 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
 .sleeves.view-list .sleeve-play { top: 8px; right: 50px; width: 40px; height: 40px; }
 .sleeves.view-list .sleeve .more { top: 10px; bottom: auto; right: 6px; }
 
-/* Tarjetas de carpeta (solo cuadrícula): la tarjeta ocupa la silueta completa, con la pestaña dentro (9 px). folder-card-shape.js la recorta con el
-   trazado exacto (--clip-shape) y dibuja un único borde (svg .sleeve-outline) que sigue el contorno; el color de relleno llega hasta la pestaña. */
+/* Tarjetas de carpeta (solo cuadrícula): la tarjeta ocupa la silueta completa, con la pestaña dentro (9 px). Fondo y borde los pinta el SVG
+   .sleeve-shape (folder-card-shape.js) con un único trazado; la tarjeta no tiene fondo propio. */
 .sleeves:not(.view-list) { row-gap: 13px; }
 .sleeves:not(.view-list) .sleeve {
-  min-height: 121px; border-radius: 0; clip-path: var(--clip-shape, none); box-shadow: none !important; outline: none !important;
+  min-height: 121px; border-radius: 0; background: none !important; box-shadow: none !important; outline: none !important;
 }
 .sleeves:not(.view-list) .sleeve::before { display: none; }
 .sleeves:not(.view-list) .sleeve .check { top: 21px; }
-@media (max-width: 640px) { .sleeves:not(.view-list) .sleeve .check { top: 21px; } .sleeves:not(.view-list) .sleeve-play { top: 19px; } }
 .sleeves:not(.view-list) .sleeve-play { top: 19px; }
-.sleeve-outline { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
-.sleeve-outline path { fill: none; stroke: var(--sleeve-line); stroke-width: 1.5; }
-.sleeves:not(.view-list) .sleeve.selected .sleeve-outline path, .sleeves:not(.view-list) .sleeve.drop-target .sleeve-outline path { stroke: var(--accent); stroke-width: 3; }
-.sleeves.view-list .sleeve-outline { display: none; }
+.sleeve-shape { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.sleeve-shape .sa { stop-color: var(--sleeve-a); } .sleeve-shape .sb { stop-color: var(--sleeve-b); }
+.sleeve-outline { fill: none; stroke: var(--sleeve-line); stroke-width: 1.5; stroke-linejoin: round; }
+.sleeves:not(.view-list) .sleeve:hover .sleeve-shape { filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.28)); }
+.sleeves:not(.view-list) .sleeve.selected .sleeve-outline, .sleeves:not(.view-list) .sleeve.drop-target .sleeve-outline { stroke: var(--accent); stroke-width: 3; }
+.sleeves.view-list .sleeve-shape { display: none; }
 
-/* Con imagen: recuadro 1,44:1 (como el recorte), imagen a todo el recuadro; el icono no cambia */
-.sleeves:not(.view-list) .sleeve.has-image {
-  aspect-ratio: 1.44 / 1; background-size: 100% 100%; background-repeat: no-repeat; color: #fff;
-  --sleeve-line: oklch(0.78 0.13 var(--h, 230) / 0.75);
-}
+/* Con imagen: recuadro 1,44:1 (como el recorte); el borde toma el tono de la imagen; el icono no cambia */
+.sleeves:not(.view-list) .sleeve.has-image { aspect-ratio: 1.44 / 1; color: #fff; --sleeve-line: oklch(0.78 0.13 var(--h, 230) / 0.8); }
 .sleeves .sleeve.has-image > .icon { color: #fff; opacity: 0.92; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.55)); }
 .sleeves .sleeve.has-image .sleeve-name { text-shadow: 0 1px 6px rgb(0 0 0 / 0.7); }
-.sleeves.view-list .sleeve.has-image { background-image: none !important; color: var(--ink); }
+.sleeves.view-list .sleeve.has-image { color: var(--ink); }

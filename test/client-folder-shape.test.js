@@ -16,7 +16,7 @@ test('la silueta es un trazado cerrado, sin valores no numéricos, y respeta el 
 test('la pestaña mide lo mismo a cualquier ancho y el cuerpo arranca TAB_H por debajo', () => {
   for (const w of [180, 228, 330]) {
     const d = folderPath(w, 150);
-    assert.ok(d.includes(`L ${TAB_W - 6} 0`), 'arista superior de la pestaña');
+    assert.ok(d.includes(`L ${TAB_W - 6} 0`), "arista superior de la pestaña");
     assert.ok(d.includes(`L ${w - 16} ${TAB_H}`), 'arista superior del cuerpo');
   }
 });
