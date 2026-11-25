@@ -190,7 +190,7 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
   box-shadow: inset 0 0 0 1.5px var(--sleeve-line), 0 1px 2px rgb(0 0 0 / 0.2);
 }
 .sleeves .sleeve.has-image::before {
-  height: 10px; background-color: transparent; background-image: inherit; background-clip: border-box; background-origin: border-box;
+  height: 11px; background-color: transparent; background-image: inherit; background-clip: border-box; background-origin: border-box;
   background-repeat: no-repeat; background-position: 0 0; background-size: var(--cw, 100%) var(--ch, 100%);
   box-shadow: inset 1.5px 1.5px 0 var(--sleeve-line), inset -1.5px 0 0 var(--sleeve-line);
 }
