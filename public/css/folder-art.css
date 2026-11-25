@@ -5,3 +5,6 @@
   transform: translateX(-50%); opacity: 0.9; z-index: 0; pointer-events: none; stroke-width: 1.5;
 }
 .sleeves:not(.view-list) .sleeve .sleeve-name { position: relative; z-index: 1; }
+
+/* Con imagen la tarjeta incluye la pestaña (9 px más arriba): el icono baja esa distancia */
+.sleeves:not(.view-list) .sleeve.has-image > .icon { top: 17px; height: calc(100% - 65px); }
