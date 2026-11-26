@@ -30,3 +30,13 @@ test('una carátula WebP guardada en <id>.jpg se sirve con su tipo real', async 
 test('el audio no tiene vista previa de foto', async () => {
   assert.equal((await h.raw(`/api/files/${song.id}/preview`)).status, 404);
 });
+
+test('isImage: solo acepta JPEG, PNG y WebP reales (respaldo sin «sharp»)', async () => {
+  const { isImage } = await import('../server/services/cover.js');
+  const pad = Buffer.alloc(16);
+  assert.ok(isImage(Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), pad])));
+  assert.ok(isImage(Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), pad])));
+  assert.ok(isImage(Buffer.concat([Buffer.from('RIFF\0\0\0\0WEBP'), pad])));
+  assert.ok(!isImage(Buffer.from('<html><script>alert(1)</script></html>')));
+  assert.ok(!isImage(Buffer.from('GIF89a')));
+});

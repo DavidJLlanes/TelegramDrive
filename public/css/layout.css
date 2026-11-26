@@ -32,7 +32,7 @@
 .toolbar-spacer { flex: 1; }
 
 /* ---------- Contenido ---------- */
-.main { flex: 1; padding: 6px 28px calc(36px + var(--player-h) + var(--safe-b)); }
+.main { flex: 1; padding: 6px 28px calc(36px + var(--fab-room) + var(--player-h) + var(--safe-b)); }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
 .page-title { min-width: 0; }
 .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; margin-left: -8px; color: var(--muted); font-size: 13.5px; }
@@ -79,7 +79,7 @@
   .topbar .brand-mark { display: grid; width: 40px; height: 40px; }
   .searchbar { padding: 4px 14px 10px; }
   .search { max-width: none; }
-  .main { padding: 4px 16px calc(32px + var(--player-h) + var(--safe-b)); }
+  .main { padding: 4px 16px calc(32px + var(--fab-room) + var(--player-h) + var(--safe-b)); }
   .foot-stats { display: block; }
   .page-head { margin-bottom: 20px; flex-wrap: wrap; }
   .hide-mobile { display: none !important; }

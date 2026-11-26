@@ -10,9 +10,16 @@ export function sniffImageType(bytes) {
   return bytes.length > 12 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP' ? 'image/webp' : 'image/jpeg';
 }
 
+/** ¿Es de verdad una imagen JPEG, PNG o WebP? (por sus primeros bytes; se usa cuando no hay «sharp» que la decodifique) */
+export function isImage(b) {
+  return b.length > 12 && ((b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff)
+    || b.toString('hex', 0, 8) === '89504e470d0a1a0a'
+    || (b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP'));
+}
+
 export async function shrinkCover(buffer, size = COVER_SIZE) {
   const sharp = await loadSharp();
-  if (!sharp) return buffer.length <= 2 * 1024 * 1024 ? buffer : null;
+  if (!sharp) return buffer.length <= 2 * 1024 * 1024 && isImage(buffer) ? buffer : null;
   try {
     return await sharp(buffer).resize(size, size, { fit: 'cover' }).webp({ quality: COVER_QUALITY }).toBuffer();
   } catch {

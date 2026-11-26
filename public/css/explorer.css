@@ -168,7 +168,8 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
   .sleeve { min-height: 120px; padding-right: 46px; }
 }
 
-@media (max-width: 380px) { .sleeve-name { font-size: 0.95rem; } } /* nombres largos de carpeta en pantallas muy estrechas */
+/* Pantallas muy estrechas: una sola línea con «…» (dos líneas pisaban los botones y partían palabras); el nombre completo está en el title */
+@media (max-width: 380px) { .sleeves:not(.view-list) .sleeve-name { display: block; font-size: 0.95rem; white-space: nowrap; text-overflow: ellipsis; } }
 
 /* Carpetas en vista de lista: filas compactas en lugar de fundas */
 .sleeves.view-list { grid-template-columns: 1fr; gap: 6px; }

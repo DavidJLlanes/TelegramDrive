@@ -1,4 +1,5 @@
 /* ---------- Botón flotante en abanico ---------- */
+:root { --fab-room: 78px; } /* hueco al final del contenido para que el botón flotante no tape lo último */
 .fab { position: fixed; z-index: 42; right: 20px; bottom: calc(20px + var(--player-h) + var(--safe-b)); width: 58px; height: 58px; transition: transform 0.35s var(--out), opacity 0.25s ease; }
 .fab.away { transform: translateY(24px) scale(0.6); opacity: 0; pointer-events: none; }
 .fab-scrim { position: fixed; inset: 0; z-index: -1; background: color-mix(in oklab, var(--bg) 55%, transparent); backdrop-filter: blur(6px); animation: fab-fade 0.25s ease both; }

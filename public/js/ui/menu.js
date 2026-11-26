@@ -20,7 +20,7 @@ export function openMenu(anchor, items) {
     }, icon(item.icon), item.label))));
   document.body.append(menu);
   const a = anchor.getBoundingClientRect();
-  const m = menu.getBoundingClientRect();
+  const m = { width: menu.offsetWidth, height: menu.offsetHeight }; // tamaño real: el rectángulo visual sale menor por la animación de entrada (escala)
   const left = Math.max(8, Math.min(a.right - m.width, innerWidth - m.width - 8));
   const top = a.bottom + m.height + 8 > innerHeight ? Math.max(8, a.top - m.height - 4) : a.bottom + 4;
   menu.style.left = `${left}px`;

@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config/index.js';
+import { isImage } from './cover.js';
 
 export const WIDTH = 640;
 export const HEIGHT = 444; // 640×444 ≈ 1,44:1: la silueta completa de la tarjeta (cuerpo + pestaña); cubre con holgura su ancho máximo en retina
@@ -46,7 +47,7 @@ let sharpLoading;
 export async function prepare(buffer) {
   sharpLoading ??= import('sharp').then((m) => m.default).catch(() => null);
   const sharp = await sharpLoading;
-  if (!sharp) return buffer.length <= 2 * 1024 * 1024 ? buffer : null;
+  if (!sharp) return buffer.length <= 2 * 1024 * 1024 && isImage(buffer) ? buffer : null;
   try {
     return await sharp(buffer).rotate().resize(WIDTH, HEIGHT, { fit: 'cover' }).webp({ quality: 70 }).toBuffer();
   } catch { return null; }
