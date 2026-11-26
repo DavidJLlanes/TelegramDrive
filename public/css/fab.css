@@ -25,15 +25,7 @@
 }
 .fab-item .icon { width: 24px; height: 24px; }
 .fab.open .fab-item { opacity: 1; pointer-events: auto; transform: translate(var(--x), var(--y)) scale(1) rotate(0); }
-.fab.open .fab-item:nth-of-type(1) { transition-delay: 0ms; }
-.fab.open .fab-item:nth-of-type(2) { transition-delay: 55ms; }
-.fab.open .fab-item:nth-of-type(3) { transition-delay: 110ms; }
-.fab.open .fab-item:nth-of-type(4) { transition-delay: 165ms; }
-/* Cuatro botones en un cuarto de círculo de 104 px (cada 30°) */
-.fab-home { --x: 0px; --y: -104px; }
-.fab-up { --x: -52px; --y: -90px; }
-.fab-upload { --x: -90px; --y: -52px; }
-.fab-folder { --x: -104px; --y: 0px; }
+.fab.open .fab-item { transition-delay: var(--d, 0ms); } /* posición (--x, --y) y retraso (--d) los pone fan.js */
 .fab .fab-item:disabled { color: var(--muted); }
 .fab.open .fab-item:disabled { opacity: 0.45; cursor: default; }
 .fab-item:active { filter: brightness(1.15); }
@@ -42,3 +34,8 @@
 /* Los paneles flotantes del mismo rincón suben para no quedar debajo del botón */
 .upload-panel, .ly-panel, .fx-panel, .queue-panel { margin-bottom: 76px; }
 @media (prefers-reduced-motion: reduce) { .fab-item, .fab-main, .fab-main .icon { transition-duration: 0.01s; transition-delay: 0s !important; } }
+
+/* Dentro del visor de imágenes: encima de todo y sin reproductor debajo */
+.fab.fab-overlay { position: absolute; z-index: 5; bottom: calc(20px + var(--safe-b)); }
+.fab.fab-overlay .fab-scrim { position: fixed; background: rgb(0 0 0 / 0.35); }
+.fab-overlay .fab-close { color: var(--danger); }

@@ -5,6 +5,7 @@ import { icon } from '../core/icons.js';
 import { contentUrl, previewUrl, thumbUrl } from '../core/api.js';
 import { formatBytes } from '../core/format.js';
 import { saveAs } from '../ui/save-as.js';
+import { createFan } from '../ui/fan.js';
 
 let closeActive = null;
 const SWIPE = 60;
@@ -38,7 +39,7 @@ export function openLightbox(file, list = []) {
   };
   const step = (delta) => { if (queue.length > 1) show(index + delta); };
   const onKey = (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Escape') { e.preventDefault(); if (fan.el.classList.contains('open')) fan.toggle(false); else close(); }
     if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
   };
@@ -99,17 +100,20 @@ export function openLightbox(file, list = []) {
   }, { passive: true });
   stage.addEventListener('click', (e) => { if (e.target === stage && Date.now() - swipedAt >= 400) close(); });
 
-  const closeBtn = h('button', { class: 'btn btn-icon', 'aria-label': 'Cerrar', type: 'button', onclick: () => close() }, icon('close'));
+  // Acciones en el mismo botón flotante que la app (abajo a la derecha): descargar y cerrar
+  const fan = createFan({ label: 'Acciones de la imagen', className: 'fab-overlay', items: [
+    { id: 'download', label: 'Descargar', icon: 'download', run: () => saveAs(queue[index]) },
+    { id: 'close', label: 'Cerrar', icon: 'close', run: () => close() },
+  ] });
   const box = h('div', { class: 'lightbox', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Visor de imágenes' },
-    h('div', { class: 'viewer-bar' }, closeBtn, title,
-      h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Guardar como…', title: 'Guardar como…', onclick: () => saveAs(queue[index]) }, icon('download'))),
-    stage, foot,
+    h('div', { class: 'viewer-bar' }, title),
+    stage, foot, fan.el,
     queue.length > 1 && h('button', { class: 'lb-nav lb-prev', type: 'button', 'aria-label': 'Anterior', onclick: () => step(-1) }, icon('chevronLeft')),
     queue.length > 1 && h('button', { class: 'lb-nav lb-next', type: 'button', 'aria-label': 'Siguiente', onclick: () => step(1) }, icon('chevronRight')));
   closeActive = close;
   document.body.append(box);
   document.body.style.overflow = 'hidden';
   document.addEventListener('keydown', onKey);
-  closeBtn.focus({ preventScroll: true });
+  fan.main.focus({ preventScroll: true });
   show(index);
 }
