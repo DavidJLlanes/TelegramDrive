@@ -31,15 +31,14 @@ export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
     const reg = await navigator.serviceWorker.register('sw.js', { scope: './' });
-    reg.addEventListener('updatefound', () => {
-      const worker = reg.installing;
-      worker?.addEventListener('statechange', () => {
-        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-          toast('Hay una nueva versión disponible', { action: { label: 'Actualizar', run: () => { worker.postMessage('skipWaiting'); } } });
-        }
-      });
-    });
+    // La versión nueva se activa sola (sw.js) y los archivos se piden siempre a la red: al volver a abrir la app ya es la nueva.
+    // A la página abierta solo se le avisa (recargar sola cortaría la música, también con la pantalla bloqueada).
+    const hadController = Boolean(navigator.serviceWorker.controller); // en la primera visita no hay nada que actualizar
     let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      toast('Hay una nueva versión disponible', { action: { label: 'Actualizar', run: () => { reloaded = true; location.reload(); } } });
+    });
+    reg.update().catch(() => {});
   } catch (err) { console.warn('Service worker no registrado', err); }
 }

@@ -5,8 +5,13 @@ const VERSION = '__BUILD__';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = ['__SHELL__'];
 
+// Instalación: guarda la app (un archivo que falle no bloquea la actualización) y se activa al momento, sin esperar a que se pulse nada.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.allSettled(SHELL.map((url) => cache.add(url)));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -54,14 +59,21 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(request).catch(async () => (await caches.match('index.html')) || caches.match('offline.html')));
     return;
   }
-  // Estáticos: caché primero, y se refresca en segundo plano.
+  // Fuentes e imágenes no cambian entre versiones: caché primero (arranque instantáneo, sin destello de tipografía).
+  if (/\.(woff2|png|svg)$/.test(url.pathname)) {
+    event.respondWith((async () => (await caches.match(request)) || fetch(request))());
+    return;
+  }
+  // Código (JS, CSS, HTML): red primero (con conexión siempre se usa la versión desplegada, nunca una mezcla de archivos viejos
+  // y nuevos); la caché solo se usa sin conexión.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const cached = await cache.match(request);
-    const network = fetch(request).then((res) => {
+    try {
+      const res = await fetch(request, { cache: 'no-cache' });
       if (res.ok) cache.put(request, res.clone());
       return res;
-    }).catch(() => cached);
-    return cached || network;
+    } catch {
+      return (await cache.match(request)) || (await caches.match(request)) || Response.error();
+    }
   })());
 });

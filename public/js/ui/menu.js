@@ -3,15 +3,24 @@ import { icon } from '../core/icons.js';
 import { leave } from '../core/motion.js';
 
 let current = null;
-const closeMenu = () => { leave(current); current = null; };
-document.addEventListener('pointerdown', (e) => current && !current.contains(e.target) && closeMenu(), true);
+let currentAnchor = null;
+let closedFrom = null; // botón cuyo menú se acaba de cerrar al pulsarlo: ese mismo clic no debe volver a abrirlo
+const closeMenu = () => { leave(current); current = null; currentAnchor = null; };
+document.addEventListener('pointerdown', (e) => {
+  if (!current || current.contains(e.target)) return;
+  closedFrom = currentAnchor?.contains(e.target) ? currentAnchor : null; // volver a pulsar los puntitos = cerrar
+  closeMenu();
+}, true);
 document.addEventListener('keydown', (e) => e.key === 'Escape' && closeMenu());
 window.addEventListener('scroll', closeMenu, true);
 window.addEventListener('resize', closeMenu);
 
 /** items: [{ label, icon, run, danger }] | 'sep'. Se ancla al botón `anchor`. */
 export function openMenu(anchor, items) {
+  if (closedFrom === anchor) { closedFrom = null; return; }
+  closedFrom = null;
   closeMenu();
+  currentAnchor = anchor;
   const menu = h('div', { class: 'menu', role: 'menu' }, items.map((item) => (item === 'sep'
     ? h('div', { class: 'menu-sep' })
     : h('button', {
