@@ -1,8 +1,8 @@
-// Gestos táctiles sobre archivos y carpetas: pulsación larga = empezar a seleccionar; deslizar a la izquierda = papelera
-// (con «Deshacer»); deslizar a la derecha = compartir. Solo con dedo: con ratón no cambia nada.
+// Gestos táctiles: pulsación larga sobre archivos y carpetas = empezar a seleccionar. Solo en archivos: deslizar a la izquierda =
+// papelera (con «Deshacer») y a la derecha = compartir (las carpetas no se deslizan). Solo con dedo: con ratón no cambia nada.
 import { appState } from '../../core/store.js';
 import { fileKey, folderKey, toggleSelected } from '../../ui/selection.js';
-import { trashFile, trashFolder } from '../../ui/actions.js';
+import { trashFile } from '../../ui/actions.js';
 import { shareItem } from '../../ui/share-dialog.js';
 
 const HOLD_MS = 480;
@@ -12,7 +12,6 @@ const SWIPE_AT = 96;        // px para disparar el deslizamiento
 const target = (e) => e.target.closest('.tile, .sleeve');
 const keyOf = (card) => (card.dataset.id ? fileKey({ id: Number(card.dataset.id) }) : folderKey({ path: card.dataset.path }));
 const fileOf = (card) => appState.get().files.concat(appState.get().results ?? []).find((f) => String(f.id) === card.dataset.id);
-const folderOf = (card) => appState.get().folders.find((f) => f.path === card.dataset.path);
 
 let press = null;
 let swallowClick = false;
@@ -40,6 +39,7 @@ document.addEventListener('pointermove', (e) => {
   const dx = e.clientX - press.x; const dy = e.clientY - press.y;
   if (!press.held && Math.hypot(dx, dy) > MOVE_TOLERANCE) clearTimeout(press.timer);
   if (press.held || appState.get().selected.length) return;
+  if (press.card.classList.contains('sleeve')) return; // las carpetas no se deslizan: solo pulsación larga para seleccionar
   if (!press.locked && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > MOVE_TOLERANCE) { press = null; return; } // es un desplazamiento vertical
   if (Math.abs(dx) > MOVE_TOLERANCE) {
     press.locked = true; press.dx = dx;
@@ -47,7 +47,7 @@ document.addEventListener('pointermove', (e) => {
     card.style.setProperty('transform', `translateX(${Math.max(-140, Math.min(140, dx))}px)`);
     card.style.setProperty('transition', 'none');
     card.classList.toggle('swipe-left', dx <= -SWIPE_AT);
-    card.classList.toggle('swipe-right', dx >= SWIPE_AT && card.classList.contains('tile'));
+    card.classList.toggle('swipe-right', dx >= SWIPE_AT);
   }
 });
 
@@ -58,8 +58,8 @@ function finish(e, cancelled) {
   if (locked) {
     swallowClick = true;
     card.style.setProperty('transition', 'transform 0.2s ease');
-    if (!cancelled && dx <= -SWIPE_AT) (card.classList.contains('tile') ? fileOf(card) && trashFile(fileOf(card)) : folderOf(card) && trashFolder(folderOf(card)));
-    else if (!cancelled && dx >= SWIPE_AT && card.classList.contains('tile')) { const f = fileOf(card); if (f) shareItem({ kind: 'file', target: f.id, label: f.name }); }
+    if (!cancelled && dx <= -SWIPE_AT) { const f = fileOf(card); if (f) trashFile(f); }
+    else if (!cancelled && dx >= SWIPE_AT) { const f = fileOf(card); if (f) shareItem({ kind: 'file', target: f.id, label: f.name }); }
     setTimeout(() => reset(card), 220);
   }
   if (swallowClick) setTimeout(() => { swallowClick = false; }, 350);

@@ -63,7 +63,7 @@
 /* ---------- Gestos táctiles ---------- */
 @media (pointer: coarse) {
   .tile, .sleeve { touch-action: pan-y; -webkit-touch-callout: none; user-select: none; }
-  .tile.swipe-left, .sleeve.swipe-left { outline: 2px solid var(--danger); }
+  .tile.swipe-left { outline: 2px solid var(--danger); }
   .tile.swipe-right { outline: 2px solid var(--accent); }
 }
 
