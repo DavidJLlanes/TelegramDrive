@@ -3,12 +3,37 @@ const supported = () => 'mediaSession' in navigator;
 const SEEK_STEP = 10;
 const FALLBACK_ART = [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }];
 
+const ART_SIZES = [512, 256, 96];
+let current = 0; // turno de la canción actual: una carátula que llega tarde no pisa la de la siguiente
+
+/**
+ * Carátula para el sistema en JPEG y en varios tamaños, como data: URL generada aquí mismo. Así no depende de que el sistema
+ * pueda pedir la imagen con la sesión iniciada ni de que admita WebP (Android y algunos iOS mostraban el icono de la app).
+ */
+async function artworkFor(url) {
+  const res = await fetch(url, { credentials: 'same-origin' });
+  if (!res.ok) throw new Error(String(res.status));
+  const bitmap = await createImageBitmap(await res.blob());
+  const side = Math.min(bitmap.width, bitmap.height);
+  const out = ART_SIZES.map((size) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    canvas.getContext('2d').drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size); // recorte cuadrado centrado
+    return { src: canvas.toDataURL('image/jpeg', 0.86), sizes: `${size}x${size}`, type: 'image/jpeg' };
+  });
+  bitmap.close?.();
+  return out;
+}
+
 export function setMetadata({ title, artist, album, artUrl }) {
   if (!supported()) return;
-  navigator.mediaSession.metadata = new MediaMetadata({
-    title, artist: artist || 'Telegram Drive', album: album || '',
-    artwork: artUrl ? [{ src: artUrl, sizes: '512x512' }, ...FALLBACK_ART] : FALLBACK_ART, // sin carátula: el icono de la aplicación
-  });
+  const turn = ++current;
+  const meta = (artwork) => { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: artist || 'Telegram Drive', album: album || '', artwork }); };
+  meta(FALLBACK_ART); // al instante (con el icono de la app); la carátula llega en cuanto se prepara
+  if (!artUrl) return;
+  const original = { src: artUrl, sizes: '480x480' }; // alternativa por si un sistema no admite data: URL
+  artworkFor(artUrl).then((art) => { if (turn === current) meta([...art, original, ...FALLBACK_ART]); })
+    .catch(() => { if (turn === current) meta([original, ...FALLBACK_ART]); });
 }
 
 export const setPlaying = (playing) => { if (supported()) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'; };
