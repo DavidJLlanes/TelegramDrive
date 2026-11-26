@@ -14,6 +14,7 @@
 .mobile-nav .chip .icon { width: 18px; height: 18px; }
 .mobile-nav .chip-home { width: 40px; padding: 0; justify-content: center; color: var(--accent); }
 .mobile-nav .chip-home .icon { width: 21px; height: 21px; }
+.mobile-nav .chip-up:disabled { opacity: 0.4; color: var(--muted); }
 .mobile-nav .chip[aria-current="page"] { color: var(--accent-ink); background: transparent; }
 .mobile-nav .chip:not([aria-current="page"]):active { background: var(--accent-soft); color: var(--accent); }
 /* El fondo activo (accent) se desliza de una a otra con curva suave, sin rebote */

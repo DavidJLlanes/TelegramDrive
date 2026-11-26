@@ -66,12 +66,19 @@ export function createMobileNav() {
     class: `chip pop-fx${extra}`, type: 'button', 'aria-current': active ? 'page' : null, 'aria-label': label,
     onclick: (e) => pop(e.currentTarget, go, 170),
   }, icon(iconName), extra ? null : h('span', {}, label));
+  // Subir un nivel (carpeta superior): solo activo dentro de una subcarpeta de Archivos
+  const upChip = (s) => {
+    const b = chip('Subir un nivel', 'levelUp', false, () => navigate(s.path.replace(/\/[^/]+\/?$/, '') || '/'), ' chip-home chip-up');
+    b.disabled = s.section !== 'files' || s.path === '/' || s.results !== null;
+    return b;
+  };
   const paint = (s) => {
     const lib = s.section === 'library' && s.results === null;
     const root = s.section === 'files' && s.path === '/' && s.results === null;
     const from = indicatorRect(el, 'tab-ind');
     fill(el,
       chip('Inicio', 'home', root, () => navigate('/'), ' chip-home'),
+      upChip(s),
       chip('Archivos', 'folder', (s.section === 'files' || s.results !== null) && !root, () => navigate('/')),
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
       ...menuViews('library').map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
