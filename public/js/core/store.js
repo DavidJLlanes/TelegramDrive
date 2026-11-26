@@ -29,7 +29,7 @@ const write = (key, value) => { try { localStorage.setItem(key, value); } catch 
 export const prefs = {
   view: read('tgd.view', 'grid'),
   sort: read('tgd.sort', 'name'),
-  volume: Number(read('tgd.volume', '0.8')),
+  volume: Number(read('tgd.volume', '1')), // por defecto, sin atenuar
   save(key, value) { this[key] = value; write(`tgd.${key}`, String(value)); },
 };
 

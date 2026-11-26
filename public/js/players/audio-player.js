@@ -45,7 +45,9 @@ function toggleButton(label, name, onclick) {
 function build() {
   audio = new Audio();
   audio.preload = 'metadata';
-  audio.volume = prefs.volume;
+  // Sin deslizador de volumen (móvil y pantallas estrechas): siempre al 100 % y manda el volumen del sistema.
+  // Antes quedaba al 80 % (−2 dB) sin forma de subirlo en el móvil. Al 100 % el audio sale tal cual, sin pérdida.
+  audio.volume = matchMedia('(max-width: 900px)').matches ? 1 : prefs.volume;
 
   ui.title = h('div', { class: 'audio-title' });
   ui.sub = h('div', { class: 'audio-sub' });
@@ -53,7 +55,7 @@ function build() {
   ui.seek = h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posición' });
   ui.cur = h('span', {}, '0:00');
   ui.dur = h('span', {}, '0:00');
-  ui.vol = h('input', { class: 'range hide-mobile', type: 'range', min: 0, max: 1, step: 0.02, value: prefs.volume, 'aria-label': 'Volumen' });
+  ui.vol = h('input', { class: 'range hide-mobile', type: 'range', min: 0, max: 1, step: 0.02, value: audio.volume, 'aria-label': 'Volumen' });
   ui.art = h('div', { class: 'audio-art' }, icon('music'));
   ui.mute = h('button', { class: 'btn btn-icon hide-mobile', 'aria-label': 'Silenciar', onclick: () => { audio.muted = !audio.muted; syncVolume(); } }, icon('volume'));
   ui.shuffle = toggleButton('Orden aleatorio', 'shuffle', () => { queue.toggleShuffle(); syncModes(); });
@@ -61,7 +63,7 @@ function build() {
 
   ui.seek.addEventListener('input', () => { fill(ui.seek, ui.seek.value / 1000); if (audio.duration) audio.currentTime = (ui.seek.value / 1000) * audio.duration; });
   ui.vol.addEventListener('input', () => { fill(ui.vol, Number(ui.vol.value)); audio.volume = Number(ui.vol.value); audio.muted = false; prefs.save('volume', ui.vol.value); syncVolume(); });
-  fill(ui.vol, prefs.volume);
+  fill(ui.vol, audio.volume);
 
   bar = h('section', { class: 'audio-bar', 'aria-label': 'Reproductor de música' },
     h('div', { class: 'audio-info' }, ui.art, h('div', { class: 'audio-text' }, ui.title, ui.sub)),
