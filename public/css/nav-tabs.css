@@ -26,3 +26,26 @@
 .pop-fx.pop::after { animation: home-ring 0.5s ease-out; }
 @media (prefers-reduced-motion: reduce) { .pop-fx.pop .icon, .pop-fx.pop::after { animation: none; } }
 @media (max-width: 900px) { .mobile-nav { display: flex; } }
+
+/* ---------- Botón de menú (barra superior): tres líneas que se convierten en ✕ ---------- */
+.menu-toggle {
+  position: relative; display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 15px; cursor: pointer;
+  background: color-mix(in oklab, var(--ink) 7%, transparent); color: var(--ink); -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s var(--out), color 0.3s var(--out), border-radius 0.4s var(--out), transform 0.5s var(--spring);
+}
+.menu-toggle:hover { background: color-mix(in oklab, var(--ink) 11%, transparent); }
+.menu-toggle:active { transform: scale(0.92); transition-duration: 0.09s; }
+.menu-toggle[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); border-radius: 50%; box-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 40%, transparent); }
+.mt-lines { position: relative; display: block; width: 20px; height: 14px; }
+.mt-lines i { position: absolute; right: 0; height: 2.4px; border-radius: 2px; background: currentColor; transition: transform 0.42s cubic-bezier(0.34, 1.4, 0.64, 1), width 0.32s var(--out), opacity 0.2s ease, top 0.32s var(--out); }
+.mt-lines i:nth-child(1) { top: 0; width: 20px; }
+.mt-lines i:nth-child(2) { top: 5.8px; width: 13px; }
+.mt-lines i:nth-child(3) { top: 11.6px; width: 17px; }
+.menu-toggle:hover .mt-lines i { width: 20px; }
+.menu-toggle[aria-expanded="true"] .mt-lines i { width: 20px; top: 5.8px; }
+.menu-toggle[aria-expanded="true"] .mt-lines i:nth-child(1) { transform: rotate(45deg); }
+.menu-toggle[aria-expanded="true"] .mt-lines i:nth-child(2) { opacity: 0; transform: scaleX(0.2); }
+.menu-toggle[aria-expanded="true"] .mt-lines i:nth-child(3) { transform: rotate(-45deg); }
+.pop-fx.pop .mt-lines { animation: mt-pop 0.42s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes mt-pop { 30% { transform: scale(0.75); } 65% { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .mt-lines i, .pop-fx.pop .mt-lines { transition: none; animation: none; } }

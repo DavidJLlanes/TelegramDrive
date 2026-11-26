@@ -1,5 +1,4 @@
 import { h } from '../core/dom.js';
-import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
 import { menuViews, navigateView } from '../core/views.js';
 import { watchSync } from '../core/drive.js';
@@ -33,5 +32,9 @@ export function renderTopbar({ onLogout }) {
   return h('header', { class: 'topbar' },
     h('span', { class: 'brand-mark' }, h('img', { src: 'icons/icon-96.png', alt: '', width: 40, height: 40 })),
     h('div', { class: 'toolbar-spacer' }),
-    h('button', { class: 'btn btn-icon btn-ghost pop-fx', 'aria-label': 'Más opciones', 'aria-haspopup': 'menu', onclick: (e) => { const b = e.currentTarget; pop(b); overflow({ currentTarget: b }); } }, icon('more')));
+    // Botón de menú: tres líneas que se convierten en una ✕ mientras el menú está abierto (aria-expanded lo pone menu.js)
+    h('button', {
+      class: 'menu-toggle pop-fx', type: 'button', 'aria-label': 'Menú', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+      onclick: (e) => { const b = e.currentTarget; pop(b); overflow({ currentTarget: b }); },
+    }, h('span', { class: 'mt-lines', 'aria-hidden': 'true' }, h('i'), h('i'), h('i'))));
 }
