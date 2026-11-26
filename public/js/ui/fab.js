@@ -1,4 +1,4 @@
-// Botón flotante (abajo a la derecha) que se despliega en abanico: Inicio, subir archivo y nueva carpeta.
+// Botón flotante (abajo a la derecha) que se despliega en abanico: Inicio, carpeta superior, subir archivo y nueva carpeta.
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState, watch } from '../core/store.js';
@@ -7,8 +7,12 @@ import { pickFiles } from '../features/uploads/index.js';
 import { createFolder } from './actions.js';
 import { pop } from './pop.js';
 
+/** '/a/b' → '/a'; '/a' → '/'. */
+const parentOf = (path) => path.replace(/\/[^/]+\/?$/, '') || '/';
+
 const ITEMS = [
   { id: 'home', label: 'Inicio', icon: 'home', run: () => navigate('/') },
+  { id: 'up', label: 'Subir un nivel', icon: 'levelUp', run: () => navigate(parentOf(appState.get().path)) },
   { id: 'upload', label: 'Subir archivo', icon: 'upload', run: () => pickFiles() },
   { id: 'folder', label: 'Nueva carpeta', icon: 'folderPlus', run: () => createFolder() },
 ];
@@ -32,7 +36,9 @@ export function createFab() {
   main.addEventListener('click', () => toggle());
   scrim.addEventListener('click', () => toggle(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+  const up = root.querySelector('.fab-up');
   watch(appState, root, (s) => { // se aparta mientras se seleccionan elementos (la barra de selección ocupa ese sitio)
+    up.disabled = s.section !== 'files' || s.path === '/'; // en la raíz (o fuera de Archivos) no hay nivel superior
     const busy = s.selected.length > 0;
     root.classList.toggle('away', busy);
     if (busy) toggle(false);

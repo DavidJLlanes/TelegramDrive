@@ -43,6 +43,7 @@ const PATHS = {
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   queue: '<path d="M4 6h12M4 11h12M4 16h7"/><path d="m15 14 5 3-5 3z" fill="currentColor"/>',
   archive: '<rect x="3.5" y="4" width="17" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/>',
+  levelUp: '<path d="M19 20h-7a5 5 0 0 1-5-5V5"/><path d="m3 9 4-4 4 4"/>',
   arrowUp: '<path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/>',
   arrowDown: '<path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/>',
   cloud: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5z"/><path d="m9.5 13.5 2 2 3.5-3.5"/>',
