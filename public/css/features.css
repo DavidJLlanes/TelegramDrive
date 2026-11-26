@@ -160,14 +160,17 @@
 @media (max-width: 560px) { .pg-row.us-row { grid-template-columns: minmax(0, 1fr); } .us-row .pg-side { justify-content: space-between; } }
 
 /* Diálogo «Cambiar carátula» */
-.cover-pick { display: grid; gap: 12px; }
 .cover-pick-replace { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 0.92rem; cursor: pointer; }
-.crop { display: grid; gap: 10px; justify-items: center; }
-.crop-canvas { width: 100%; max-width: 320px; height: auto; border-radius: var(--r-md); cursor: grab; touch-action: none; background: var(--sunken); }
+.cover-pick { display: grid; gap: 14px; }
+.cover-pick p { margin: 0; }
+.file-pick { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.file-pick .btn { flex: none; display: inline-flex; align-items: center; gap: 8px; }
+.file-pick .icon { position: static; width: 18px; height: 18px; margin: 0; opacity: 1; }
+.file-pick-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.9rem; }
+.crop { display: grid; gap: 12px; justify-items: center; }
+.crop[hidden], .crop-hint[hidden] { display: none; }
+.crop-canvas { width: 100%; max-width: 320px; height: auto; border-radius: var(--r-md); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--sunken); }
 .crop-canvas:active { cursor: grabbing; }
-.crop-tools { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 320px; }
-.crop-tools .range { flex: 1; }
-.crop[hidden] { display: none; }
-.crop-hint { font-size: 0.85rem; }
-.tree-item.dragging { opacity: 0.5; }
-.tree-item.drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-soft); }
+.crop-tools { display: flex; gap: 12px; align-items: center; width: 100%; max-width: 320px; }
+.crop-tools .range { flex: 1; min-width: 0; }
+.crop-hint { font-size: 0.85rem; color: var(--muted); text-align: center; text-wrap: balance; }
