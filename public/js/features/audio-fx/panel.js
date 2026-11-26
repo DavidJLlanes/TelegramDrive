@@ -2,6 +2,17 @@ import { leave } from '../../core/motion.js';
 import { h, fill } from '../../core/dom.js';
 import { icon } from '../../core/icons.js';
 import { BANDS, GAIN_RANGE, PRESETS } from './presets.js';
+
+/** Opciones del desplegable agrupadas: Básicos, Electrónica y Otros estilos. */
+function groups(current) {
+  const byGroup = new Map();
+  for (const [key, p] of Object.entries(PRESETS)) {
+    if (!byGroup.has(p.group)) byGroup.set(p.group, []);
+    byGroup.get(p.group).push(h('option', { value: key, selected: current === key }, p.label));
+  }
+  const out = [...byGroup].map(([label, options]) => h('optgroup', { label }, ...options));
+  return out;
+}
 import { FADE_CHOICES } from './settings.js';
 
 const isIos = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -20,7 +31,7 @@ export function createFxPanel(ctl) {
     });
     const preset = h('select', { class: 'fl-select', 'aria-label': 'Preajuste', disabled: !s.eq, onchange: (e) => ctl.update({ preset: e.target.value, gains: [...PRESETS[e.target.value].gains] }) },
       s.preset === 'custom' ? h('option', { value: 'custom', selected: true }, 'Personalizado') : null,
-      Object.entries(PRESETS).map(([key, p]) => h('option', { value: key, selected: s.preset === key }, p.label)));
+      groups(s.preset));
     const fade = h('select', { class: 'fl-select', 'aria-label': 'Fundido', onchange: (e) => ctl.update({ fade: Number(e.target.value) }) },
       FADE_CHOICES.map((n) => h('option', { value: n, selected: s.fade === n }, n ? `${n} segundos` : 'Desactivado')));
     fill(root.querySelector('.fx-body'),

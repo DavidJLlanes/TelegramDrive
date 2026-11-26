@@ -1,4 +1,4 @@
-import { BANDS } from './presets.js';
+import { BANDS, headroom } from './presets.js';
 import { getGraph, webAudioSupported } from '../../players/web-audio.js';
 
 /**
@@ -8,13 +8,15 @@ import { getGraph, webAudioSupported } from '../../players/web-audio.js';
 export function createEq(audio) {
   let graph = null;
   let filters = [];
+  let pre = null; // atenuación previa: evita que los preajustes con mucho realce saturen
 
   function build() {
     graph = getGraph(audio);
     if (!graph) return false;
     filters = BANDS.map(({ hz, type }) => Object.assign(graph.ctx.createBiquadFilter(), { type }));
     filters.forEach((f, i) => { f.frequency.value = BANDS[i].hz; f.Q.value = 1; });
-    graph.setInserts('eq', filters);
+    pre = graph.ctx.createGain();
+    graph.setInserts('eq', [pre, ...filters]);
     return true;
   }
 
@@ -25,6 +27,7 @@ export function createEq(audio) {
       if (!graph && enabled && !build()) return false;
       if (!graph) return true;
       filters.forEach((f, i) => { f.gain.value = enabled ? gains[i] : 0; });
+      pre.gain.value = enabled ? 10 ** (-headroom(gains) / 20) : 1;
       if (enabled && graph.ctx.state === 'suspended') graph.ctx.resume().catch(() => {});
       return true;
     },

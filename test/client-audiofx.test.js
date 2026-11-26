@@ -26,3 +26,10 @@ test('sanitize recupera de datos corruptos', () => {
 test('cada preajuste tiene una ganancia por banda y dentro de rango', () => {
   for (const p of Object.values(PRESETS)) { assert.equal(p.gains.length, BANDS.length); p.gains.forEach((g) => assert.equal(clampGain(g), g)); }
 });
+test('preajustes de electrónica y atenuación previa contra la saturación', async () => {
+  const { headroom } = await import('../public/js/features/audio-fx/presets.js');
+  for (const key of ['techno', 'house', 'trance', 'progressive', 'dance']) assert.ok(PRESETS[key], key);
+  assert.equal(new Set(Object.values(PRESETS).map((p) => p.label)).size, Object.keys(PRESETS).length, 'nombres distintos');
+  assert.equal(headroom([7, 1, -3, 2, 4]), 3.5);
+  assert.equal(headroom([-4, -1, -2, 0, -3]), 0, 'sin realces no se atenúa');
+});
