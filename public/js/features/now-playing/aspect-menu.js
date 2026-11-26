@@ -1,7 +1,8 @@
-// Menú «Aspecto» de la pantalla completa: ajustes visuales del reproductor.
+// Menú de la pantalla completa: qué se ve, ecualizador y ajustes visuales del reproductor.
 import { openMenu } from '../../ui/menu.js';
 import { navigateView } from '../../core/views.js';
 import { look } from './settings.js';
+import { toggleSoundPanel } from '../audio-fx/index.js';
 
 const yesNo = (value) => (value ? 'sí' : 'no');
 
@@ -10,6 +11,8 @@ export function openAspectMenu(anchor, { stop, leave } = {}) {
   const show = (id, label, ic) => ({ label: `${panel === id ? '● ' : ''}${label}`, icon: ic, run: () => look.set('panel', id) });
   openMenu(anchor, [
     show('art', 'Ver la carátula', 'music'), show('lyrics', 'Ver la letra', 'lyrics'), show('queue', 'Ver la lista de reproducción', 'list'),
+    'sep',
+    { label: 'Ecualizador y fundido…', icon: 'sliders', run: toggleSoundPanel },
     'sep',
     { label: `Osciloscopio: ${yesNo(look.get('scopeOn'))}`, icon: 'sliders', run: () => look.toggle('scopeOn') },
     { label: `Carátula como disco giratorio: ${yesNo(look.get('disc'))}`, icon: 'disc', run: () => look.toggle('disc') },

@@ -8,6 +8,10 @@ import { createFader } from './fade.js';
 import { createFxPanel } from './panel.js';
 
 let settings = loadSettings();
+let panelRef = null;
+
+/** Abre o cierra el panel de sonido (ecualizador y fundido); lo usa también el menú de la pantalla completa. */
+export const toggleSoundPanel = () => panelRef?.toggle();
 
 onAudioReady((audio, bar) => {
   const eq = createEq(audio);
@@ -19,6 +23,7 @@ onAudioReady((audio, bar) => {
     update(patch) { settings = { ...settings, ...patch }; saveSettings(settings); apply(); panel.repaint(); },
     setBand(i, db) { const gains = settings.gains.map((g, k) => (k === i ? db : g)); settings = { ...settings, gains, preset: 'custom' }; saveSettings(settings); apply(); },
   });
+  panelRef = panel;
   bar.querySelector('.audio-volume')?.prepend(h('button', { class: 'btn btn-icon hide-mobile', type: 'button', 'aria-label': 'Sonido', title: 'Ecualizador y fundido', onclick: panel.toggle }, icon('sliders')));
   if (settings.eq) apply();
 });

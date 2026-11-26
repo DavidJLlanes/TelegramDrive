@@ -13,6 +13,7 @@ import { createLyricsView } from './lyrics-view.js';
 import { createQueueView } from './queue-view.js';
 import { createScopeView } from '../scope/view.js';
 import { openAspectMenu } from './aspect-menu.js';
+import { pop } from '../../ui/pop.js';
 import { look } from './settings.js';
 import { attachWave } from '../waveform/seek.js';
 import { followPeaks } from '../waveform/follow.js';
@@ -104,7 +105,11 @@ export function openNowPlaying(audio, bar) {
   const closeBtn = h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Cerrar pantalla completa', onclick: close }, icon('chevronDown'));
   root = h('section', { class: `np${look.get('disc') ? ' disc' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Reproduciendo' }, bg,
     h('header', { class: 'np-top' }, closeBtn, h('span', { class: 'np-top-label' }, 'Reproduciendo'),
-      h('button', { class: 'btn btn-icon np-btn', type: 'button', 'aria-label': 'Aspecto del reproductor', onclick: (e) => openAspectMenu(e.currentTarget, { leave: close, stop: () => { close(); proxy(bar, 'Cerrar reproductor')(); } }) }, icon('palette'))),
+      // Mismo botón de menú que la pantalla principal: tres líneas que se convierten en ✕ (aria-expanded lo pone menu.js)
+      h('button', {
+        class: 'menu-toggle pop-fx np-menu', type: 'button', 'aria-label': 'Menú del reproductor', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+        onclick: (e) => { const b = e.currentTarget; pop(b); openAspectMenu(b, { leave: close, stop: () => { close(); proxy(bar, 'Cerrar reproductor')(); } }); },
+      }, h('span', { class: 'mt-lines', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')))),
     h('div', { class: 'np-main' }, artBox, panes.lyrics, panes.queue, panes.scope,
       h('div', { class: 'np-text' }, title, sub),
       h('div', { class: 'np-seek' }, cur, seek, dur),

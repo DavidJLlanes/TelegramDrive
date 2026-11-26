@@ -74,3 +74,10 @@
 .tile.playing .cover { box-shadow: 0 0 0 3px var(--accent), 0 12px 26px -12px rgb(13 26 44 / 0.5); }
 .tile:active .cover { transform: scale(0.98); }
 .empty .empty-actions .icon { width: 18px; height: 18px; margin: 0; opacity: 1; stroke-width: 1.8; color: inherit; }
+
+/* Botón de menú en la pantalla completa: el mismo de la app, en blanco translúcido sobre el fondo de la carátula */
+.np .menu-toggle.np-menu { color: #fff; background: rgb(255 255 255 / 0.12); }
+.np .menu-toggle.np-menu:hover { background: rgb(255 255 255 / 0.18); }
+.np .menu-toggle.np-menu[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+/* Panel de sonido abierto desde la pantalla completa: por encima de ella y sin reproductor debajo */
+body:has(.np) .fx-panel { z-index: 70; bottom: calc(18px + var(--safe-b)); margin-bottom: 0; }
