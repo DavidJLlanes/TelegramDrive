@@ -15,9 +15,9 @@ export default {
 
     /** GET /api/folder-image/:id?v=… → la imagen (la URL lleva la versión, así que se cachea para siempre) */
     router.get('/folder-image/:id', wrap(async (req, res) => {
-      const file = images.file(req.params.id);
-      if (!file) throw notFound('Esta carpeta no tiene imagen');
-      res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' }).sendFile(file);
+      const found = images.file(req.params.id);
+      if (!found) throw notFound('Esta carpeta no tiene imagen');
+      res.set({ 'Content-Type': found.type, 'Cache-Control': 'private, max-age=31536000, immutable' }).sendFile(found.path);
     }));
 
     /** POST /api/folders/image (multipart: image, paths, replace) → { updated, skipped } */

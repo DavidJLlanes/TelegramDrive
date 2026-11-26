@@ -11,7 +11,7 @@ export async function chooseFolderImage(folders) {
   const single = folders.length === 1;
   const withImage = folders.filter((f) => f.image).length;
   return pickImage({
-    title: single ? `Imagen de «${folders[0].name}»` : 'Asignar imagen a carpetas', ratio: 900 / 625, outWidth: 900,
+    title: single ? `Imagen de «${folders[0].name}»` : 'Asignar imagen a carpetas', ratio: 900 / 625, outWidth: 640,
     text: single ? 'Elige la imagen de fondo de la carpeta. Su icono y su color se mantienen.' : `Elige una imagen: será el fondo de ${plural(folders.length)}.`,
     replaceLabel: single ? null : (withImage ? `Sustituir también las que ya tienen imagen (${withImage})` : 'Sustituir las que ya tengan imagen'),
     apply: async (blob, replace) => {

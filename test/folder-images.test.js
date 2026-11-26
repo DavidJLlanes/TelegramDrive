@@ -30,11 +30,11 @@ test('una carpeta sin imagen no la anuncia; con imagen aparece su versión y se 
   assert.ok(Number.isInteger(rock.image) && rock.id);
   const img = await h.raw(`/api/folder-image/${rock.id}?v=${rock.image}`);
   assert.equal(img.status, 200);
-  assert.equal(img.headers.get('content-type'), 'image/jpeg');
+  assert.equal(img.headers.get('content-type'), 'image/webp');
   assert.match(img.headers.get('cache-control'), /immutable/);
   const sharp = (await import('sharp')).default;
   const meta = await sharp(Buffer.from(await img.arrayBuffer())).metadata();
-  assert.deepEqual([meta.width, meta.height], [900, 625], 'se ajusta a la proporción de la tarjeta');
+  assert.deepEqual([meta.width, meta.height], [640, 444], 'se ajusta a la proporción de la tarjeta');
 });
 
 test('en masa: respeta las que ya tienen salvo «sustituir»', async () => {

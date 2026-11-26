@@ -21,7 +21,7 @@ test('carátula incrustada: el lector la guarda y /thumb la sirve como imagen', 
   assert.equal(h.catalog.getFile(withCover.id).thumb, true);
   const r = await h.raw(`/api/files/${withCover.id}/thumb`);
   assert.equal(r.status, 200);
-  assert.equal(r.headers.get('content-type'), 'image/jpeg');
+  assert.equal(r.headers.get('content-type'), 'image/webp');
   assert.ok((await r.arrayBuffer()).byteLength > 100);
   assert.equal(h.catalog.getFile(without.id).thumb, false);
   assert.equal((await h.raw(`/api/files/${without.id}/thumb`)).status, 404);

@@ -69,7 +69,7 @@ export function createCropper({ ratio = 1, outWidth = 600 }) {
       const { sx, sy, sw, sh } = source();
       const out = h('canvas', { width: outWidth, height: Math.round(outWidth / ratio) });
       out.getContext('2d').drawImage(state.img, sx, sy, sw, sh, 0, 0, out.width, out.height);
-      return new Promise((resolve) => out.toBlob(resolve, 'image/jpeg', 0.88));
+      return new Promise((resolve) => out.toBlob(resolve, 'image/jpeg', 0.92));
     },
   };
 }

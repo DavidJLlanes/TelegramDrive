@@ -3,8 +3,10 @@ import { wrap } from '../../utils/async-handler.js';
 import { notFound } from '../../utils/errors.js';
 import { getCachedImage } from '../../services/image-cache/images.js';
 import { getThumbnail } from '../../services/thumbnails.js';
+import { sniffImageType } from '../../services/cover.js';
 import { pruneCache } from '../../services/image-cache/prune.js';
 import { migrateLegacyThumbs } from '../../services/image-cache/legacy.js';
+
 
 export default {
   name: 'image-cache',
@@ -17,7 +19,7 @@ export default {
         const bytes = kind === 'thumb' ? await getThumbnail(tg, entry.id) : null;
         if (!bytes) throw notFound(kind === 'thumb' ? 'Sin miniatura' : 'No es una fotografía');
         // no-cache + ETag: si se cambia la carátula, todos los dispositivos la ven al momento (y si no cambió, responde 304)
-        return res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, no-cache' }).send(bytes);
+        return res.set({ 'Content-Type': sniffImageType(bytes), 'Cache-Control': 'private, no-cache' }).send(bytes);
       }
       const result = await getCachedImage(tg, entry, kind);
       if (!result) throw notFound('Vista previa no disponible');

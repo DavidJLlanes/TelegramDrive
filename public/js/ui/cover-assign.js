@@ -12,7 +12,7 @@ export async function chooseCover(files) {
   const single = tracks.length === 1;
   const withCover = tracks.filter((f) => f.thumb).length;
   return pickImage({
-    title: single ? 'Cambiar carátula' : 'Asignar carátula', ratio: 1, outWidth: 600,
+    title: single ? 'Cambiar carátula' : 'Asignar carátula', ratio: 1, outWidth: 480,
     text: single ? 'Elige la imagen que será la carátula de esta canción.' : `Elige una imagen: será la carátula de ${plural(tracks.length)}.`,
     replaceLabel: single ? null : (withCover ? `Sustituir también las que ya tienen carátula (${withCover})` : 'Sustituir las que ya tengan carátula'),
     apply: async (blob, replace) => {
