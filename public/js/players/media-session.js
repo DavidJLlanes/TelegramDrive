@@ -31,9 +31,10 @@ export function setMetadata({ title, artist, album, artUrl }) {
   const meta = (artwork) => { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: artist || 'Telegram Drive', album: album || '', artwork }); };
   meta(FALLBACK_ART); // al instante (con el icono de la app); la carátula llega en cuanto se prepara
   if (!artUrl) return;
-  const original = { src: artUrl, sizes: '480x480' }; // alternativa por si un sistema no admite data: URL
-  artworkFor(artUrl).then((art) => { if (turn === current) meta([...art, original, ...FALLBACK_ART]); })
-    .catch(() => { if (turn === current) meta([original, ...FALLBACK_ART]); });
+  // Con carátula se envía SOLO la carátula: Chrome para Android, ante dos imágenes del mismo tamaño, prefiere la PNG
+  // (el icono de la app) a la JPEG, y la pantalla de bloqueo mostraba siempre el logo.
+  artworkFor(artUrl).then((art) => { if (turn === current) meta(art); })
+    .catch(() => { if (turn === current) meta([{ src: artUrl, sizes: '480x480', type: 'image/webp' }]); });
 }
 
 export const setPlaying = (playing) => { if (supported()) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'; };
