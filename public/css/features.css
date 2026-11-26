@@ -167,9 +167,9 @@
 .file-pick .btn { flex: none; display: inline-flex; align-items: center; gap: 8px; }
 .file-pick .icon { position: static; width: 18px; height: 18px; margin: 0; opacity: 1; }
 .file-pick-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.9rem; }
-.crop { display: grid; gap: 12px; justify-items: center; }
+.crop { display: grid; gap: 12px; justify-items: center; touch-action: pan-y; }
 .crop[hidden], .crop-hint[hidden] { display: none; }
-.crop-canvas { width: 100%; max-width: 320px; height: auto; border-radius: var(--r-md); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--sunken); }
+.crop-canvas { width: 100%; max-width: 320px; height: auto; border-radius: var(--r-md); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; background: var(--sunken); }
 .crop-canvas:active { cursor: grabbing; }
 .crop-tools { display: flex; gap: 12px; align-items: center; width: 100%; max-width: 320px; }
 .crop-tools .range { flex: 1; min-width: 0; }

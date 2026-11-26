@@ -50,6 +50,7 @@ export function createCropper({ ratio = 1, outWidth = 600 }) {
   const pointers = new Map(); let pinch = null;
   canvas.addEventListener('pointerdown', (e) => {
     if (!state.img) return;
+    e.preventDefault(); // evita que iOS interprete el gesto como selección o desplazamiento
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, zoom: Number(zoom.value) }; }
@@ -79,6 +80,7 @@ export function createCropper({ ratio = 1, outWidth = 600 }) {
     e.preventDefault();
     setZoom(Number(zoom.value) * Math.exp(-e.deltaY * 0.0015)); schedule();
   }, { passive: false });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('dblclick', () => { zoom.value = 1; state.cx = 0.5; state.cy = 0.5; schedule(); });
   zoom.addEventListener('input', schedule);
 
