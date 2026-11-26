@@ -56,3 +56,24 @@ test('las carpetas intermedias se crean una sola vez aunque haya subidas en para
   assert.deepEqual(paths, ['/A/B', '/A/B', '/A', '/ya']);
   assert.deepEqual(calls.sort(), ['/A|B', '/|A', '/|ya']);
 });
+
+test('un fallido se puede reintentar con otro nombre o ignorar', async () => {
+  const seen = [];
+  let idle = null;
+  const q = new UploadQueue({
+    run: async (job) => { seen.push(job.file.name); if (job.file.name.includes('?')) { const e = new Error('Nombre no válido'); e.status = 400; throw e; } return {}; },
+    wait: () => Promise.resolve(), onIdle: (s) => { idle = s; },
+  });
+  const [bad, other] = q.add([{ file: { name: 'mal?.png' } }, { file: { name: 'otro?.png' } }]);
+  await new Promise((r) => setTimeout(r, 20));
+  assert.deepEqual([bad.status, other.status], ['error', 'error']);
+  assert.equal(idle.failed, 2);
+  assert.ok(q.retry(bad, { name: 'bien.png' }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(bad.status, 'done');
+  assert.equal(seen.at(-1), 'bien.png');
+  assert.equal(q.skip(), 1, 'ignorar fallidos');
+  assert.equal(other.status, 'skipped');
+  assert.deepEqual([idle.done, idle.failed, idle.skipped], [1, 0, 1]);
+  assert.equal(q.retry(bad), false, 'solo se reintentan los fallidos');
+});

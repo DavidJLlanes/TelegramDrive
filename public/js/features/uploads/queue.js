@@ -27,7 +27,7 @@ export class UploadQueue {
 
   summary() {
     const count = (s) => this.jobs.filter((j) => j.status === s).length;
-    return { total: this.jobs.length, done: count('done'), failed: count('error'), pending: count('queued') + count('running'), failures: this.jobs.filter((j) => j.status === 'error') };
+    return { total: this.jobs.length, done: count('done'), failed: count('error'), skipped: count('skipped'), pending: count('queued') + count('running'), failures: this.jobs.filter((j) => j.status === 'error') };
   }
 
   /** Pone los fallidos otra vez en cola. */
@@ -37,6 +37,24 @@ export class UploadQueue {
     this.onChange(failed);
     this.#pump();
     return failed.length;
+  }
+
+  /** Reintenta un trabajo fallido; `file` permite cambiarlo (p. ej. con otro nombre). */
+  retry(job, file = job.file) {
+    if (job.status !== 'error') return false;
+    Object.assign(job, { file, status: 'queued', error: null, progress: 0, attempt: 0 });
+    this.onChange([job]);
+    this.#pump();
+    return true;
+  }
+
+  /** Descarta fallidos (uno o todos): dejan de contar como error. */
+  skip(job = null) {
+    const list = job ? [job] : this.jobs.filter((j) => j.status === 'error');
+    list.forEach((j) => { if (j.status === 'error') j.status = 'skipped'; });
+    this.onChange(list);
+    if (!this.running) this.onIdle(this.summary());
+    return list.length;
   }
 
   /** Vacía lo ya terminado para empezar de cero. */

@@ -4,6 +4,7 @@ import { api, uploadFile } from '../../core/api.js';
 import { appState } from '../../core/store.js';
 import { reload, refreshStats } from '../../core/drive.js';
 import { toast } from '../../ui/toast.js';
+import { promptText } from '../../ui/modal.js';
 import { UploadQueue } from './queue.js';
 import { createFolderEnsurer } from './folders.js';
 import { findDuplicates, resolveDuplicates } from './duplicates.js';
@@ -11,7 +12,19 @@ import { createPanel } from './panel.js';
 import { scanDrop } from './scan.js';
 
 const folders = createFolderEnsurer((parent, name) => api.createFolder(parent, name));
-const panel = createPanel({ running: () => queue.running, retryFailed: () => queue.retryFailed() });
+const panel = createPanel({
+  running: () => queue.running,
+  retryFailed: () => queue.retryFailed(),
+  retry: (job) => queue.retry(job),
+  skip: (job) => queue.skip(job),
+  rename: async (job) => { // reintenta con otro nombre (p. ej. si el nombre no es válido o choca con otro)
+    const name = (await promptText({ title: 'Renombrar y reintentar', label: 'Nuevo nombre', value: job.file.name, confirmLabel: 'Subir' }))?.trim();
+    if (!name || name === job.file.name) return;
+    const file = new File([job.file], name, { type: job.file.type, lastModified: job.file.lastModified });
+    if (job.rel) job.rel = job.rel.replace(/[^/]+$/, name);
+    queue.retry(job, file);
+  },
+});
 const queue = new UploadQueue({
   concurrency: 3,
   run: async (job, onProgress) => {
@@ -19,14 +32,14 @@ const queue = new UploadQueue({
     if (job.attempt > 0 && (await findDuplicates(job.base, [{ file: job.file, rel: job.rel }])).same.length) return { size: job.file.size };
     return uploadFile(job.file, job.rel ? await folders.ensure(job.base, job.rel) : job.base, onProgress);
   },
-  onChange: (jobs) => panel.update(jobs),
-  onIdle: ({ done, failed }) => {
+  onChange: (jobs) => panel.update(jobs, queue.jobs),
+  onIdle: ({ done, failed, skipped }) => {
     folders.clear();
     refreshStats();
     if (done) reload();
-    panel.finish({ done, failed });
-    if (done && !failed) {
-      toast(`${done === 1 ? 'Archivo subido' : `${done} archivos subidos`} correctamente`, { type: 'ok' });
+    panel.finish({ done, failed, skipped });
+    if (!failed) {
+      if (done) toast(`${done === 1 ? 'Archivo subido' : `${done} archivos subidos`} correctamente`, { type: 'ok' });
       panel.closeLater(); // el panel se cierra solo; si hubo errores se queda para poder reintentar
     }
   },

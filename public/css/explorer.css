@@ -126,16 +126,30 @@ body.eq-live .eq i { transform: scaleY(var(--lv, 0.2)); transition: transform 0.
 }
 
 .upload-panel {
-  position: fixed; z-index: 45; right: 20px; bottom: calc(20px + var(--player-h) + var(--safe-b)); width: min(360px, calc(100% - 28px)); max-height: 42vh; overflow: auto;
-  padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); border: 1px solid var(--line);
+  position: fixed; z-index: 45; right: 20px; bottom: calc(20px + var(--player-h) + var(--safe-b)); width: min(380px, calc(100% - 28px)); max-height: min(60vh, 520px);
+  display: flex; flex-direction: column; padding: 12px 16px 14px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); border: 1px solid var(--line);
 }
-.upload-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font: 700 1.05rem var(--font-display); }
+/* Cabecera y pie fijos: solo se desplaza la lista (antes la × se iba con el scroll y no se podía cerrar) */
+.upload-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px; }
+.upload-count { margin-left: 8px; margin-right: auto; color: var(--muted); font: 600 0.85rem var(--font-body, inherit); font-variant-numeric: tabular-nums; }
+.upload-row.error { margin: 4px 0; padding: 10px 12px; border-radius: 14px; background: color-mix(in oklab, var(--danger) 9%, transparent); }
+.upload-row.error .progress { display: none; }
+.upload-row.skipped { opacity: 0.55; }
+.upload-row.skipped .progress { display: none; }
+.upload-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.upload-acts:empty { display: none; }
+.upload-act { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border: 0; border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
+.upload-act .icon { width: 14px; height: 14px; }
+.upload-act:active { transform: scale(0.95); }
+.upload-foot-acts { display: flex; gap: 8px; }
+.upload-foot-acts .btn { padding-inline: 12px; }
+.upload-head { flex: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font: 700 1.05rem var(--font-display); }
 .upload-row { display: grid; gap: 5px; padding: 8px 0; }
 .upload-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; font-size: 14px; }
-.upload-row .state { color: var(--muted); font-size: 12.5px; }
+.upload-row .state { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
 .upload-row.error .state { color: var(--danger); }
 .upload-row.done .state { color: var(--ok); }
-.upload-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
+.upload-foot { flex: none; padding-top: 10px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
 .upload-foot:empty { display: none; }
 .upload-foot .ok { color: var(--ok); }
 .upload-foot .bad { color: var(--danger); }
