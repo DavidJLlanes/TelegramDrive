@@ -2,8 +2,8 @@
 :root { --halo: rgb(20 121 201 / 0.07); }
 /* Los tonos de carpeta se calculan en cada carpeta (no en :root) para que cada una pueda tener el suyo. */
 .sleeves .sleeve {
-  --sleeve-a: oklch(0.93 0.035 var(--h, 230)); --sleeve-b: oklch(0.89 0.05 var(--h, 230));
-  --sleeve-line: oklch(0.6 0.09 var(--h, 230) / 0.28);
+  --sleeve-a: oklch(0.93 calc(0.035 * var(--k, 1)) var(--h, 230)); --sleeve-b: oklch(0.89 calc(0.05 * var(--k, 1)) var(--h, 230));
+  --sleeve-line: oklch(0.6 calc(0.09 * var(--k, 1)) var(--h, 230) / 0.28);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -11,8 +11,8 @@
     --halo: rgb(88 176 234 / 0.06);
   }
   .sleeves .sleeve {
-    --sleeve-a: oklch(0.29 0.055 var(--h, 230)); --sleeve-b: oklch(0.23 0.04 var(--h, 230));
-    --sleeve-line: oklch(0.62 0.1 var(--h, 230) / 0.32);
+    --sleeve-a: oklch(0.29 calc(0.055 * var(--k, 1)) var(--h, 230)); --sleeve-b: oklch(0.23 calc(0.04 * var(--k, 1)) var(--h, 230));
+    --sleeve-line: oklch(0.62 calc(0.1 * var(--k, 1)) var(--h, 230) / 0.32);
   }
 }
 
@@ -25,7 +25,7 @@ body { background: radial-gradient(1100px 520px at 12% -8%, var(--halo), transpa
   box-shadow: inset 0 0 0 1px var(--sleeve-line), 0 1px 2px rgb(0 0 0 / 0.08);
 }
 .sleeves .sleeve::before { background: var(--sleeve-a); box-shadow: inset 1px 1px 0 var(--sleeve-line), inset -1px 0 0 var(--sleeve-line); }
-.sleeves .sleeve > .icon { color: oklch(0.7 0.12 var(--h, 230)); opacity: 0.9; }
+.sleeves .sleeve > .icon { color: oklch(0.7 calc(0.12 * var(--k, 1)) var(--h, 230)); opacity: 0.9; }
 .sleeves .sleeve:hover { box-shadow: inset 0 0 0 1px var(--sleeve-line), var(--shadow); }
 .sleeve-name { font-weight: 600; font-size: 0.98rem; letter-spacing: -0.01em; hyphens: manual; overflow-wrap: break-word; }
 .sleeves .sleeve { padding-right: 44px; }

@@ -42,6 +42,8 @@ export function driveRoutes({ catalog, tg }) {
   router.post('/folders', wrap(async (req, res) => {
     res.status(201).json(await folderOps.create(req.body?.parent ?? '/', req.body?.name));
   }));
+  /** PATCH /api/folders/style { paths, color?, icon? } → { updated, failed }: estilo para varias carpetas a la vez */
+  router.patch('/folders/style', wrap(async (req, res) => res.json(await folderOps.setStyleMany(req.body?.paths, req.body ?? {}))));
   router.patch('/folders', wrap(async (req, res) => {
     const { path, name, parent } = req.body ?? {};
     if (req.body && ('color' in req.body || 'icon' in req.body)) return res.json(await folderOps.setStyle(path, req.body));

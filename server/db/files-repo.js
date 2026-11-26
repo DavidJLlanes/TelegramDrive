@@ -104,6 +104,7 @@ export class FilesRepo {
   }
 
   markCover(id) { this.db.stmt('UPDATE files SET thumb = 1 WHERE msg_id = ?').run(id); }
+  unmarkCover(id) { this.db.stmt('UPDATE files SET thumb = 0 WHERE msg_id = ?').run(id); }
 
   setOverride(id, ovr) {
     this.db.stmt('UPDATE files SET ovr = ? WHERE msg_id = ?').run(Object.keys(ovr).length ? JSON.stringify(ovr) : '', id);

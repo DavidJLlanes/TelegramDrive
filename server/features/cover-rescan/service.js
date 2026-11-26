@@ -3,6 +3,7 @@ import path from 'node:path';
 import { config } from '../../config/index.js';
 import { shrinkCover } from '../../services/cover.js';
 import { findAlbumCover } from './cover-finder.js';
+import { hasNoCover } from '../../services/thumbnails.js';
 
 const MAX_ALBUMS = 150;      // por ejecución, para no saturar la API externa
 const PAUSE_MS = 3000;       // ~20 consultas por minuto
@@ -15,6 +16,7 @@ export function createService({ files, tree, tagger, find = findAlbumCover, paus
   async function search(signal) {
     const albums = new Map();
     for (const row of files.withoutCover()) {
+      if (await hasNoCover(row.id)) continue; // carátula quitada a propósito
       const key = `${row.band}\0${row.album}`;
       if (!albums.has(key)) albums.set(key, { artist: row.band, album: row.album, ids: [] });
       albums.get(key).ids.push(row.id);

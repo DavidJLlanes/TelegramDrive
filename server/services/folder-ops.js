@@ -53,7 +53,7 @@ export class FolderOps {
     });
   }
 
-  /** Estilo de la carpeta: `color` (0-359, -1/null = automático) e `icon` (de FOLDER_ICONS, '' = normal). Lo omitido no cambia. Se guarda también en Telegram. */
+  /** Estilo de la carpeta: `color` (tono + 360 × tonalidad, -1/null = automático) e `icon` (de FOLDER_ICONS, '' = normal). Lo omitido no cambia. Se guarda también en Telegram. */
   setStyle(path, raw = {}) {
     const color = 'color' in raw ? parseColor(raw.color) : undefined;
     const icon = 'icon' in raw ? parseIcon(raw.icon) : undefined;
@@ -69,6 +69,23 @@ export class FolderOps {
       this.tree.setStyle(id, next);
       return next;
     });
+  }
+
+  /** Mismo estilo (color y/o icono) para varias carpetas. Devuelve { updated, failed: [{ path, error }] }. */
+  async setStyleMany(paths, raw = {}) {
+    if (!Array.isArray(paths) || !paths.length) throw badRequest('No hay carpetas seleccionadas');
+    if (!('color' in raw) && !('icon' in raw)) throw badRequest('Indica "color" o "icon"');
+    const style = {};
+    if ('color' in raw) style.color = raw.color;
+    if ('icon' in raw) style.icon = raw.icon;
+    let updated = 0; const failed = [];
+    for (const path of [...new Set(paths.map(String))].slice(0, 2000)) {
+      try { await this.setStyle(path, style); updated += 1; } catch (err) {
+        if (err.status === 400 && /no válido/.test(err.message)) throw err; // valor erróneo: falla todo, no carpeta a carpeta
+        failed.push({ path, error: err.message });
+      }
+    }
+    return { updated, failed };
   }
 
   move(path, targetPath) {

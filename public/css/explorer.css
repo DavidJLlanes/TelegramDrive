@@ -16,7 +16,7 @@
 .icon-choice:hover { transform: translateY(-1px); background: var(--accent-soft); }
 .icon-choice[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0 8px; }
-.swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; background: oklch(0.7 0.14 var(--h, 230)); transition: transform 0.12s, box-shadow 0.12s; }
+.swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; background: oklch(0.7 calc(0.14 * var(--k, 1)) var(--h, 230)); transition: transform 0.12s, box-shadow 0.12s; }
 .swatch.auto { background: conic-gradient(from 0deg, oklch(0.7 0.14 25), oklch(0.7 0.14 95), oklch(0.7 0.14 160), oklch(0.7 0.14 245), oklch(0.7 0.14 325), oklch(0.7 0.14 25)); }
 .swatch:hover { transform: scale(1.08); }
 .swatch[aria-checked="true"] { border-color: var(--text, #fff); box-shadow: 0 0 0 3px var(--accent); }

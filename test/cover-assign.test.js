@@ -51,3 +51,16 @@ test('rechaza imágenes ilegibles, peticiones sin pistas y sin imagen', async ()
   assert.equal((await h.call('POST', '/api/covers/assign', form(null, [a.id], true))).res.status, 400);
   assert.equal((await h.call('POST', '/api/covers/assign', { ids: [a.id] })).res.status, 415);
 });
+
+test('quitar carátula: la pista queda sin imagen, no vuelve sola al releer etiquetas y se puede volver a poner', async () => {
+  const { json } = await h.call('POST', '/api/covers/remove', { ids: [withCover.id, missing] });
+  assert.deepEqual(json, { removed: 1 });
+  assert.equal(h.catalog.getFile(withCover.id).thumb, false);
+  assert.equal((await h.raw(`/api/files/${withCover.id}/thumb`)).status, 404);
+  await h.catalog.tagger.reread([{ id: withCover.id, name: 'con.mp3' }]); // la carátula incrustada no debe reaparecer
+  assert.equal(h.catalog.getFile(withCover.id).thumb, false);
+  assert.equal((await h.raw(`/api/files/${withCover.id}/thumb`)).status, 404);
+  await h.call('POST', '/api/covers/assign', form(blue, [withCover.id], false));
+  assert.equal((await h.raw(`/api/files/${withCover.id}/thumb`)).status, 200, 'asignar una nueva la recupera');
+  assert.equal((await h.call('POST', '/api/covers/remove', { ids: [] })).res.status, 400);
+});

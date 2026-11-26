@@ -1,3 +1,4 @@
+import { paintColor } from './folder-styles-data.js';
 import { h, clear } from '../core/dom.js';
 import { emptyBlock, skeletons } from './empty.js';
 import { pickFiles } from '../features/uploads/index.js';
@@ -44,7 +45,7 @@ function sleeve(folder) {
     }, icon('play')),
     moreButton(() => folderMenu(folder)));
   const hue = Number.isInteger(folder.color) ? folder.color : folder.inherited; // propio, o heredado de la carpeta madre
-  if (Number.isInteger(hue)) { card.style.setProperty('--h', hue); card.classList.add('hued'); } else tint(card, folder.name);
+  if (paintColor(card, hue)) card.classList.add('hued'); else tint(card, folder.name); // tono + tonalidad (--h, --k)
   shapeCard(card, folder.image ? imageFor(card, folder) : null);
   return enhanceCard(card, folder, 'folder');
 }

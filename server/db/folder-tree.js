@@ -125,7 +125,7 @@ export class FolderTree {
   inheritedHue(id) {
     let level = 1;
     for (let cur = this.byId.get(this.byId.get(id)?.parent); cur; cur = this.byId.get(cur.parent), level += 1) {
-      if (cur.color >= 0) return (cur.color + 14 * level) % 360;
+      if (cur.color >= 0) return cur.color - (cur.color % 360) + ((cur.color % 360) + 14 * level) % 360; // misma tonalidad, tono desplazado
     }
     return null;
   }

@@ -64,7 +64,6 @@ html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 
 .toast { animation: toast-in 0.5s var(--spring); }
 .upload-panel, .queue-panel, .ly-panel, .fx-panel { animation: panel-in 0.5s var(--spring-soft); }
 .lightbox, .video-modal { animation: ov-in 0.28s var(--out); }
-.selection-bar:not([hidden]) { animation: panel-in 0.45s var(--spring); }
 @keyframes ov-in { from { opacity: 0; backdrop-filter: blur(0); } }
 @keyframes dlg-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } }
 @keyframes menu-in { from { opacity: 0; transform: scale(0.88); } }

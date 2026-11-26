@@ -3,6 +3,7 @@ import path from 'node:path';
 import { config } from '../config/index.js';
 import { readTags } from './tags.js';
 import { shrinkCover } from './cover.js';
+import { hasNoCover } from './thumbnails.js';
 
 const BATCH = 60;
 const CONCURRENCY = 3;
@@ -71,8 +72,9 @@ export class Tagger {
       const message = await this.tg.getMessage(row.id);
       const { tags, cover, duration } = await readTags(this.tg, message, row.name);
       const small = cover ? await shrinkCover(cover) : null;
-      if (small) await fs.writeFile(path.join(config.thumbsDir, `${row.id}.jpg`), small).catch(() => {});
-      this.files.setTags(row.id, tags, { cover: Boolean(small), duration });
+      const keep = small && !(await hasNoCover(row.id)); // si el usuario quitó la carátula, no se vuelve a poner
+      if (keep) await fs.writeFile(path.join(config.thumbsDir, `${row.id}.jpg`), small).catch(() => {});
+      this.files.setTags(row.id, tags, { cover: Boolean(keep), duration });
       return true;
     } catch (err) {
       if (err?.status === 404) { this.files.setTags(row.id, null); return true; } // borrado en Telegram

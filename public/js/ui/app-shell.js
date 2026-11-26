@@ -11,7 +11,7 @@ import { createPageHeader } from './page-header.js';
 import { renderExplorer } from './explorer.js';
 import { renderLibrary } from './library.js';
 import { renderTrash } from './trash-view.js';
-import { createSelectionBar } from './selection.js';
+import { createSelectionBar } from './selection-bar.js';
 import { renderPage } from './page-view.js';
 import { showPruneGuard } from './prune-guard.js';
 

@@ -10,6 +10,8 @@ export default {
     const router = Router();
     /** POST /api/covers/assign (multipart: image, ids, replace) → { updated, skipped } */
     router.post('/covers/assign', wrap(async (req, res) => res.json(await service.assign(await receiveCover(req)))));
+    /** POST /api/covers/remove { ids } → { removed } */
+    router.post('/covers/remove', wrap(async (req, res) => res.json(await service.remove({ ids: req.body?.ids }))));
     return { router, api: service };
   },
 };

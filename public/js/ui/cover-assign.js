@@ -2,7 +2,7 @@
 import { api, bumpCovers } from '../core/api.js';
 import { reload } from '../core/drive.js';
 import { pickImage } from './image-dialog.js';
-import { toast } from './toast.js';
+import { toast, toastError } from './toast.js';
 
 const plural = (n) => `${n} ${n === 1 ? 'canción' : 'canciones'}`;
 
@@ -23,4 +23,16 @@ export async function chooseCover(files) {
       return true;
     },
   });
+}
+
+/** Quita la carátula de las canciones (quedan sin imagen y no vuelve a ponerse sola). */
+export async function removeCovers(files) {
+  const tracks = files.filter((f) => f.kind === 'audio');
+  if (!tracks.length) { toast('Selecciona alguna canción'); return false; }
+  try {
+    const { removed } = await api.removeCovers(tracks.map((f) => f.id));
+    bumpCovers(); await reload();
+    toast(`Carátula quitada de ${plural(removed)}`, { type: 'ok' });
+    return true;
+  } catch (err) { toastError(err); return false; }
 }

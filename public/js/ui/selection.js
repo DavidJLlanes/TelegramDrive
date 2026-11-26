@@ -1,17 +1,11 @@
-// Selección múltiple de archivos y carpetas, con barra de acciones (mover, papelera, ZIP, añadir a lista).
+// Selección múltiple de archivos y carpetas: estado y acciones comunes (la barra está en selection-bar.js).
 import { h } from '../core/dom.js';
-import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
-import { appState, watch } from '../core/store.js';
+import { appState } from '../core/store.js';
 import { reload, refreshStats, loadMore } from '../core/drive.js';
 import { applyFileFilters } from '../core/explorer-ext.js';
-import { pickFolder, dialog } from './modal.js';
-import { openMenu } from './menu.js';
+import { dialog } from './modal.js';
 import { downloadZip } from './download.js';
-import { addToPlaylist } from './playlist-picker.js';
-import { editTagsBulk } from './tag-editor.js';
-import { chooseCover } from './cover-assign.js';
-import { chooseFolderImage } from './folder-image.js';
 import { toast, toastError } from './toast.js';
 
 export const fileKey = (f) => `f:${f.id}`;
@@ -26,7 +20,7 @@ export function toggleSelected(key) {
 
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.querySelector('.overlay, .menu')) clearSelection(); });
 
-function split(s) {
+export function split(s) {
   const files = new Map([...s.files, ...(s.results ?? [])].map((f) => [fileKey(f), f]));
   return {
     files: s.selected.filter((k) => k.startsWith('f:')).map((k) => files.get(k)).filter(Boolean),
@@ -34,7 +28,7 @@ function split(s) {
   };
 }
 
-async function bulk(action, parent) {
+export async function bulk(action, parent) {
   const { files, folders } = split(appState.get());
   try {
     const r = await api.bulk({ action, files: files.map((f) => f.id), folders, parent });
@@ -50,7 +44,7 @@ async function bulk(action, parent) {
 const count = (n, one, many) => `${n.toLocaleString('es-ES')} ${n === 1 ? one : many}`;
 
 /** Eliminación definitiva (también en Telegram), con confirmación y recuento. */
-async function confirmDelete() {
+export async function confirmDelete() {
   const { files, folders } = split(appState.get());
   const parts = [];
   if (files.length) parts.push(count(files.length, 'archivo', 'archivos'));
@@ -77,40 +71,10 @@ export async function selectAll() {
   appState.set({ selected: all ? [] : keys });
 }
 
-function zip() {
+export function zip() {
   const { files, folders } = split(appState.get());
   if (files.length) downloadZip({ ids: files.map((f) => f.id) });
   else if (folders.length === 1) downloadZip({ path: folders[0] });
   else toast('Selecciona archivos, o una sola carpeta, para descargar un ZIP');
   if (files.length && folders.length) toast('El ZIP incluye solo los archivos seleccionados; las carpetas se descargan de una en una');
-}
-
-/** Imagen para la selección: carátula si son canciones, portada si son carpetas (no se mezclan: llevan recortes distintos). */
-function chooseImage() {
-  const state = appState.get();
-  const { files, folders } = split(state);
-  if (files.length && folders.length) { toast('Selecciona solo canciones (carátula) o solo carpetas (imagen de carpeta)'); return false; }
-  if (folders.length) return chooseFolderImage((state.folders ?? []).filter((f) => folders.includes(f.path)));
-  return chooseCover(files);
-}
-
-export function createSelectionBar() {
-  const count = h('strong', {});
-  const btn = (label, name, fn, extra = '') => h('button', { class: `btn ${extra}`, type: 'button', onclick: fn }, icon(name), h('span', { class: 'hide-mobile' }, label));
-  const bar = h('div', { class: 'selection-bar', role: 'toolbar', 'aria-label': 'Acciones sobre la selección' },
-    h('button', { class: 'btn btn-icon btn-ghost', type: 'button', 'aria-label': 'Cancelar selección', onclick: clearSelection }, icon('close')), count,
-    h('span', { class: 'toolbar-spacer' }),
-    btn('Mover', 'move', async () => { const to = await pickFolder({ title: 'Mover selección' }); if (to !== null) bulk('move', to); }),
-    btn('ZIP', 'archive', zip),
-    btn('Etiquetas', 'tag', async () => { const picked = split(appState.get()); await editTagsBulk(picked); clearSelection(); }),
-    btn('Imagen', 'image', async () => { if (await chooseImage()) clearSelection(); }),
-    btn('Añadir a lista', 'playlist', () => addToPlaylist(split(appState.get()).files.filter((f) => f.kind === 'audio').map((f) => f.id))),
-    h('button', { class: 'btn btn-danger', type: 'button', 'aria-haspopup': 'menu', onclick: (e) => openMenu(e.currentTarget, [
-      { label: 'Enviar a la papelera', icon: 'trash', run: () => bulk('trash') },
-      { label: 'Eliminar definitivamente', icon: 'close', danger: true, run: confirmDelete },
-    ]) }, icon('trash'), h('span', { class: 'hide-mobile' }, 'Eliminar')));
-  const paint = (s) => { bar.hidden = s.selected.length === 0; count.textContent = `${s.selected.length} seleccionado${s.selected.length === 1 ? '' : 's'}`; };
-  watch(appState, bar, paint);
-  paint(appState.get());
-  return bar;
 }

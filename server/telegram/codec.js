@@ -2,11 +2,11 @@
 // renombrar/mover una carpeta es editar UN mensaje, no uno por archivo.
 //   Carpeta: #tgdrive {"v":2,"t":"folder","i":"a1b2c3d4e5","p":"root","n":"Música"}
 //   Archivo: #tgdrive {"v":2,"t":"file","f":"a1b2c3d4e5","n":"tema.mp3"}
-//   Opcionales: "x" (papelera: fecha en ms), "m" (etiquetas de música corregidas por el usuario), "c" (carpeta: tono de color 0-359), "ic" (carpeta: nombre de icono).
+//   Opcionales: "x" (papelera: fecha en ms), "m" (etiquetas de música corregidas por el usuario), "c" (carpeta: color, tono + 360 × tonalidad), "ic" (carpeta: nombre de icono).
 //   Lista:   #tgdrive {"v":2,"t":"playlist","i":"a1b2c3d4e5","n":"Para correr","s":"1x,2k,3d"}  (ids de archivo en base 36)
 import { randomBytes } from 'node:crypto';
 import { badRequest } from '../utils/errors.js';
-import { FOLDER_ICONS } from '../utils/folder-style.js';
+import { FOLDER_ICONS, isColor } from '../utils/folder-style.js';
 
 export const TAG = '#tgdrive';
 const MAX_CAPTION = 1000;
@@ -41,7 +41,7 @@ export function decode(text) {
     const m = JSON.parse(text.slice(TAG.length).trim());
     if (m?.v !== VERSION || !isStr(m.n)) return null;
     const trashed = Number.isFinite(m.x) && m.x > 0 ? m.x : 0;
-    if (m.t === 'folder' && isStr(m.i) && isStr(m.p)) return { type: 'folder', id: m.i, parent: m.p, name: m.n, trashed, color: Number.isInteger(m.c) && m.c >= 0 && m.c < 360 ? m.c : -1, icon: FOLDER_ICONS.includes(m.ic) ? m.ic : '' };
+    if (m.t === 'folder' && isStr(m.i) && isStr(m.p)) return { type: 'folder', id: m.i, parent: m.p, name: m.n, trashed, color: isColor(m.c) ? m.c : -1, icon: FOLDER_ICONS.includes(m.ic) ? m.ic : '' };
     if (m.t === 'file' && isStr(m.f)) return { type: 'file', folder: m.f, name: m.n, trashed, ovr: m.m && typeof m.m === 'object' ? m.m : null };
     if (m.t === 'playlist' && isStr(m.i)) {
       const ids = String(m.s ?? '').split(',').filter(Boolean).map((v) => parseInt(v, 36)).filter(Number.isInteger);
