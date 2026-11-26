@@ -14,7 +14,6 @@ html:not([data-nav="morph"])::view-transition-old(root), html:not([data-nav="mor
 @keyframes vt-fade-in { from { opacity: 0; transform: translateY(6px); } }
 
 /* Indicadores (se deslizan con FLIP desde motion.js) */
-.tab-ind { position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); pointer-events: none; transform-origin: 0 0; }
 .tree-item { position: relative; isolation: isolate; }
 .tree-item[aria-current="page"] { background: transparent; }
 .side-ind { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--accent-soft); pointer-events: none; transform-origin: 0 0; }
@@ -43,10 +42,10 @@ html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 
 .cover > img.ready { opacity: 1; transform: none; }
 
 /* ===== Respuesta al tacto: hunde rápido, recupera con muelle ===== */
-.btn, .chip, .sleeve, .tile, .tree-item, .menu-item, .folder-option, .crumb, .home-btn, .queue-btn, .lb-nav {
+.btn, .sleeve, .tile, .tree-item, .menu-item, .folder-option, .crumb, .home-btn, .queue-btn, .lb-nav {
   transition: transform 0.5s var(--spring), background-color 0.2s var(--out), color 0.2s var(--out), box-shadow 0.3s var(--out), opacity 0.2s var(--out);
 }
-.btn:active, .chip:active, .menu-item:active, .folder-option:active, .crumb:active, .queue-btn:active { transform: scale(0.955); transition-duration: 0.09s; }
+.btn:active, .menu-item:active, .folder-option:active, .crumb:active, .queue-btn:active { transform: scale(0.955); transition-duration: 0.09s; }
 .tree-item:active { transform: scale(0.98); transition-duration: 0.09s; }
 .sleeve:hover { transform: translateY(-3px); }
 .sleeve:active { transform: translateY(-1px) scale(0.975); transition-duration: 0.1s; }

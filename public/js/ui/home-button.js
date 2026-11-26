@@ -1,17 +1,13 @@
-// Botón «Inicio» de la barra superior: rebote + onda al pulsar y, un instante después, navega a la raíz.
+// Botón «Inicio» (casita): rebote + onda al pulsar y, un instante después, navega a la raíz.
+// `variant` 'chip' = versión de la barra de secciones; 'fab' = la del botón flotante (la crea fab.js con su propia clase).
 import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 import { appState, watch } from '../core/store.js';
 import { navigate } from '../core/router.js';
+import { pop } from './pop.js';
 
-function goHome(e) {
-  const btn = e.currentTarget;
-  btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
-  setTimeout(() => navigate('/'), 220);
-}
-
-export function homeButton() {
-  const btn = h('button', { class: 'home-btn', type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: goHome }, icon('home'));
+export function homeButton(cls = 'home-btn', after) {
+  const btn = h('button', { class: `${cls} pop-fx`, type: 'button', title: 'Inicio', 'aria-label': 'Inicio', onclick: (e) => pop(e.currentTarget, () => { navigate('/'); after?.(); }) }, icon('home'));
   watch(appState, btn, (s) => {
     const here = s.section === 'files' && s.path === '/' && s.results === null; // estamos en la raíz
     btn.classList.toggle('active', here);

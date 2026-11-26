@@ -7,6 +7,7 @@ import { navigate, navigateLib, navigateTrash } from '../core/router.js';
 import { compareNames } from '../core/text.js';
 import { menuViews, navigateView } from '../core/views.js';
 import { enhanceCard } from '../core/explorer-ext.js';
+import { pop } from './pop.js';
 
 const parentOf = (p) => p.slice(0, p.lastIndexOf('/')) || '/';
 
@@ -61,19 +62,24 @@ const pageItem = (view, s) => h('button', { class: 'tree-item', 'aria-current': 
 export function createMobileNav() {
   const el = h('nav', { class: 'mobile-nav', 'aria-label': 'Secciones' });
   let shown = null;
-  const chip = (label, iconName, active, go) => h('button', { class: 'chip', 'aria-current': active ? 'page' : null, onclick: go }, icon(iconName), label);
+  const chip = (label, iconName, active, go, extra = '') => h('button', {
+    class: `chip pop-fx${extra}`, type: 'button', 'aria-current': active ? 'page' : null, 'aria-label': label,
+    onclick: (e) => pop(e.currentTarget, go, 170),
+  }, icon(iconName), extra ? null : h('span', {}, label));
   const paint = (s) => {
     const lib = s.section === 'library' && s.results === null;
+    const root = s.section === 'files' && s.path === '/' && s.results === null;
     const from = indicatorRect(el, 'tab-ind');
-    fill(el, 
-      chip('Archivos', 'folder', s.section === 'files' || s.results !== null, () => navigate('/')),
+    fill(el,
+      chip('Inicio', 'home', root, () => navigate('/'), ' chip-home'),
+      chip('Archivos', 'folder', (s.section === 'files' || s.results !== null) && !root, () => navigate('/')),
       ...LIBRARY.map((e) => chip(e.label, e.icon, lib && [e.view, ...e.also].includes(s.lib.view), () => navigateLib(e.view))),
-      ...[...menuViews('library'), ...menuViews('more')].map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
+      ...menuViews('library').map((v) => chip(v.label, v.icon, s.section === 'page' && s.page.id === v.id, () => navigateView(v.id))),
       chip('Papelera', 'trash', s.section === 'trash', navigateTrash));
-    indicator(el, '.chip[aria-current="page"]', 'tab-ind', from);
+    indicator(el, '.chip[aria-current="page"]', 'tab-ind', from, { bounce: false });
     const active = el.querySelector('.chip[aria-current="page"]');
-    if (active && active.textContent !== shown) { // solo al cambiar de sección: no pelea con el desplazamiento manual
-      shown = active.textContent;
+    if (active && active.getAttribute('aria-label') !== shown) { // solo al cambiar de sección: no pelea con el desplazamiento manual
+      shown = active.getAttribute('aria-label');
       el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
     }
   };

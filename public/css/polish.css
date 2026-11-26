@@ -40,14 +40,7 @@ body { background: radial-gradient(1100px 520px at 12% -8%, var(--halo), transpa
 .foot-stats { opacity: 0.8; }
 
 @media (max-width: 900px) {
-  /* Cabecera: logo mayor y «Nueva carpeta» sin caja */
+  /* Cabecera: logo mayor */
   .topbar .brand-mark { width: 46px; height: 46px; border-radius: 14px; }
-  .topbar .btn:not(.btn-primary):not(.btn-icon) { background: transparent; border-color: transparent; box-shadow: none; padding-inline: 10px; }
-  .topbar .btn:not(.btn-primary):not(.btn-icon):active { background: var(--accent-soft); }
-
-  /* Secciones: texto plano; la activa lleva un indicador que se desliza (motion.css) */
-  .mobile-nav { gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
-  .mobile-nav .chip { position: relative; border: 0; border-radius: 0; background: transparent; padding: 10px 12px 12px; color: var(--muted); }
-  .mobile-nav .chip[aria-current="page"] { background: transparent; color: var(--accent); }
 }
 

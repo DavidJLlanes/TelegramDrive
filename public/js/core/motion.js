@@ -78,7 +78,7 @@ export function watchScreen(el, paint) {
 export const indicatorRect = (container, cls) => container.querySelector(`.${cls}`)?.getBoundingClientRect() ?? null;
 
 /** Indicador que se desliza entre pestañas: el nuevo parte de la posición y tamaño `from` del anterior (FLIP). */
-export function indicator(container, selector, cls, from = indicatorRect(container, cls)) {
+export function indicator(container, selector, cls, from = indicatorRect(container, cls), { bounce = true } = {}) {
   container.querySelector(`.${cls}`)?.remove();
   const host = container.querySelector(selector);
   if (!host) return;
@@ -89,8 +89,10 @@ export function indicator(container, selector, cls, from = indicatorRect(contain
   const to = el.getBoundingClientRect();
   if (!to.width || (from.left === to.left && from.top === to.top)) return;
   const t = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
-  try { el.animate([{ transform: t }, { transform: 'none' }], { duration: 480, easing: SPRING }); }
-  catch { el.animate([{ transform: t }, { transform: 'none' }], { duration: 420, easing: EASE }); }
+  const frames = [{ transform: t }, { transform: 'none' }];
+  if (!bounce) { el.animate(frames, { duration: 340, easing: EASE }); return; } // sin rebote: se posa suave en su sitio
+  try { el.animate(frames, { duration: 480, easing: SPRING }); }
+  catch { el.animate(frames, { duration: 420, easing: EASE }); }
 }
 
 const name = (el, n) => { if (el) el.style.viewTransitionName = n; };

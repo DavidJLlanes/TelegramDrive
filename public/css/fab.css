@@ -1,0 +1,38 @@
+/* ---------- Botón flotante en abanico ---------- */
+.fab { position: fixed; z-index: 42; right: 20px; bottom: calc(20px + var(--player-h) + var(--safe-b)); width: 58px; height: 58px; transition: transform 0.35s var(--out), opacity 0.25s ease; }
+.fab.away { transform: translateY(24px) scale(0.6); opacity: 0; pointer-events: none; }
+.fab-scrim { position: fixed; inset: 0; z-index: -1; background: color-mix(in oklab, var(--bg) 55%, transparent); backdrop-filter: blur(6px); animation: fab-fade 0.25s ease both; }
+.fab-scrim[hidden] { display: none; }
+@keyframes fab-fade { from { opacity: 0; } }
+
+.fab-main {
+  position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; width: 58px; height: 58px; padding: 0; border: 0; border-radius: 20px;
+  background: linear-gradient(145deg, color-mix(in oklab, var(--accent) 80%, #fff), var(--accent)); color: var(--accent-ink); cursor: pointer;
+  box-shadow: 0 10px 26px color-mix(in oklab, var(--accent) 45%, transparent), 0 2px 6px rgb(0 0 0 / 0.25);
+  transition: transform 0.3s var(--out), border-radius 0.4s var(--out), box-shadow 0.3s ease; -webkit-tap-highlight-color: transparent;
+}
+.fab-main .icon { width: 28px; height: 28px; stroke-width: 2.2; transition: transform 0.45s var(--out); }
+.fab-main:active { transform: scale(0.92); }
+.fab.open .fab-main { border-radius: 50%; }
+.fab.open .fab-main .icon { transform: rotate(135deg); } /* el + se convierte en × */
+
+.fab .fab-item {
+  position: absolute; right: 5px; bottom: 5px; z-index: 1; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--surface); color: var(--accent); box-shadow: 0 6px 18px rgb(0 0 0 / 0.28), inset 0 0 0 1px var(--line); cursor: pointer;
+  opacity: 0; pointer-events: none; transform: translate(0, 0) scale(0.3) rotate(-90deg);
+  transition: transform 0.38s cubic-bezier(0.34, 1.35, 0.64, 1), opacity 0.2s ease; -webkit-tap-highlight-color: transparent;
+}
+.fab-item .icon { width: 24px; height: 24px; }
+.fab.open .fab-item { opacity: 1; pointer-events: auto; transform: translate(var(--x), var(--y)) scale(1) rotate(0); }
+.fab.open .fab-item:nth-of-type(1) { transition-delay: 0ms; }
+.fab.open .fab-item:nth-of-type(2) { transition-delay: 55ms; }
+.fab.open .fab-item:nth-of-type(3) { transition-delay: 110ms; }
+.fab-home { --x: 0px; --y: -86px; }
+.fab-upload { --x: -61px; --y: -61px; }
+.fab-folder { --x: -86px; --y: 0px; }
+.fab-item:active { filter: brightness(1.15); }
+@media (max-width: 900px) { .fab { right: 16px; } }
+
+/* Los paneles flotantes del mismo rincón suben para no quedar debajo del botón */
+.upload-panel, .ly-panel, .fx-panel, .queue-panel { margin-bottom: 76px; }
+@media (prefers-reduced-motion: reduce) { .fab-item, .fab-main, .fab-main .icon { transition-duration: 0.01s; transition-delay: 0s !important; } }

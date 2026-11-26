@@ -1,0 +1,28 @@
+/* ---------- Secciones deslizables (móvil): píldoras, sin muelle; la activa lleva un fondo que se desliza ---------- */
+.mobile-nav {
+  display: none;
+  gap: 6px; margin: 2px -16px 14px; padding: 6px 16px; overflow-x: auto; scrollbar-width: none;
+  overscroll-behavior-x: contain; scroll-snap-type: none; /* sin rebote al llegar al final */
+  mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 22px), transparent);
+}
+.mobile-nav::-webkit-scrollbar { display: none; }
+.mobile-nav .chip {
+  position: relative; isolation: isolate; flex: none; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 6%, transparent); color: var(--muted); font: inherit; font-weight: 600; font-size: 0.9rem;
+  -webkit-tap-highlight-color: transparent; transition: color 0.25s ease, background-color 0.25s ease;
+}
+.mobile-nav .chip .icon { width: 18px; height: 18px; }
+.mobile-nav .chip-home { width: 40px; padding: 0; justify-content: center; color: var(--accent); }
+.mobile-nav .chip-home .icon { width: 21px; height: 21px; }
+.mobile-nav .chip[aria-current="page"] { color: var(--accent-ink); background: transparent; }
+.mobile-nav .chip:not([aria-current="page"]):active { background: var(--accent-soft); color: var(--accent); }
+/* El fondo activo (accent) se desliza de una a otra con curva suave, sin rebote */
+.tab-ind { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--accent); box-shadow: 0 4px 14px color-mix(in oklab, var(--accent) 35%, transparent); pointer-events: none; transform-origin: 0 0; }
+
+/* ---------- Animación de pulsación común: rebote del icono + onda ---------- */
+.pop-fx { position: relative; }
+.pop-fx::after { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 2px solid currentColor; opacity: 0; pointer-events: none; }
+.pop-fx.pop .icon { animation: home-pop 0.42s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.pop-fx.pop::after { animation: home-ring 0.5s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pop-fx.pop .icon, .pop-fx.pop::after { animation: none; } }
+@media (max-width: 900px) { .mobile-nav { display: flex; } }

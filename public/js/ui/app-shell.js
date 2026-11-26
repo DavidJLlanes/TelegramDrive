@@ -4,6 +4,8 @@ import { watchScreen, transitioning } from '../core/motion.js';
 import { screenBusy } from '../core/screen-key.js';
 import { formatBytes } from '../core/format.js';
 import { renderTopbar } from './topbar.js';
+import { renderSearchBar } from './search-bar.js';
+import { createFab } from './fab.js';
 import { createSidebar, createMobileNav } from './sidebar.js';
 import { createPageHeader } from './page-header.js';
 import { renderExplorer } from './explorer.js';
@@ -19,7 +21,7 @@ export function renderShell(root, { onLogout }) {
   const foot = h('div', { class: 'foot-stats' });
   const banner = h('p', { class: 'sync-note warn', role: 'status', hidden: true });
   const main = h('main', { class: 'main' }, createMobileNav(), banner, syncNote, createPageHeader(), explorer, foot);
-  fill(root, h('div', { class: 'shell' }, createSidebar(), h('div', { class: 'column' }, renderTopbar({ onLogout }), main), createSelectionBar()));
+  fill(root, h('div', { class: 'shell' }, createSidebar(), h('div', { class: 'column' }, h('div', { class: 'head' }, renderTopbar({ onLogout }), renderSearchBar()), main), createSelectionBar(), createFab()));
 
   const paint = (s) => {
     const sync = s.stats?.sync;
