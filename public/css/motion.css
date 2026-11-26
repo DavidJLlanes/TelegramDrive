@@ -100,3 +100,11 @@ html[data-nav="morph"]::view-transition-new(root) { animation: vt-fade-in-plain 
 }
 @keyframes sheet-in { from { transform: translateY(100%); } }
 @keyframes sheet-out { to { transform: translateY(100%); } }
+
+/* ===== Apertura de la app: entrada suave (sin «golpe» al aparecer) ===== */
+.shell, .login { animation: app-in 0.42s var(--out) both; }
+.shell .head { animation: app-head-in 0.5s var(--out) both; }
+@keyframes app-in { from { opacity: 0; } }
+@keyframes app-head-in { from { opacity: 0; transform: translateY(-6px); } }
+html.app-leaving body { opacity: 0; transition: opacity 0.16s ease; }
+@media (prefers-reduced-motion: reduce) { .shell, .login, .shell .head { animation: none; } }

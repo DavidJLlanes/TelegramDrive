@@ -20,13 +20,21 @@ import './pwa/global-errors.js';
 
 const root = document.getElementById('app');
 let started = false;
+let shellShown = false;
+// Pista local de «hay sesión»: permite pintar la app al instante al abrirla, sin esperar a que el servidor lo confirme.
+// No da acceso a nada (los datos los pide la API con la cookie); si la sesión caducó, la API responde 401 y sale el acceso.
+const AUTH_HINT = 'tgdrive-authed';
+const hint = (on) => { try { if (on) localStorage.setItem(AUTH_HINT, '1'); else localStorage.removeItem(AUTH_HINT); } catch { /* modo privado */ } };
+const hinted = () => { try { return localStorage.getItem(AUTH_HINT) === '1'; } catch { return false; } };
 
 function showLogin() {
+  hint(false); shellShown = false;
   appState.set({ loading: true });
   renderLogin(root, start);
 }
 
 async function logout({ wipe = false } = {}) {
+  hint(false);
   await api.logout().catch(() => {});
   if (wipe) {
     await removeOffline(offlineTracks().map((t) => t.id)).catch(() => {});
@@ -43,6 +51,9 @@ const openRoute = (route) => {
 };
 
 function start() {
+  hint(true);
+  if (shellShown) return; // ya se pintó al abrir (arranque optimista)
+  shellShown = true;
   renderShell(root, { onLogout: logout });
   if (!started) {
     started = true;
@@ -58,11 +69,12 @@ function start() {
 async function boot() {
   registerServiceWorker();
   onUnauthorized(showLogin);
+  if (hinted() && navigator.onLine) start(); // la app aparece al momento; la comprobación de sesión sigue debajo
   try {
     const status = await api.status();
     if (status.authenticated) start(); else showLogin();
   } catch {
-    renderOfflineHome(root, () => location.reload());
+    if (!shellShown) renderOfflineHome(root, () => location.reload());
   }
 }
 

@@ -5,11 +5,12 @@ const VERSION = '__BUILD__';
 const CACHE = `tgdrive-shell-${VERSION}`;
 const SHELL = ['__SHELL__'];
 
-// Instalación: guarda la app (un archivo que falle no bloquea la actualización) y se activa al momento, sin esperar a que se pulse nada.
+// Instalación: descarga la versión completa en su propia caché (sin pasar por la caché HTTP) y se activa sola.
+// Cada versión vive en su caché y nunca se mezcla con otra: así se puede servir todo desde la caché (arranque instantáneo).
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await Promise.allSettled(SHELL.map((url) => cache.add(url)));
+    await Promise.allSettled(SHELL.map((url) => cache.add(new Request(url, { cache: 'reload' })))); // si alguno falla, ese se pedirá a la red
     await self.skipWaiting();
   })());
 });
@@ -55,25 +56,15 @@ self.addEventListener('fetch', (event) => {
   if (/\/api\/files\/\d+\/content$/.test(url.pathname) && url.search === '?offline=1') { event.respondWith(offlineAudio(request)); return; }
   if (url.pathname.includes('/api/') || url.pathname.endsWith('/healthz')) return; // red directa
 
+  const appPage = url.pathname === new URL('./', self.registration.scope).pathname || url.pathname.endsWith('/index.html');
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(async () => (await caches.match('index.html')) || caches.match('offline.html')));
+    // La app (índice) sale de la caché de su misma versión: HTML y código siempre coinciden. Otras páginas (enlaces compartidos), de la red.
+    event.respondWith((async () => {
+      if (appPage) { const hit = await (await caches.open(CACHE)).match('./'); if (hit) return hit; }
+      try { return await fetch(request); } catch { return (await caches.match('./')) || caches.match('offline.html'); }
+    })());
     return;
   }
-  // Fuentes e imágenes no cambian entre versiones: caché primero (arranque instantáneo, sin destello de tipografía).
-  if (/\.(woff2|png|svg)$/.test(url.pathname)) {
-    event.respondWith((async () => (await caches.match(request)) || fetch(request))());
-    return;
-  }
-  // Código (JS, CSS, HTML): red primero (con conexión siempre se usa la versión desplegada, nunca una mezcla de archivos viejos
-  // y nuevos); la caché solo se usa sin conexión.
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE);
-    try {
-      const res = await fetch(request, { cache: 'no-cache' });
-      if (res.ok) cache.put(request, res.clone());
-      return res;
-    } catch {
-      return (await cache.match(request)) || (await caches.match(request)) || Response.error();
-    }
-  })());
+  // Estáticos: de la caché de esta versión; lo que no esté (o falló al instalar), de la red.
+  event.respondWith((async () => (await (await caches.open(CACHE)).match(request)) || fetch(request))());
 });
